@@ -1,0 +1,52 @@
+[project]
+name = "b5t4"
+version = "0.1.0"
+description = "MVP B5-T4 (MIAX) · de la carpeta de trabajo de un equipo a su onboarding: informe, infografía y vídeo; evolución de la opinión corporativa; y un agente de preguntas con respuesta en voz"
+readme = "README.md"
+authors = [
+    { name = "Javier Hernández", email = "javier.hernandez.m1@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    # núcleo
+    "pydantic>=2.13",
+    "requests>=2.34",
+    "python-dotenv>=1.0",
+    "pyyaml>=6.0",
+    "jinja2>=3.1.6",
+    "numpy>=2.0",
+    # lectura del corpus
+    "pypdfium2>=4.30",          # texto y rasterizado de PDF (Apache-2.0 / BSD)
+    "python-pptx>=1.0.2",
+    "pillow>=10.0",
+    # salidas: voz, vídeo, gráficos
+    "kokoro-onnx>=0.6.1",       # TTS local
+    "soundfile>=0.14.0",
+    "num2words>=0.5.14",
+    "playwright>=1.63.0",       # dibuja los fotogramas del vídeo e infografías
+    "imageio-ffmpeg>=0.6.0",    # ffmpeg empaquetado (no hace falta instalarlo en Windows)
+    "matplotlib>=3.11.2",
+    # interfaz
+    "gradio>=5.0",
+]
+
+[project.scripts]
+b5t4 = "b5t4.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ipykernel>=6.29",
+    "pandas>=2.2",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "b5t4"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

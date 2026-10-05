@@ -1,0 +1,34 @@
+# --- Python ---
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.pytest_cache/
+.ipynb_checkpoints/
+
+# --- Entornos ---
+.venv
+
+# --- Secretos: nunca al repo ---
+.env
+*.env.local
+
+# --- Datos de la empresa: el repo APUNTA a la carpeta (B5T4_DATA_DIR), no la contiene ---
+data/*
+!data/README.md
+!data/sample/
+
+# --- Artefactos generados (anclados a la raíz con «/»: sin la barra, «models/»
+#     ignoraría también el código de src/b5t4/models/) ---
+# voz Kokoro (~350 MB): se descarga con scripts/download_models.py
+/models/
+# informes, infografías y vídeos generados (contienen datos del corpus)
+/out/
+# índice del RAG (contiene texto del corpus)
+/index/
+*.mp4
+*.wav
+evals/*.local.*
+

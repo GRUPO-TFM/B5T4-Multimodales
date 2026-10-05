@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }}</title>
+<style>
+  :root{--rojo:#D52B1E;--gris:#928B81;--fondo:#f4f2f0;--tinta:#1d1d1b;--linea:#e2ddd7}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--fondo);color:var(--tinta);font:16px/1.55 "Myriad Pro",Calibri,"Segoe UI",Arial,sans-serif}
+  header{background:#fff;border-bottom:4px solid var(--rojo);padding:18px 20px}
+  header .marca{font-weight:700;color:var(--rojo);letter-spacing:.5px}
+  header h1{margin:6px 0 0;font-size:1.6rem;line-height:1.2}
+  header .fecha{color:var(--gris);font-size:.9rem}
+  main{max-width:980px;margin:0 auto;padding:20px}
+  h2{color:var(--rojo);margin-top:2rem;border-bottom:1px solid var(--linea);padding-bottom:.3rem}
+  h3{margin-top:1.4rem}
+  .tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:1rem 0;background:#fff;border-radius:6px}
+  table{border-collapse:collapse;width:100%;min-width:520px;font-size:.92rem}
+  th{background:var(--rojo);color:#fff;text-align:left;padding:8px 10px;white-space:nowrap}
+  td{border-top:1px solid var(--linea);padding:7px 10px;vertical-align:top}
+  code{background:#fff;border:1px solid var(--linea);border-radius:4px;padding:0 4px;font-size:.88em}
+  img,video{max-width:100%;height:auto;border-radius:6px}
+  footer{color:var(--gris);font-size:.8rem;text-align:center;padding:24px 16px}
+  @media (max-width:600px){header h1{font-size:1.3rem} main{padding:14px}}
+</style>
+</head>
+<body>
+<header><div class="marca">{{ brand }}</div><h1>{{ title }}</h1><div class="fecha">{{ date }}</div></header>
+<main>
+{{ body | safe }}
+</main>
+<footer>Documento interno · generado automáticamente a partir de la carpeta de trabajo del equipo · cada dato cita su fuente</footer>
+</body>
+</html>

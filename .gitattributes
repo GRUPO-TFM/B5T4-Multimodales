@@ -1,0 +1,4 @@
+# Finales de línea normalizados a LF en el repo (evita los avisos LF/CRLF de Windows)
+* text=auto eol=lf
+# Los .bat necesitan CRLF para ejecutarse bien en Windows
+*.bat text eol=crlf

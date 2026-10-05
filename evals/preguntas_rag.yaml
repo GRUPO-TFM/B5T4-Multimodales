@@ -1,0 +1,96 @@
+# Golden set del agente 3 (RAG): preguntas que haría cualquier empleado, con la respuesta esperada y la fuente
+# donde está. Sirve para medir (acierto, recall@k de la fuente, latencia) y para no romper nada al iterar.
+# Rutas relativas a la carpeta de datos (B5T4_DATA_DIR). Ampliar hasta ~30 preguntas.
+# Contiene datos internos del equipo (correos de mesas): el repositorio debe ser PRIVADO.
+
+- id: q01
+  pregunta: ¿A qué correo hay que enviar la operativa de Luxemburgo?
+  respuesta: "A privatedesk@andbank.lu, con copia a middle.office@andbank.lu y al banquero del cliente (Suiza va por otra ruta: privatedesk.gva@andpw.com)."
+  fuentes: ["20. Gestion Clientes/00_Instrucciones/02_reglas-operativas.md", "01. Organizacion/05_Operativa.md"]
+  tipo: dato_operativo
+
+- id: q02
+  pregunta: ¿Cuál es la mesa de ejecución de personas físicas y quiénes son sus responsables?
+  respuesta: "La mesa de ejecución de personas físicas de España; se escribe a josemaria.garcia@andbank.es y adrian.jimenez@andbank.es. Por correo solo va renta variable directa con boleta; los fondos se ejecutan en NextPortfolio."
+  fuentes: ["01. Organizacion/01_Personas_y_Responsables.md", "20. Gestion Clientes/00_Instrucciones/02_reglas-operativas.md"]
+  tipo: persona_contacto
+  nota: los documentos solo dan los correos; los nombres se deducen de ellos (decirlo así)
+
+- id: q03
+  pregunta: ¿Quién gestiona la sección Alpha y qué objetivos tiene?
+  respuesta: "Javier Hernández, Miguel Ángel Olmeda y Pablo Díaz (análisis y modelos), con Álex Fusté y Juan Rodríguez como miembros de comité. Objetivo: +1-2 % anual sobre el MSCI ACWI NR EUR con veinte acciones a peso igual; entrada con potencial ≥ 20-25 %, revisión por debajo del 10 % y decisión por debajo del 5 %."
+  fuentes: ["10. Seccion Alpha/00_CONTEXTO.md", "10. Seccion Alpha/00_README_Seccion_Alpha.md"]
+  tipo: responsables_objetivos
+
+- id: q04
+  pregunta: ¿Quiénes son los directores del equipo y hay más jerarquía?
+  respuesta: "Álex Fusté y Alicia Arriero, para todas las secciones. Por encima está el Consejo de Administración del banco; dentro de las secciones no hay jerarquía operativa."
+  fuentes: ["00_CONTEXTO.md", "01. Organizacion/00_CONTEXTO.md"]
+  tipo: jerarquia
+
+- id: q05
+  pregunta: ¿Quién lleva la sección High Yield?
+  respuesta: "Juan Ramón Casanovas (fondos); los bonos HY directos, J. Lissignoli (Quest Advisers, externo)."
+  fuentes: ["14. Seccion High Yield/00_CONTEXTO.md"]
+  tipo: responsables_objetivos
+
+- id: q06
+  pregunta: ¿Cuándo se envía el informe semanal de Alpha y con qué corte?
+  respuesta: "El lunes, con corte al cierre del viernes; va a todo el Equipo GD."
+  fuentes: ["04. Procesos/P01_Informe_Semanal_Alpha.md", "10. Seccion Alpha/00_README_Seccion_Alpha.md"]
+  tipo: proceso
+
+- id: q07
+  pregunta: ¿Se pueden mandar por correo las órdenes de fondos de un cliente español?
+  respuesta: "No: en España los fondos se ejecutan en NextPortfolio a partir de un listado (siempre como traspaso); por correo a la mesa solo va renta variable directa con boleta."
+  fuentes: ["20. Gestion Clientes/CLAUDE.md", "20. Gestion Clientes/00_Instrucciones/02_reglas-operativas.md"]
+  tipo: regla
+
+- id: q08
+  pregunta: ¿Qué cartera modelo está vigente?
+  respuesta: "La del 17 de julio de 2026 (20. Gestion Clientes/01_Carteras_Modelo/2026-07-17_carteras-modelo.md)."
+  fuentes: ["02. Carteras Modelo/00_CONTEXTO.md"]
+  tipo: dato
+
+- id: q09
+  pregunta: ¿Cuánto pesa la Inversión Alternativa en las carteras?
+  respuesta: "Un 5 % en los ocho modelos: Eleva Absolute Return Europe 2,5 % y DNCA Invest Alpha Bonds 2,5 %."
+  fuentes: ["15. Seccion Inversion Alternativa/00_CONTEXTO.md"]
+  tipo: dato
+
+- id: q10
+  pregunta: ¿Qué pasa si un valor de Alpha baja del 5 % de potencial?
+  respuesta: "O se cambia el precio objetivo con justificación escrita, o se debate cerrar la posición (por debajo del 10 % ya se revisa)."
+  fuentes: ["10. Seccion Alpha/00_CONTEXTO.md", "04. Procesos/P04_Revision_Modelos_tras_Resultados.md"]
+  tipo: regla
+
+- id: q11
+  pregunta: ¿Qué opina la casa del bono a 10 años de EE.UU. en la última Opinión Corporativa?
+  respuesta: "SOBREPONDERAR con rendimiento objetivo del 5,00 % (4T 2026); en el 3T era NEUTRAL y antes INFRAPONDERAR."
+  fuentes: ["03. Vision Corporativa y Servicio/01. Opinion Corporativa/00_EVOLUCION_RECOMENDACIONES.md"]
+  tipo: opinion_corporativa
+
+- id: q12
+  pregunta: ¿Quién escribe la Opinión Corporativa?
+  respuesta: "Álex Fusté, Chief Global Economist del grupo (también director del equipo)."
+  fuentes: ["03. Vision Corporativa y Servicio/00_CONTEXTO.md"]
+  tipo: persona_contacto
+
+- id: q13
+  pregunta: ¿Qué cabecera tiene que llevar un .eml para abrirse en Outlook listo para enviar?
+  respuesta: "X-Unsent: 1 (además UTF-8, CRLF, HTML, sin From ni firma)."
+  fuentes: ["05. Documentos y Formatos/00_CONTEXTO.md", "20. Gestion Clientes/03_Plantillas/correos/LEEME.md"]
+  tipo: tecnico
+
+- id: q14
+  pregunta: ¿Por qué no se puede renombrar la carpeta 03. Modelos de Alpha?
+  respuesta: "Porque el maestro lee los veinte modelos por vínculo relativo a esa carpeta; si se renombra, los vínculos se rompen sin dar error y el libro sirve valores viejos en caché."
+  fuentes: ["10. Seccion Alpha/00_CONTEXTO.md"]
+  tipo: tecnico
+
+# Pregunta trampa: la respuesta NO está en la documentación. El agente debe decirlo, no inventar.
+- id: q15
+  pregunta: ¿Cuál es el teléfono móvil de Alicia Arriero?
+  respuesta: "No consta en la documentación."
+  fuentes: []
+  tipo: no_consta

@@ -1,0 +1,43 @@
+# Configuración del MVP B5-T4. Todo lo que cambia entre máquinas o entre pruebas vive aquí.
+# Las variables de entorno (o el fichero .env de la raíz) tienen prioridad sobre este fichero:
+#   B5T4_DATA_DIR, OPENROUTER_API_KEY, JEV_API_KEY, B5T4_MODEL_MAIN, B5T4_MODEL_CHEAP, B5T4_MODEL_VISION
+
+[corpus]
+# Carpeta de la empresa sobre la que trabajan los tres agentes: la copia estructurada «Tarea MIAX».
+# El repo NO contiene estos datos: solo apunta a la carpeta. Cada miembro del equipo pone aquí (o en .env) su ruta.
+data_dir = "C:/Users/javie/OneDrive/04. Andbank Work/Tarea MIAX"
+manifest = "00_MANIFIESTO.csv"     # inventario: una fila por fichero (origen, destino, tipo, estado, md5…)
+context_file = "00_CONTEXTO.md"    # nombre de los documentos de contexto (uno por carpeta, misma plantilla)
+opinion_dir = "03. Vision Corporativa y Servicio/01. Opinion Corporativa"   # PDF del agente 2
+
+[llm]
+# Proveedor único: OpenRouter (una clave, cualquier modelo). Modelos baratos por defecto.
+# Ids del catálogo de OpenRouter comprobados el 2-oct-2026; si alguno falla, se cambia aquí sin tocar código.
+url = "https://openrouter.ai/api/v1/chat/completions"
+model_main = "google/gemini-3.8-flash"           # redacción: guion, informe, respuestas del RAG
+model_cheap = "deepseek/deepseek-v4.1-flash"     # tareas mecánicas: extraer, clasificar, reescribir consultas
+model_vision = "google/gemini-3.8-flash"         # leer páginas de PDF como imagen (gráficos, tablas)
+temperature = 0
+
+[verifier]
+# Jev (TypeSafe): verificación afirmación-pasaje y puerta de cumplimiento con probabilidad calibrada. Opcional.
+url = "https://api.typesafe.ai/v1/systemone"
+model = "jev-latest"
+publish_threshold = 0.80   # ≥ se publica
+discard_threshold = 0.30   # < se descarta; entre ambos, «a revisar»
+
+[video]
+fps = 25
+width = 1920
+height = 1080
+voice = "em_alex"          # Kokoro: em_alex (masculina) · ef_dora (femenina)
+speed = 1.1
+max_seconds = 120          # tope del vídeo de onboarding (2 minutos)
+words_per_second = 2.3     # ≈ 140 palabras/min en español: sirve para presupuestar la locución antes de sintetizar
+brand = "Gestión Discrecional"
+
+[rag]
+index_dir = "index"                                  # se genera en local; no se sube al repo (contiene texto del corpus)
+embedding_model = "intfloat/multilingual-e5-small"   # propuesta; se decide al construir el agente 3
+chunk_tokens = 450
+top_k = 8
