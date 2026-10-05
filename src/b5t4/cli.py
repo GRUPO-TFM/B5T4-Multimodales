@@ -5,7 +5,9 @@ Línea de comandos. Todo lo que hace la app se puede lanzar también desde aquí
     uv run b5t4 onboarding                 agente 1 (hoy: escribe el dosier de partida y se detiene)
     uv run b5t4 opinion                    agente 2 (hoy: lista las ediciones y se detiene)
     uv run b5t4 rag chunks                 agente 3: trocea el corpus y enseña estadísticas
-    uv run b5t4 rag ask "¿…?"              agente 3: pregunta (pendiente)
+    uv run b5t4 rag index                  agente 3: (re)construye el índice en index/ (hacerlo si cambian los datos)
+    uv run b5t4 rag ask "¿…?" [--voice]    agente 3: pregunta; respuesta citada (y en voz con --voice)
+    uv run b5t4 rag eval [--answers]       agente 3: mide el buscador con el golden set (evals/preguntas_rag.yaml)
     uv run b5t4 ui                         interfaz web (Gradio)
 """
 from __future__ import annotations
@@ -83,9 +85,57 @@ def cmd_rag(args) -> int:
         from .agents.rag import build_index
 
         return _run_agent(build_index)
+    if args.action == "eval":
+        return cmd_rag_eval(args)
     from .agents.rag import ask
 
-    return _run_agent(lambda: print(ask(" ".join(args.question), voice=args.voice).model_dump_json(indent=2)))
+    question = " ".join(args.question).strip()
+    if not question:
+        print('Falta la pregunta: uv run b5t4 rag ask "¿A qué correo hay que enviar la operativa de Luxemburgo?"')
+        return 1
+    res = ask(question, voice=args.voice)
+    print(f"\n{res.text}\n")
+    for c in res.citations:
+        print(f"  [{c.n}] {c.source} · {c.heading}")
+    steps = " · ".join(f"{k} {v} s" for k, v in res.timings.items())
+    print(f"\n  modo {res.mode} · {res.seconds} s ({steps})" + (f"\n  audio {res.audio_path}" if res.audio_path else ""))
+    return 0
+
+
+def cmd_rag_eval(args) -> int:
+    """
+    ¿Encuentra el buscador el documento donde está la respuesta? Para cada pregunta del golden set mira si alguna
+    de sus fuentes esperadas sale entre los k primeros fragmentos (recall@k). No necesita LLM ni claves.
+    Con --answers, además pregunta al agente completo y enseña la respuesta junto a la esperada.
+    """
+    import yaml
+
+    from .agents.rag import ask, search
+    from .config import ROOT, get_settings
+
+    qs = yaml.safe_load((ROOT / "evals" / "preguntas_rag.yaml").read_text(encoding="utf-8"))
+    k = get_settings().top_k
+    hits_at = {1: 0, 3: 0, k: 0}
+    scored = 0
+    for q in qs:
+        expected = set(q.get("fuentes") or [])
+        ranked = [c.source for _, c in search(q["pregunta"], k)]
+        if expected:
+            scored += 1
+            pos = next((i + 1 for i, src in enumerate(ranked) if src in expected), None)
+            for kk in hits_at:
+                hits_at[kk] += bool(pos and pos <= kk)
+            mark = f"#{pos}" if pos else "--"
+        else:
+            mark = "n/a"
+        print(f"{q['id']}  {mark:>4}  {q['pregunta']}")
+        if expected and not (pos and pos <= k):
+            print(f"         esperado: {sorted(expected)}\n         top-3:    {ranked[:3]}")
+        if args.answers:
+            res = ask(q["pregunta"], log=lambda *_: None)
+            print(f"         respuesta: {res.text}\n         esperada:  {q['respuesta']}\n")
+    print("\n" + " · ".join(f"recall@{kk} {hits_at[kk]}/{scored}" for kk in sorted(hits_at)))
+    return 0
 
 
 def cmd_ui(args) -> int:
@@ -111,10 +161,11 @@ def main(argv: list[str] | None = None) -> None:
     sub.add_parser("onboarding", help="agente 1: informe + infografía + vídeo de onboarding").set_defaults(fn=cmd_onboarding)
     sub.add_parser("opinion", help="agente 2: cambios en la Opinión Corporativa").set_defaults(fn=cmd_opinion)
     r = sub.add_parser("rag", help="agente 3: preguntas de empleados")
-    r.add_argument("action", choices=["chunks", "index", "ask"])
+    r.add_argument("action", choices=["chunks", "index", "ask", "eval"])
     r.add_argument("question", nargs="*", help="pregunta (solo con «ask»)")
     r.add_argument("--voice", action="store_true", help="devolver también la respuesta en audio")
     r.add_argument("--only-contexts", action="store_true", help="«chunks»: solo los documentos de contexto")
+    r.add_argument("--answers", action="store_true", help="«eval»: pregunta también al agente (necesita LLM)")
     r.set_defaults(fn=cmd_rag)
     u = sub.add_parser("ui", help="interfaz web (Gradio)")
     u.add_argument("--share", action="store_true", help="enlace público temporal de Gradio (para la demo)")

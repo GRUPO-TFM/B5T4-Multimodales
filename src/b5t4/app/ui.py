@@ -42,8 +42,10 @@ def _ask(question: str, want_voice: bool):
     res = _safe(ask, question, want_voice)
     if isinstance(res, str):
         return res, None
-    cites = "\n".join(f"[{c.n}] `{c.source}` · {c.heading}" for c in res.citations)
-    return f"{res.text}\n\n{cites}", res.audio_path
+    cites = "\n".join(f"- [{c.n}] `{c.source}` · {c.heading}" for c in res.citations)
+    steps = " · ".join(f"{k} {v} s" for k, v in res.timings.items())
+    foot = f"\n\n<sub>modo {res.mode} · {res.seconds} s ({steps})</sub>"
+    return f"{res.text}\n\n**Fuentes**\n\n{cites}{foot}" if cites else f"{res.text}{foot}", res.audio_path
 
 
 def build():

@@ -88,7 +88,9 @@ copia anonimizada en `data/sample/` (pendiente).
 | `uv run b5t4 onboarding` | Agente 1. Hoy escribe el dosier de partida en `out/onboarding/` | 🟡 paso 1 de 6 |
 | `uv run b5t4 opinion` | Agente 2. Hoy lista las ediciones de la Opinión Corporativa | 🟡 paso 1 de 5 |
 | `uv run b5t4 rag chunks` | Agente 3. Trocea el corpus (~2.700 fragmentos con metadatos) | ✅ |
-| `uv run b5t4 rag index` / `rag ask "…"` | Agente 3. Índice y respuesta | ⏳ |
+| `uv run b5t4 rag index` | Agente 3. Construye el índice BM25 en `index/` (≈ 3 s; repetir si cambian los datos) | ✅ |
+| `uv run b5t4 rag ask "…" [--voice]` | Agente 3. Respuesta citada; en voz con `--voice`. Sin clave de OpenRouter, modo extractivo (enseña el pasaje) | ✅ v0 |
+| `uv run b5t4 rag eval [--answers]` | Agente 3. Mide el buscador con el golden set: recall@1/3/8 (hoy 5 · 12 · 14 de 14) | ✅ |
 | `uv run b5t4 ui [--share]` | Interfaz Gradio con las tres pestañas | ✅ (muestra «pendiente» donde corresponde) |
 | `uv run pytest` | Pruebas de la capa de datos y del render | ✅ 7 pruebas |
 
