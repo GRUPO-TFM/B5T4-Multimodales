@@ -346,8 +346,13 @@ def _validate_resume(out: Path, signature: dict, material: Material) -> None:
 
 
 def run(out_root: Path | None = None, log=print, *, resume: Path | None = None,
-        report_only: bool = False) -> Path:
+        report_only: bool = False, brief=None) -> Path:
     """Genera el onboarding; las ejecuciones incompletas conservan sus etapas para --resume."""
+    if brief is None and resume and (Path(resume) / "brief.json").exists():
+        brief = json.loads((Path(resume) / "brief.json").read_text(encoding="utf-8"))
+    if brief is not None:
+        from .v2_pipeline import run as run_v2
+        return run_v2(brief, out_root=out_root, log=log, resume=resume, report_only=report_only)
     s = get_settings()
     if not s.has_llm:
         raise RuntimeError("Falta OPENROUTER_API_KEY en .env")

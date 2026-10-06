@@ -83,11 +83,7 @@ def render(sb: Storyboard, tl: dict, out: Path, template: str = "scene.html", lo
     out.mkdir(parents=True, exist_ok=True)
     if [scene["id"] for scene in tl["scenes"]] != [scene.id for scene in sb.scenes] or tl["total"] <= 0:
         raise ValueError("La cronología no coincide con el storyboard")
-    brand = s.brand
-    payload = json.dumps({**sb.model_dump(), "brand": brand}, ensure_ascii=False).replace("<", "\\u003c")
-    html = ((s.templates_dir / template).read_text(encoding="utf-8")
-            .replace("__SB__", payload)
-            .replace("__TL__", json.dumps(tl)))
+    html = scene_html(sb, tl, template)
     (out / "escenas.html").write_text(html, encoding="utf-8")
     frames = Path(tempfile.mkdtemp(prefix="frames-", dir=out)).resolve()
     n = math.ceil(tl["total"] * s.fps)
@@ -104,10 +100,10 @@ def render(sb: Storyboard, tl: dict, out: Path, template: str = "scene.html", lo
             pg.evaluate("t => render(t)", sc["start"] + sc["duration"] * .75)
             overflow = pg.evaluate("""id => {
                 const root = document.getElementById(id);
-                return [...root.querySelectorAll('.ob-title,.ob-card')].some(node => {
+                return [...root.querySelectorAll('.ob-title,.ob-card,.v2-title,.v2-card,.v2-node')].some(node => {
                     const rect = node.getBoundingClientRect();
                     return rect.right > innerWidth - 20 || rect.bottom > innerHeight - 90 * innerHeight / 1080
-                        || node.scrollWidth > node.clientWidth + 2;
+                        || node.scrollWidth > node.clientWidth + 2 || node.scrollHeight > node.clientHeight + 2;
                 });
             }""", sc["id"])
             if overflow:
@@ -134,6 +130,25 @@ def render(sb: Storyboard, tl: dict, out: Path, template: str = "scene.html", lo
     shutil.rmtree(frames)
     log(f"  vídeo {mp4.name}: {tl['total']:.1f} s, {n} fotogramas")
     return mp4
+
+
+def scene_html(sb: Storyboard, tl: dict, template="scene.html") -> str:
+    """HTML autónomo: recursos v2 locales incrustados, contratos anteriores compatibles."""
+    s = get_settings()
+    v2 = all(scene.data.get("layout") == "onboarding_v2" for scene in sb.scenes)
+    data = {**sb.model_dump(), "brand": s.brand}
+    css = script = libraries = ""
+    if v2:
+        from .brand import logo_url, VENDOR_DIR
+        data["logo_url"] = logo_url()
+        css = (s.templates_dir / "onboarding-v2.css").read_text(encoding="utf-8")
+        script = (s.templates_dir / "onboarding-v2.js").read_text(encoding="utf-8")
+        libraries = "\n".join("<script>" + path.read_text(encoding="utf-8").replace("</script", "<\\/script") + "</script>"
+                              for path in (VENDOR_DIR / "gsap-3.15.0.min.js", VENDOR_DIR / "d3-7.9.0.min.js"))
+    return ((s.templates_dir / template).read_text(encoding="utf-8")
+            .replace("__SB__", json.dumps(data, ensure_ascii=False).replace("<", "\\u003c"))
+            .replace("__TL__", json.dumps(tl)).replace("__V2_CSS__", css)
+            .replace("__V2_LIBS__", libraries).replace("__V2_JS__", script))
 
 
 def inspect_video(path: Path) -> dict:

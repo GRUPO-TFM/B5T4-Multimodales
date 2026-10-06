@@ -89,6 +89,7 @@
   body.onboarding-video .brand{background:#172b39}body.onboarding-video .progress{background:#b32932}
   body.onboarding-video .source{left:80px;bottom:34px;font-size:20px;max-width:1760px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 </style>
+<style>__V2_CSS__</style>
 </head>
 <body>
 <div class="stage" id="stage"></div>
@@ -98,6 +99,8 @@
   <div class="source" id="source"></div>
   <div class="progress" id="progress"></div>
 </div>
+__V2_LIBS__
+<script>__V2_JS__</script>
 <script>
 const SB = __SB__; const TL = __TL__;
 const stage = document.getElementById('stage');
@@ -106,6 +109,7 @@ const clamp01 = x => Math.max(0, Math.min(1, x));
 const fmt = (v, d) => v.toLocaleString('es-ES', {minimumFractionDigits: d, maximumFractionDigits: d});
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const onboarding = sc => sc.data.layout === 'onboarding' || ['orgchart','people','flow','timeline'].includes(sc.kind);
+const onboardingV2 = sc => sc.data.layout === 'onboarding_v2';
 const skyline = (c) => {
   // simple vector skyline, drawn once from a seed so it is deterministic
   let x = 0, parts = [];
@@ -124,6 +128,11 @@ const skyline = (c) => {
 const scenes = SB.scenes.map((sc, i) => {
   const el = document.createElement('div'); el.className = 'scene'; el.id = sc.id;
   const d = sc.data;
+  if (onboardingV2(sc)) {
+    el.classList.add('onboarding-v2'); stage.appendChild(el);
+    const animation = window.onboardingV2.build(el, {...d,kind:sc.kind}, TL.scenes[i]);
+    return {sc,el,tl:TL.scenes[i],animation};
+  }
   if (onboarding(sc)) {
     el.classList.add('onboarding');
     el.innerHTML = `<div class="ob-title">${esc(d.title)}</div><div class="ob-grid ${esc(sc.kind)} count-${d.items.length}">${d.items.map(it => `<div class="ob-card"><div class="ob-label">${esc(it.label)}</div><div class="ob-detail">${esc(it.detail)}</div></div>`).join('')}</div>`;
@@ -155,14 +164,25 @@ const scenes = SB.scenes.map((sc, i) => {
 document.getElementById('tick').textContent = SB.scenes[0].data.ticker || '';
 if (SB.brand) document.getElementById('brand').textContent = SB.brand;
 if (SB.scenes.every(onboarding)) document.body.classList.add('onboarding-video');
+if (SB.scenes.every(onboardingV2)) {
+  document.body.classList.add('onboarding-v2-video');
+  document.getElementById('brand').classList.add('andbank-logo');
+  document.getElementById('brand').innerHTML = `<img alt="Andbank Private Bankers" src="${esc(SB.logo_url)}">`;
+  gsap.ticker.sleep();
+}
 
 // ---------- per-frame render(t) ----------
 function render(t) {
   document.getElementById('progress').style.width = (clamp01(t / TL.total) * 1920) + 'px';
-  scenes.forEach(({sc, el, tl}) => {
+  scenes.forEach(({sc, el, tl, animation}) => {
     const lt = t - tl.start, p = lt / tl.duration;
     const on = lt >= 0 && lt < tl.duration;
     el.style.opacity = on ? Math.min(ease(lt / 0.35), ease((tl.duration - lt) / 0.3)) : 0;
+    if (onboardingV2(sc)) {
+      animation.seek(Math.max(0, Math.min(tl.duration, lt)), true);
+      if (on) document.getElementById('source').textContent = sc.data.source || '';
+      return;
+    }
     if (!on) return;
     document.getElementById('source').textContent = sc.data.source ? 'Fuente: ' + sc.data.source : (sc.data.sources || '');
     const d = sc.data;

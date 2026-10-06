@@ -60,8 +60,10 @@ def cmd_check(_args) -> int:
 def cmd_onboarding(args) -> int:
     from .agents.onboarding import run
     from pathlib import Path
+    import json
 
-    return _run_agent(lambda: run(resume=Path(args.resume) if args.resume else None, report_only=args.report_only))
+    brief = json.loads(Path(args.brief).read_text(encoding="utf-8")) if args.brief else None
+    return _run_agent(lambda: run(resume=Path(args.resume) if args.resume else None, report_only=args.report_only, brief=brief))
 
 
 def cmd_opinion(_args) -> int:
@@ -112,7 +114,8 @@ def main(argv: list[str] | None = None) -> None:
     sub.add_parser("check", help="comprueba datos, claves y modelos").set_defaults(fn=cmd_check)
     onboarding = sub.add_parser("onboarding", help="agente 1: informe + infografía + vídeo de onboarding")
     onboarding.add_argument("--resume", metavar="CARPETA", help="reanudar una ejecución conservando las etapas terminadas")
-    onboarding.add_argument("--report-only", action="store_true", help="generar solo el informe; permite un borrador si no hay verificador")
+    onboarding.add_argument("--brief", metavar="JSON", help="encargo personalizado v2 en JSON")
+    onboarding.add_argument("--report-only", action="store_true", help="solo informe; v1 permite borrador sin Jev, v2 exige verificación")
     onboarding.set_defaults(fn=cmd_onboarding)
     sub.add_parser("opinion", help="agente 2: cambios en la Opinión Corporativa").set_defaults(fn=cmd_opinion)
     r = sub.add_parser("rag", help="agente 3: preguntas de empleados")

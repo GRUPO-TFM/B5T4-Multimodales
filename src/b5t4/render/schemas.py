@@ -16,6 +16,7 @@ SceneKind = Literal[
     "flow",       # pasos numerados de un proceso
     "people",     # rejilla de personas/secciones con su rol
     "timeline",   # cadencias y entregables
+    "hero", "organisation", "map", "process", "illustration", "focus",
 ]
 
 
@@ -28,6 +29,11 @@ class Scene(BaseModel):
 
     @model_validator(mode="after")
     def validate_onboarding_layout(self):
+        if self.data.get("layout") == "onboarding_v2":
+            from ..agents.onboarding.v2_schemas import DirectedScene
+            DirectedScene.model_validate({"id": self.id, "kind": self.kind, "narration": self.narration,
+                                          **{k: v for k, v in self.data.items() if k in DirectedScene.model_fields}})
+            return self
         if self.kind in ("orgchart", "people", "flow", "timeline") or self.data.get("layout") == "onboarding":
             if not isinstance(self.data.get("title"), str) or not self.data["title"].strip():
                 raise ValueError("Una escena de onboarding necesita un título")

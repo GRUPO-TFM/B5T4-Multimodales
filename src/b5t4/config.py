@@ -43,6 +43,10 @@ class Settings:
     model_cheap: str = "deepseek/deepseek-v4.1-flash"
     model_vision: str = "google/gemini-3.8-flash"
     temperature: float = 0.0
+    model_image: str = "google/gemini-3.1-flash-image"
+    model_tts: str = "google/gemini-3.8-flash-tts"
+    voice_v2: str = "Algieba"
+    onboarding_budget: float = 5.0
     # --- verificador (Jev) ---
     jev_api_key: str = ""
     jev_url: str = "https://api.typesafe.ai/v1/systemone"
@@ -98,6 +102,7 @@ def get_settings() -> Settings:
     """Lee la configuración una sola vez por proceso."""
     t = _toml()
     c, l, v, vid, r = (t.get(k, {}) for k in ("corpus", "llm", "verifier", "video", "rag"))
+    onboarding = t.get("onboarding_v2", {})
     env = os.environ.get
     data_dir = env("B5T4_DATA_DIR") or c.get("data_dir") or str(ROOT / "data" / "sample")
     index_dir = Path(r.get("index_dir", "index"))
@@ -113,6 +118,10 @@ def get_settings() -> Settings:
         model_cheap=env("B5T4_MODEL_CHEAP") or l.get("model_cheap", Settings.model_cheap),
         model_vision=env("B5T4_MODEL_VISION") or l.get("model_vision", Settings.model_vision),
         temperature=float(l.get("temperature", 0)),
+        model_image=env("B5T4_MODEL_IMAGE") or onboarding.get("model_image", Settings.model_image),
+        model_tts=env("B5T4_MODEL_TTS") or onboarding.get("model_tts", Settings.model_tts),
+        voice_v2=onboarding.get("voice", Settings.voice_v2),
+        onboarding_budget=float(onboarding.get("budget_usd", 5.0)),
         jev_api_key=env("JEV_API_KEY") or env("TYPESAFE_API_KEY", ""),
         jev_url=v.get("url", Settings.jev_url),
         jev_model=v.get("model", Settings.jev_model),
