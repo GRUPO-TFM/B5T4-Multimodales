@@ -103,6 +103,7 @@ def get_settings() -> Settings:
     index_dir = Path(r.get("index_dir", "index"))
     return Settings(
         data_dir=Path(data_dir).expanduser(),
+        models_dir=Path(env("B5T4_MODELS_DIR") or ROOT / "models").expanduser(),
         manifest=c.get("manifest", "00_MANIFIESTO.csv"),
         context_file=c.get("context_file", "00_CONTEXTO.md"),
         opinion_dir=c.get("opinion_dir", Settings.opinion_dir),

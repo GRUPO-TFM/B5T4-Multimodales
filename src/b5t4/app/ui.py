@@ -10,6 +10,10 @@ Mientras un agente esté «pendiente», su pestaña muestra el mensaje de NotImp
 from __future__ import annotations
 
 import traceback
+import json
+import queue
+import threading
+from pathlib import Path
 
 
 def _safe(fn, *args):
@@ -21,11 +25,63 @@ def _safe(fn, *args):
         return f"**Error:** {e}\n\n```\n{traceback.format_exc()[-1500:]}\n```"
 
 
-def _onboarding():
+def _onboarding_result(folder: Path | None, status: str):
+    md = folder / "informe.md" if folder else None
+    image = folder / "infografia.png" if folder else None
+    video = folder / "video.mp4" if folder else None
+    names = ("informe.html", "informe.md", "infografia.png", "video.mp4", "storyboard.json",
+             "verificacion.json", "fuentes.json", "validacion_video.json", "ejecucion.json")
+    downloads = [str(folder / name) for name in names if (folder / name).is_file()] if folder else []
+    return (status, md.read_text(encoding="utf-8") if md and md.is_file() else "",
+            str(image) if image and image.is_file() else None,
+            str(video) if video and video.is_file() else None, downloads)
+
+
+def _load_onboarding(folder: str):
+    try:
+        path = Path(folder).resolve()
+        state = json.loads((path / "ejecucion.json").read_text(encoding="utf-8"))
+        label = "Onboarding completo" if state["status"] == "complete" else "Resultados parciales"
+        return _onboarding_result(path, f"**{label}.** {state['stage']}\n\nSalida en `{path}`")
+    except (OSError, ValueError, KeyError) as exc:
+        return f"No se pueden abrir los resultados: {exc}", "", None, None, []
+
+
+def _onboarding(resume_folder: str = "", report_only: bool = False):
+    """Progreso por etapas y resultados parciales, sin bloquear la cola de presentación."""
     from ..agents.onboarding import run
 
-    out = run()
-    return f"Salida en `{out}`"
+    events = queue.Queue()
+    lines, folder = [], None
+
+    def worker():
+        try:
+            result = run(resume=Path(resume_folder) if resume_folder.strip() else None,
+                         report_only=report_only, log=lambda msg: events.put(("log", str(msg))))
+            events.put(("done", result))
+        except Exception as exc:
+            events.put(("error", str(exc)))
+
+    threading.Thread(target=worker, daemon=True).start()
+    yield "Preparando el onboarding…", "", None, None, []
+    while True:
+        try:
+            kind, value = events.get(timeout=1)
+        except queue.Empty:
+            continue
+        if kind == "log":
+            lines.append(value)
+            if value.startswith("Salida: "):
+                folder = Path(value.removeprefix("Salida: "))
+            yield "**En curso**\n\n```text\n" + "\n".join(lines[-12:]) + "\n```", "", None, None, []
+            continue
+        if kind == "done":
+            folder = value
+        status = f"**Completado.** Salida en `{folder}`" if kind == "done" else f"**No se ha completado:** {value}"
+        if kind == "error" and folder:
+            status += f"\n\nPuedes reanudar desde `{folder}`. Las etapas terminadas están guardadas."
+        yield _onboarding_result(folder, status)
+        break
 
 
 def _opinion():
@@ -53,8 +109,23 @@ def build():
         gr.Markdown("# Onboarding multimodal · Gestión Discrecional\nDe la carpeta de trabajo del equipo a su onboarding: informe, infografía, vídeo y respuestas.")
         with gr.Tab("1 · Onboarding"):
             gr.Markdown("Informe escrito, infografía y vídeo (≤ 2 min) para una persona que se incorpora al equipo.")
-            b1, o1 = gr.Button("Generar onboarding", variant="primary"), gr.Markdown()
-            b1.click(lambda: _safe(_onboarding), outputs=o1)
+            resume = gr.Textbox(label="Carpeta de resultados para abrir o reanudar (opcional)")
+            report_only = gr.Checkbox(label="Generar solo el informe", value=False)
+            with gr.Row():
+                b1 = gr.Button("Generar / reanudar onboarding", variant="primary")
+                load1 = gr.Button("Abrir resultados existentes")
+            o1 = gr.Markdown()
+            with gr.Row():
+                onboarding_image = gr.Image(label="Infografía", type="filepath")
+                onboarding_video = gr.Video(label="Vídeo de incorporación")
+            onboarding_files = gr.File(label="Descargar resultados", file_count="multiple")
+            with gr.Accordion("Informe y fuentes", open=False):
+                onboarding_report = gr.Markdown()
+            b1.click(_onboarding, inputs=[resume, report_only],
+                     outputs=[o1, onboarding_report, onboarding_image, onboarding_video, onboarding_files],
+                     concurrency_limit=1)
+            load1.click(_load_onboarding, inputs=resume,
+                        outputs=[o1, onboarding_report, onboarding_image, onboarding_video, onboarding_files])
         with gr.Tab("2 · Opinión Corporativa"):
             gr.Markdown("Qué ha cambiado entre ediciones de la Opinión Corporativa: informe y vídeo de los cambios.")
             b2, o2 = gr.Button("Comparar ediciones", variant="primary"), gr.Markdown()
@@ -70,4 +141,5 @@ def build():
 
 
 def launch(share: bool = False) -> None:
-    build().launch(share=share)
+    from ..config import get_settings
+    build().queue().launch(share=share, allowed_paths=[str(get_settings().out_dir)])

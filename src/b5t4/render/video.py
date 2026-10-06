@@ -14,8 +14,12 @@ Coste: cero APIs. 60 s de vídeo a 25 fps son 1.500 capturas: ≈ 1-2 min de CPU
 from __future__ import annotations
 
 import json
+import hashlib
+import math
+import re
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -31,19 +35,34 @@ def narrate(sb: Storyboard, out: Path, log=print) -> dict:
     """Sintetiza la locución escena a escena y devuelve la línea temporal {total, scenes:[{id,start,duration}]}."""
     import soundfile as sf
 
+    out.mkdir(parents=True, exist_ok=True)
+    audio_dir = out / "audio"
+    audio_dir.mkdir(exist_ok=True)
+    s = get_settings()
     timeline, track, sr, t = [], [], tts.SAMPLE_RATE, 0.0
-    for sc in sb.scenes:
-        samples, sr = tts.synthesize(tts.verbalize(sc.narration), voice=sb.voice)
+    for index, sc in enumerate(sb.scenes, 1):
+        spoken = tts.verbalize(sc.narration)
+        digest = hashlib.sha256(json.dumps([spoken, sb.voice, s.speed], ensure_ascii=False).encode()).hexdigest()[:16]
+        audio = audio_dir / f"{index:02d}-{digest}.wav"
+        if audio.exists():
+            samples, sr = sf.read(audio, dtype="float32")
+        else:
+            samples, sr = tts.synthesize(spoken, voice=sb.voice)
+            sf.write(audio, samples, sr, subtype="FLOAT")
+        if sr != tts.SAMPLE_RATE or samples.ndim != 1 or not len(samples):
+            raise ValueError("La voz debe ser mono, no vacía y a la frecuencia de Kokoro")
         voice_len = len(samples) / sr
         dur = max(sc.min_seconds, LEAD_IN + voice_len + PAD_AFTER)
-        track.append(np.concatenate([np.zeros(int(LEAD_IN * sr), np.float32), samples,
-                                     np.zeros(int((dur - LEAD_IN - voice_len) * sr), np.float32)]))
-        timeline.append({"id": sc.id, "kind": sc.kind, "start": round(t, 3), "duration": round(dur, 3),
-                         "voice_seconds": round(voice_len, 2)})
+        clip = np.concatenate([np.zeros(round(LEAD_IN * sr), np.float32), samples,
+                               np.zeros(round((dur - LEAD_IN - voice_len) * sr), np.float32)])
+        track.append(clip)
+        dur = len(clip) / sr
+        timeline.append({"id": sc.id, "kind": sc.kind, "start": round(t, 6), "duration": round(dur, 6),
+                         "voice_seconds": round(voice_len, 3), "audio": audio.relative_to(out).as_posix()})
         t += dur
         log(f"  voz {sc.id} {voice_len:4.1f}s → escena {dur:4.1f}s")
     sf.write(out / "voz.wav", np.concatenate(track), sr)
-    tl = {"total": round(t, 3), "scenes": timeline}
+    tl = {"total": sum(len(clip) for clip in track) / sr, "scenes": timeline}
     (out / "timeline.json").write_text(json.dumps(tl, indent=2), encoding="utf-8")
     return tl
 
@@ -61,21 +80,39 @@ def render(sb: Storyboard, tl: dict, out: Path, template: str = "scene.html", lo
     from playwright.sync_api import sync_playwright
 
     s = get_settings()
-    brand = s.brand   # texto de la pastilla de marca (admite HTML, p. ej. «Gestión <b>Discrecional</b>»)
+    out.mkdir(parents=True, exist_ok=True)
+    if [scene["id"] for scene in tl["scenes"]] != [scene.id for scene in sb.scenes] or tl["total"] <= 0:
+        raise ValueError("La cronología no coincide con el storyboard")
+    brand = s.brand
+    payload = json.dumps({**sb.model_dump(), "brand": brand}, ensure_ascii=False).replace("<", "\\u003c")
     html = ((s.templates_dir / template).read_text(encoding="utf-8")
-            .replace("__SB__", json.dumps({**sb.model_dump(), "brand": brand}, ensure_ascii=False))
+            .replace("__SB__", payload)
             .replace("__TL__", json.dumps(tl)))
     (out / "escenas.html").write_text(html, encoding="utf-8")
-    frames = out / "frames"
-    if frames.exists():
-        shutil.rmtree(frames)
-    frames.mkdir()
-    n = int(round(tl["total"] * s.fps))
+    frames = Path(tempfile.mkdtemp(prefix="frames-", dir=out)).resolve()
+    n = math.ceil(tl["total"] * s.fps)
     with sync_playwright() as p:
         b = p.chromium.launch()
         pg = b.new_page(viewport={"width": s.width, "height": s.height})
         pg.set_content(html, wait_until="load")
-        pg.wait_for_timeout(300)
+        pg.evaluate("document.fonts.ready")
+        # El diseño usa coordenadas 1920×1080; el viewport puede escalarse manteniendo 16:9.
+        if s.width * 9 != s.height * 16:
+            raise ValueError("El vídeo requiere dimensiones 16:9")
+        pg.evaluate("scale => {document.body.style.transformOrigin='0 0'; document.body.style.transform=`scale(${scale})`;}", s.width / 1920)
+        for sc in tl["scenes"]:
+            pg.evaluate("t => render(t)", sc["start"] + sc["duration"] * .75)
+            overflow = pg.evaluate("""id => {
+                const root = document.getElementById(id);
+                return [...root.querySelectorAll('.ob-title,.ob-card')].some(node => {
+                    const rect = node.getBoundingClientRect();
+                    return rect.right > innerWidth - 20 || rect.bottom > innerHeight - 90 * innerHeight / 1080
+                        || node.scrollWidth > node.clientWidth + 2;
+                });
+            }""", sc["id"])
+            if overflow:
+                pg.screenshot(path=str(out / "error_diseno.png"))
+                raise ValueError(f"La escena {sc['id']} desborda el área legible; acorta sus tarjetas")
         for i in range(n):
             pg.evaluate(f"render({i / s.fps})")
             pg.screenshot(path=str(frames / f"f_{i:05d}.jpg"), type="jpeg", quality=92)
@@ -90,9 +127,29 @@ def render(sb: Storyboard, tl: dict, out: Path, template: str = "scene.html", lo
                     "-i", str(out / "voz.wav"), "-c:v", "libx264", "-preset", "medium", "-crf", "20",
                     "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", "-shortest", "-movflags", "+faststart",
                     str(mp4)], check=True)
+    # Se borra solo el directorio temporal creado para esta ejecución, dentro de out.
+    frames.relative_to(out.resolve())
+    if not frames.name.startswith("frames-"):
+        raise ValueError("Directorio temporal inesperado")
     shutil.rmtree(frames)
     log(f"  vídeo {mp4.name}: {tl['total']:.1f} s, {n} fotogramas")
     return mp4
+
+
+def inspect_video(path: Path) -> dict:
+    """Decodifica el MP4 completo y comprueba que contiene imagen y audio válidos."""
+    result = subprocess.run([_ffmpeg(), "-hide_banner", "-i", str(path), "-f", "null", "-"],
+                            capture_output=True, text=True, encoding="utf-8", errors="replace")
+    if result.returncode:
+        raise RuntimeError("El MP4 no se decodifica correctamente: " + result.stderr[-600:])
+    duration = re.search(r"Duration: (\d+):(\d+):([\d.]+)", result.stderr)
+    dimensions = re.search(r"Video: h264[^\n]*? (\d{2,5})x(\d{2,5})", result.stderr)
+    if not duration or not dimensions or "Audio: aac" not in result.stderr:
+        raise ValueError("Se esperaba un MP4 H.264 con audio AAC y duración conocida")
+    hours, minutes, seconds = map(float, duration.groups())
+    return {"duration": hours * 3600 + minutes * 60 + seconds, "width": int(dimensions[1]),
+            "height": int(dimensions[2]), "video_codec": "h264", "audio_codec": "aac",
+            "bytes": path.stat().st_size, "decoded": True}
 
 
 def make_video(sb: Storyboard, out: Path, log=print) -> Path:

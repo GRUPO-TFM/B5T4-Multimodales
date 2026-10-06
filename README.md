@@ -15,9 +15,11 @@ El MVP lee esa carpeta y lo convierte en tres productos:
 Caso real: la carpeta del equipo de **Gestión Discrecional de Andbank España** (1.185 ficheros, 7 secciones de
 cartera, 17 personas).
 
-> **Estado (5-oct-2026):** estructura, configuración, capa de datos, motor de vídeo e interfaz funcionando. De
-> cada agente está hecho el primer paso; el resto está especificado en el docstring de su `pipeline.py`. Ver
-> [docs/PLAN.md](docs/PLAN.md).
+> **Estado de esta rama (6-oct-2026):** agente 1 implementado hasta informe, infografía y vídeo narrado, con
+> verificación de fuentes, progreso en la interfaz y reanudación. Los agentes 2 y 3 mantienen su estado inicial.
+> Ejecución, contratos y límites: [docs/ONBOARDING.md](docs/ONBOARDING.md).
+> Validación con datos reales: 39 afirmaciones publicadas, 7 escenas y vídeo de 84,85 s en 1080p.
+> Detalle: [docs/VALIDACION_ONBOARDING.md](docs/VALIDACION_ONBOARDING.md).
 
 ---
 
@@ -58,7 +60,7 @@ Requisitos: [uv](https://docs.astral.sh/uv/) y Python 3.12. Windows, macOS o Lin
 
 ```powershell
 git clone https://github.com/GRUPO-TFM/B5T4-Multimodales.git; cd B5T4-Multimodales
-copy .env.example .env          # y rellena B5T4_DATA_DIR y OPENROUTER_API_KEY
+copy .env.example .env          # rellena B5T4_DATA_DIR, OPENROUTER_API_KEY y JEV_API_KEY
 uv sync                          # crea .venv con todas las dependencias
 uv run playwright install chromium
 uv run python scripts/download_models.py     # voz Kokoro, ~350 MB, una sola vez
@@ -85,12 +87,14 @@ copia anonimizada en `data/sample/` (pendiente).
 | Comando | Qué hace | Estado |
 |---|---|---|
 | `uv run b5t4 check` | Comprueba la carpeta de datos, el manifiesto, los contextos, las claves, la voz y ffmpeg | ✅ |
-| `uv run b5t4 onboarding` | Agente 1. Hoy escribe el dosier de partida en `out/onboarding/` | 🟡 paso 1 de 6 |
+| `uv run b5t4 onboarding` | Agente 1. Informe verificado, infografía y vídeo ≤ 120 s | Implementado |
+| `uv run b5t4 onboarding --report-only` | Genera el informe; permite borrador si no hay Jev | Implementado |
+| `uv run b5t4 onboarding --resume "out/onboarding/<ejecución>"` | Reutiliza las etapas terminadas si las fuentes no cambiaron | Implementado |
 | `uv run b5t4 opinion` | Agente 2. Hoy lista las ediciones de la Opinión Corporativa | 🟡 paso 1 de 5 |
 | `uv run b5t4 rag chunks` | Agente 3. Trocea el corpus (~2.700 fragmentos con metadatos) | ✅ |
 | `uv run b5t4 rag index` / `rag ask "…"` | Agente 3. Índice y respuesta | ⏳ |
 | `uv run b5t4 ui [--share]` | Interfaz Gradio con las tres pestañas | ✅ (muestra «pendiente» donde corresponde) |
-| `uv run pytest` | Pruebas de la capa de datos y del render | ✅ 7 pruebas |
+| `uv run pytest` | Pruebas de datos, fuentes, verificación, reanudación, interfaz y render | Incluye regresiones del onboarding |
 
 ---
 
@@ -113,7 +117,7 @@ copia anonimizada en `data/sample/` (pendiente).
 │   ├── corpus/                  CAPA DE DATOS: manifest.py · contexts.py · extract.py
 │   ├── models/                  CAPA DE IA: llm.py (texto, JSON, visión) · verifier.py (Jev) · tts.py (Kokoro)
 │   │                            · stt.py · embeddings.py (pendientes)
-│   ├── render/                  CAPA DE SALIDA: report.py · video.py · infographic.py (pendiente) · templates/
+│   ├── render/                  CAPA DE SALIDA: report.py · video.py · infographic.py · templates/
 │   ├── agents/                  LÓGICA DE NEGOCIO, un agente por carpeta
 │   │   ├── onboarding/          agente 1
 │   │   ├── opinion/             agente 2
@@ -132,8 +136,10 @@ copia anonimizada en `data/sample/` (pendiente).
 
 - **Coste por ejecución:** modelos baratos por OpenRouter (DeepSeek / Gemini Flash). Voz, vídeo y embeddings
   corren en local y gratis. Las cifras medidas se añadirán al cerrar cada agente.
-- **Privacidad:** los datos de la empresa, el índice del RAG y las salidas generadas no salen del PC: están
-  fuera de Git. El `golden set` contiene correos internos de mesas, así que el repositorio debe ser **privado**.
+- **Datos:** el corpus y los artefactos se guardan localmente y quedan fuera de Git. La redacción envía los
+  fragmentos seleccionados a OpenRouter; la verificación envía afirmaciones y pasajes a Jev/TypeSafe.
+  Voz, infografía y montaje del vídeo se ejecutan localmente. El `golden set` contiene correos internos de
+  mesas, así que el repositorio debe ser **privado**.
 
 ## Equipo
 

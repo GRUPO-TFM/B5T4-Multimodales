@@ -2,7 +2,8 @@
 Línea de comandos. Todo lo que hace la app se puede lanzar también desde aquí (útil para depurar y para la demo).
 
     uv run b5t4 check                      ¿encuentro la carpeta de datos, las claves y los modelos de voz?
-    uv run b5t4 onboarding                 agente 1 (hoy: escribe el dosier de partida y se detiene)
+    uv run b5t4 onboarding                 agente 1: informe, infografía y vídeo verificados
+    uv run b5t4 onboarding --resume RUTA   reanuda las etapas de una ejecución
     uv run b5t4 opinion                    agente 2 (hoy: lista las ediciones y se detiene)
     uv run b5t4 rag chunks                 agente 3: trocea el corpus y enseña estadísticas
     uv run b5t4 rag ask "¿…?"              agente 3: pregunta (pendiente)
@@ -56,10 +57,11 @@ def cmd_check(_args) -> int:
     return 0
 
 
-def cmd_onboarding(_args) -> int:
+def cmd_onboarding(args) -> int:
     from .agents.onboarding import run
+    from pathlib import Path
 
-    return _run_agent(run)
+    return _run_agent(lambda: run(resume=Path(args.resume) if args.resume else None, report_only=args.report_only))
 
 
 def cmd_opinion(_args) -> int:
@@ -108,7 +110,10 @@ def main(argv: list[str] | None = None) -> None:
     p = argparse.ArgumentParser(prog="b5t4", description="MVP B5-T4 · onboarding, opinión corporativa y preguntas sobre la carpeta del equipo")
     sub = p.add_subparsers(dest="cmd", required=True)
     sub.add_parser("check", help="comprueba datos, claves y modelos").set_defaults(fn=cmd_check)
-    sub.add_parser("onboarding", help="agente 1: informe + infografía + vídeo de onboarding").set_defaults(fn=cmd_onboarding)
+    onboarding = sub.add_parser("onboarding", help="agente 1: informe + infografía + vídeo de onboarding")
+    onboarding.add_argument("--resume", metavar="CARPETA", help="reanudar una ejecución conservando las etapas terminadas")
+    onboarding.add_argument("--report-only", action="store_true", help="generar solo el informe; permite un borrador si no hay verificador")
+    onboarding.set_defaults(fn=cmd_onboarding)
     sub.add_parser("opinion", help="agente 2: cambios en la Opinión Corporativa").set_defaults(fn=cmd_opinion)
     r = sub.add_parser("rag", help="agente 3: preguntas de empleados")
     r.add_argument("action", choices=["chunks", "index", "ask"])

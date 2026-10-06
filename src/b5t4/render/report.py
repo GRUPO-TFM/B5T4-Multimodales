@@ -7,6 +7,7 @@ viste: tipografía, colores de marca, tablas con scroll propio en el móvil. As�
 from __future__ import annotations
 
 import datetime as dt
+import html
 import re
 from pathlib import Path
 
@@ -19,7 +20,7 @@ def md_to_html(md: str) -> str:
     """Conversor mínimo (títulos, listas, tablas, negritas, código). Suficiente para informes generados;
     si se quiere más, cambiar por `markdown-it-py` sin tocar a los agentes."""
     lines, out, i = md.splitlines(), [], 0
-    inline = lambda t: re.sub(r"`([^`]+)`", r"<code>\1</code>", re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", t))
+    inline = lambda t: re.sub(r"`([^`]+)`", r"<code>\1</code>", re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", html.escape(t)))
     while i < len(lines):
         ln = lines[i]
         if m := re.match(r"^(#{1,4}) (.+)", ln):
