@@ -91,10 +91,13 @@ def _speak(text: str) -> str | None:
     return str(path)
 
 
-def ask(question: str, voice: bool = False, k: int | None = None, log=print) -> Answer:
+def ask(question: str, voice: bool = False, k: int | None = None, log=print, *,
+        hits: list[tuple[float, Chunk]] | None = None) -> Answer:
+    """Responde con los fragmentos proporcionados, o busca si `hits` es None."""
     t0 = time.perf_counter()
     s = get_settings()
-    hits = search(question, k or s.top_k)
+    if hits is None:
+        hits = search(question, k or s.top_k)
     t_search = time.perf_counter()
     if not hits:
         ans = Answer(question=question, text=NO_CONSTA, found=False, mode="llm" if s.has_llm else "extractivo")
