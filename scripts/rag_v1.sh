@@ -6,7 +6,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 cmd="${1:-ui}"; shift || true
 VOZ=(--with "faster-whisper>=1.2")
-EMB=(--with "sentence-transformers>=6.1.0" --with "transformers>=5.19" --with "torch>=2.6")
+EMB=(--with "sentence-transformers>=6.1.0" --with "transformers>=5.19" --with "torch>=2.6" --with "torchvision")
 case "$cmd" in
   ui)      uv run "${VOZ[@]}" "${EMB[@]}" python -m b5t4.app.ui_rag "$@" ;;
   dense)   uv run "${EMB[@]}" python scripts/rag_dense_index.py "$@" ;;

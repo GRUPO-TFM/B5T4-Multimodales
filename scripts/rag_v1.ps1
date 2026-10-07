@@ -8,10 +8,11 @@
 #   .\scripts\rag_v1.ps1 test                  pruebas
 param([Parameter(Position = 0)][string]$cmd = "ui", [Parameter(ValueFromRemainingArguments = $true)]$rest)
 $ErrorActionPreference = "Stop"
+$env:HF_HUB_DISABLE_SYMLINKS_WARNING = "1"   # Windows sin modo desarrollador: aviso inofensivo de la caché
 Set-Location (Split-Path $PSScriptRoot -Parent)
 
 $voz = @("--with", "faster-whisper>=1.2")
-$emb = @("--with", "sentence-transformers>=6.1.0", "--with", "transformers>=5.19", "--with", "torch>=2.6")
+$emb = @("--with", "sentence-transformers>=6.1.0", "--with", "transformers>=5.19", "--with", "torch>=2.6", "--with", "torchvision")
 
 switch ($cmd) {
     "ui"      { uv run @voz @emb python -m b5t4.app.ui_rag @rest }
