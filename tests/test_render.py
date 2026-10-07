@@ -9,6 +9,13 @@ def test_verbalize_numbers_and_units():
     assert "cinco" in out and "por ciento" in out and "puntos básicos" in out
 
 
+def test_verbalize_keeps_sentence_end_and_separates_codes():
+    assert verbalize("entre el 20 y el 25. Si cae") == "entre el veinte y el veinticinco. Si cae"
+    assert verbalize("carteras P1-P4. La Sección") == "carteras P uno-P cuatro. La Sección"
+    assert verbalize("pulsa Ctrl+Alt+F9 ahora") == "pulsa Ctrl+Alt+F nueve ahora"
+    assert verbalize("61.5 y 1.234") == "sesenta y uno coma cinco y mil doscientos treinta y cuatro"
+
+
 def test_markdown_table_is_scrollable_on_mobile():
     html = md_to_html("| a | b |\n|---|---|\n| 1 | 2 |")
     assert '<div class="tw"><table>' in html and "<td>1</td>" in html

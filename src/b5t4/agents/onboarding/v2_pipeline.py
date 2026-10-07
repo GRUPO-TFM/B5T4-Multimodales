@@ -17,10 +17,11 @@ from ...render.brand import signature as brand_signature, illustration_prompt
 from .material import collect_material
 from .schemas import SourceSelection
 from .v2_schemas import (OnboardingBrief, ResearchPlan, ResearchDraft, FactChapter, FactBank, GuideChapter,
-                         ReferenceGuide, Review, Direction, DirectedStoryboard)
+                         ReferenceGuide, Review, Direction, KeyMessages, DirectedStoryboard)
 from .v2_content import (PersonalizedMaterial, Checks, SYSTEM, plan_research, research_topic, verify_research,
                          validate_references, validate_plan, write_chapter, validate_guide, editorial_review, direct,
-                         validate_modules, storyboard, validate_storyboard, revise_narration)
+                         validate_modules, select_messages, validate_messages, storyboard, validate_storyboard,
+                         revise_narration)
 from .v2_media import common_storyboard, narrate, audit_audio, previews, visual_review, repair_visuals, fit_audio_tempo, cached_timeline
 
 
@@ -88,6 +89,7 @@ class StageArtifacts:
             (write_chapter, validate_guide) if name.startswith("referencia_") else
             (editorial_review,) if name.startswith("revision_editorial_") else
             (direct, validate_modules) if name == "direccion.json" else
+            (select_messages, validate_messages) if name == "mensajes.json" else
             (storyboard, validate_storyboard) if name == "guion.json" else ())
         recipe_parts = {function.__name__: inspect.getsource(function) for function in functions}
         recipe_parts["system"] = SYSTEM
@@ -296,9 +298,13 @@ def run(brief: OnboardingBrief | dict, out_root=None, log=print, *, resume=None,
         write_json(out / "infografia.json", direction)
         stage("7 · Guion, storyboard y respaldo documental")
         target_words = round((brief.duration_seconds * .95 - 6) * 2.35)
+        messages = cached("mensajes.json", KeyMessages,
+            lambda: select_messages(brief, bank, direction, client, target_words),
+            lambda m: validate_messages(m, bank, target_words), dependencies=[direction.model_dump(), bank.model_dump(), brief.model_dump()])
         plan_video = cached("guion.json", DirectedStoryboard,
-            lambda: storyboard(brief, bank, direction, client, checks, target_words),
-            lambda p: validate_storyboard(p, bank, direction, checks), dependencies=[direction.model_dump(), bank.model_dump(), brief.model_dump()])
+            lambda: storyboard(brief, bank, direction, client, checks, target_words, messages),
+            lambda p: validate_storyboard(p, bank, direction, checks),
+            dependencies=[direction.model_dump(), bank.model_dump(), brief.model_dump(), messages.model_dump()])
         stage("8 · Ilustraciones, voz expresiva y duración real")
         needed_images = {scene.image_id for scene in plan_video.scenes if scene.image_id}
         for illustration in direction.illustrations:
@@ -323,7 +329,7 @@ def run(brief: OnboardingBrief | dict, out_root=None, log=print, *, resume=None,
         words = sum(len(scene.narration.split()) for scene in plan_video.scenes)
         pre_adjusted = not saved_audio and (words > target_words * 1.08 or words < target_words * .85)
         if pre_adjusted:
-            plan_video = revise_narration(plan_video, bank, brief, client, checks, target_words)
+            plan_video = revise_narration(plan_video, bank, brief, client, checks, target_words, messages)
             write_json(out / "guion.json", plan_video)
         rounds = 3-int(pre_adjusted)
         for attempt in range(rounds):
@@ -340,7 +346,7 @@ def run(brief: OnboardingBrief | dict, out_root=None, log=print, *, resume=None,
             count = sum(len(scene.narration.split()) for scene in plan_video.scenes)
             target_words = round(count * (brief.duration_seconds * .955 - len(plan_video.scenes)*.6) /
                                  max(1, timeline["total"]-len(plan_video.scenes)*.6))
-            plan_video = revise_narration(plan_video, bank, brief, client, checks, target_words)
+            plan_video = revise_narration(plan_video, bank, brief, client, checks, target_words, messages)
             write_json(out / "guion.json", plan_video)
         stage("9 · Revisión del audio y las composiciones")
         for attempt in range(3):
@@ -349,7 +355,9 @@ def run(brief: OnboardingBrief | dict, out_root=None, log=print, *, resume=None,
             except ValueError as error:
                 if attempt == 2: raise
                 log("  Revisión del audio: " + str(error)[:240])
-                timeline = narrate(plan_video, brief, client, out, log, voice_feedback=str(error))
+                # Si el fallo se localiza en unas escenas, solo se repite su voz.
+                timeline = narrate(plan_video, brief, client, out, log, voice_feedback=str(error),
+                                   only=getattr(error, "scenes", None))
                 if not brief.duration_seconds*.9 <= timeline["total"] <= brief.duration_seconds-.1:
                     try:
                         timeline = fit_audio_tempo(timeline,out,brief.duration_seconds,log)
@@ -357,7 +365,7 @@ def run(brief: OnboardingBrief | dict, out_root=None, log=print, *, resume=None,
                     except ValueError: pass
                     count = sum(len(scene.narration.split()) for scene in plan_video.scenes)
                     target_words = round(count * (brief.duration_seconds * .95) / timeline["total"])
-                    plan_video = revise_narration(plan_video, bank, brief, client, checks, target_words)
+                    plan_video = revise_narration(plan_video, bank, brief, client, checks, target_words, messages)
                     write_json(out / "guion.json", plan_video)
                     timeline = narrate(plan_video, brief, client, out, log)
         _, source_map = renderer.source_index(bank, material)

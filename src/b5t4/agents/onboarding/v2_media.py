@@ -36,15 +36,24 @@ def common_storyboard(plan, brief, bank, source_map, images):
     return Storyboard(topic=bank.title, voice=get_settings().voice_v2, scenes=scenes)
 
 
-def narrate(plan, brief, client, out, log=print, voice_feedback=""):
+def narrate(plan, brief, client, out, log=print, voice_feedback="", only=None):
     audio_dir = out / "audio"; audio_dir.mkdir(exist_ok=True)
     parts, scenes, total = [], [], 0.0
     style = VOICE_STYLE + (" Delivery correction: " + voice_feedback if voice_feedback else "")
     settings = get_settings()
+    # Una corrección puntual (only) conserva los clips ya escuchados del resto de escenas.
+    kept = {}
+    if only is not None and (out / "timeline.json").is_file():
+        kept = {entry["id"]: out / entry["audio"] for entry in
+                json.loads((out / "timeline.json").read_text(encoding="utf-8"))["scenes"] if entry["id"] not in only}
     for scene in plan.scenes:
         spoken = tts.verbalize(scene.narration)
         key = hashlib.sha256(json.dumps([settings.model_tts, settings.voice_v2, style, spoken]).encode()).hexdigest()[:20]
         path = audio_dir / (key + ".wav")
+        previous = kept.get(scene.id)
+        if previous and previous.is_file() and previous.with_suffix(".json").is_file() and \
+                json.loads(previous.with_suffix(".json").read_text(encoding="utf-8"))["text"] == spoken:
+            path = previous
         if path.exists():
             samples, rate = sf.read(path, dtype="float32")
         else:
@@ -100,6 +109,44 @@ def cached_timeline(plan, out):
     return timeline
 
 
+class AudioMismatch(ValueError):
+    """Las escuchas aprueban el audio, pero alguna frase no casa con el guion: basta repetir esas escenas."""
+    def __init__(self, sentences, scenes):
+        super().__init__("La voz no coincide con el guion en " + ", ".join(scenes) + ": "
+                         + "; ".join(f"«{text}» ({score:.2f})" for text, score in sentences))
+        self.scenes = scenes
+
+
+def _sound(word):
+    """Clave fonética mínima del español: «Alfa» y «Alpha» suenan igual."""
+    word = word.lower().translate(str.maketrans("áéíóúü", "aeiouu"))
+    for written, sounded in (("ph", "f"), ("qu", "k"), ("ll", "y"), ("ch", "#"), ("h", ""), ("v", "b"), ("z", "s")):
+        word = word.replace(written, sounded)
+    word = re.sub(r"g(?=[ei])", "j", re.sub(r"c(?=[ei])", "s", word)).replace("c", "k").replace("#", "ch")
+    return re.sub(r"([^r])\1", r"\1", word)
+
+
+def align_spelling(heard, script):
+    """Escribe lo oído con la grafía del guion cuando suena igual que una única palabra suya.
+
+    Una transcripción ciega no puede saber si se dijo «Alfa» o «Alpha». Solo se tocan
+    homófonos: otra persona, cifra o condición sigue llegando distinta al verificador.
+    """
+    word = r"[^\W\d_]+"
+    known, by_sound = set(), {}
+    for written in re.findall(word, script):
+        known.add(written.lower())
+        by_sound.setdefault(_sound(written), {}).setdefault(written.lower(), written)
+    def spell(match):
+        said = match.group(0)
+        options = by_sound.get(_sound(said), {})
+        if said.lower() in known or len(options) != 1:
+            return said
+        written = next(iter(options.values()))
+        return written[0].upper() + written[1:] if said[0].isupper() else written
+    return re.sub(word, spell, heard)
+
+
 def audit_audio(plan, client, out, checks):
     voice = out / "voz.wav"
     result = client.audio_review(AudioReview, SYSTEM,
@@ -110,18 +157,23 @@ def audit_audio(plan, client, out, checks):
         "claramente robótico. No inventes palabras ni completes lo que no se oye. No penalices pausas "
         "cortas entre escenas. No tienes el guion para evitar inferir la transcripción.", voice,
         stage="revisión independiente del audio", max_output=6500)
-    intended = " ".join(tts.verbalize(scene.narration) for scene in plan.scenes)
+    spoken = [(scene.id, tts.verbalize(scene.narration)) for scene in plan.scenes]
+    intended = " ".join(text for _, text in spoken)
     write_json(out / "revision_audio.json", result)
     write_json(out / "revision_audio_independiente.json", result)
     if not result.complete or min(result.clarity, result.naturalness) < 4 or result.issues:
         raise ValueError("La revisión del audio requiere corrección: " + "; ".join(result.issues or ["claridad o naturalidad insuficiente"]))
     # El verificador trabaja con afirmaciones cortas y números verbalizados en
     # ambos sentidos: detecta añadidos y también frases omitidas por la voz.
-    heard = tts.verbalize(result.transcript)
+    # Comillas y rayas no se pronuncian, y la grafía de lo oído se alinea con el guion.
+    plain = lambda text: re.sub(r"[«»“”\"]|\s[-–—](?=\s)", "", text)
+    script = plain(intended)
     split = lambda text: [part.strip() for part in re.split(r"(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÑ¿¡])", text) if len(part.strip())>15]
-    pairs = [(part, intended) for part in split(heard)] + [(part, heard) for part in split(intended)]
-    scores = checks.many(pairs)
-    mismatches = [part for (part,_),score in zip(pairs,scores) if score<get_settings().publish_threshold]
+    def differences(transcript):
+        heard = plain(align_spelling(tts.verbalize(transcript), script))
+        pairs = [(part, script) for part in split(heard)] + [(part, heard) for part in split(script)]
+        return [(part, score) for (part, _), score in zip(pairs, checks.many(pairs)) if score < get_settings().publish_threshold]
+    mismatches = differences(result.transcript)
     if mismatches:
         # Una transcripción ciega puede escribir mal un nombre que se pronunció
         # correctamente. La segunda escucha compara sonido y guion expresamente;
@@ -132,16 +184,18 @@ def audit_audio(plan, client, out, checks):
             "leyendo el guion. Transcribe lo pronunciado; puedes usar la ortografía oficial de un nombre "
             "solo si sus sonidos corresponden. Si realmente dice otra persona, empresa, cifra o condición, "
             "conserva esa diferencia en transcript y añádela a issues. Evalúa claridad, naturalidad y "
-            "finalización.\nDIFERENCIAS:\n" + json.dumps(mismatches,ensure_ascii=False)
+            "finalización.\nDIFERENCIAS:\n" + json.dumps([part for part, _ in mismatches],ensure_ascii=False)
             + "\nGUION ESPERADO:\n" + intended, voice,
             stage="comparación auditiva de nombres y cifras",max_output=6500)
         write_json(out / "revision_audio_comparativa.json", compared)
         if not compared.complete or min(compared.clarity,compared.naturalness)<4 or compared.issues:
             raise ValueError("El audio difiere del guion: " + "; ".join(compared.issues or ["audio incompleto"]))
         result = compared
-        heard = tts.verbalize(result.transcript)
-        pairs = [(part,intended) for part in split(heard)] + [(part,heard) for part in split(intended)]
-    checks.require(pairs, [f"correspondencia audio/guion {n+1}" for n in range(len(pairs))])
+        mismatches = differences(result.transcript)
+        if mismatches:
+            words = lambda text: set(re.findall(r"\w+", text.lower()))
+            affected = {max(spoken, key=lambda entry: len(words(part) & words(entry[1])))[0] for part, _ in mismatches}
+            raise AudioMismatch(mismatches, [scene_id for scene_id, _ in spoken if scene_id in affected])
     write_json(out / "revision_audio.json",result)
     return result
 

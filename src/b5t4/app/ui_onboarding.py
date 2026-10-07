@@ -17,7 +17,7 @@ def _onboarding_result(folder: Path | None, status: str):
     video = folder / "video.mp4" if folder else None
     names = ("informe.html", "informe.md", "infografia.png", "video.mp4", "storyboard.json",
              "verificacion.json", "fuentes.json", "validacion_video.json", "ejecucion.json",
-             "brief.json", "referencia.json", "direccion.json", "guion.json", "infografia.html", "voz.wav",
+             "brief.json", "referencia.json", "direccion.json", "mensajes.json", "guion.json", "infografia.html", "voz.wav",
              "consumo_openrouter.json", "consumo_jev.json", "revision_audio.json", "revision_audio_independiente.json",
              "revision_audio_comparativa.json", "validacion_diseno.json")
     ledger = folder / "consumo_openrouter.json" if folder else None

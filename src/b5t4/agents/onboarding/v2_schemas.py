@@ -173,6 +173,15 @@ class Direction(Record):
         return self
 
 
+class KeyMessage(Record):
+    title: str = Field(min_length=3, max_length=90)
+    claim_ids: list[str] = Field(min_length=1, max_length=3)
+
+
+class KeyMessages(Record):
+    messages: list[KeyMessage] = Field(min_length=3, max_length=20)
+
+
 class DirectedScene(VisualModule):
     id: str = Field(pattern=r"^[a-z][a-z0-9_-]{1,35}$")
     narration: str = Field(min_length=30, max_length=1600)

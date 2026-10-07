@@ -146,6 +146,98 @@ def test_audio_resume_requires_matching_text_clips_and_track(tmp_path):
     assert cached_timeline(plan,tmp_path) is None
 
 
+def test_audio_correction_only_repeats_the_affected_scene(tmp_path):
+    import numpy as np
+    from types import SimpleNamespace
+    plan=SimpleNamespace(scenes=[SimpleNamespace(id='one',kind='hero',narration='Ana trabaja en el equipo.'),
+                                 SimpleNamespace(id='two',kind='close',narration='Luis valida el control.')])
+    class Client:
+        ledger=SimpleNamespace(entries=[{'generation_id':'gen-test'}])
+        spoken=[]
+        def speech(self,text,*args,**kwargs):
+            self.spoken.append(text)
+            return (np.sin(np.arange(24000)*.1)*4000).astype('<i2').tobytes(),24000
+    client=Client(); first=narrate(plan,None,client,tmp_path,lambda _:None)
+    second=narrate(plan,None,client,tmp_path,lambda _:None,voice_feedback='Di «Luis» con claridad',only=['two'])
+    assert client.spoken==['Ana trabaja en el equipo.','Luis valida el control.','Luis valida el control.']
+    assert second['scenes'][0]['audio']==first['scenes'][0]['audio']
+    assert second['scenes'][1]['audio']!=first['scenes'][1]['audio']
+
+
+def audit(tmp_path, transcripts):
+    from types import SimpleNamespace
+    from b5t4.agents.onboarding.v2_media import audit_audio
+    from b5t4.agents.onboarding.v2_schemas import AudioReview
+    plan=SimpleNamespace(scenes=[
+        SimpleNamespace(id='one',narration='El equipo gestiona las carteras P1-P4. La Sección Alpha selecciona 20 valores.'),
+        SimpleNamespace(id='two',narration='Las tesis se firman como «Equipo de Gestión - Sección Alpha».')])
+    class Client:
+        calls=0
+        def audio_review(self,*args,**kwargs):
+            self.calls+=1
+            return AudioReview(transcript=transcripts[self.calls-1],clarity=5,naturalness=5,complete=True)
+    class Gate:
+        # Como Jev con un nombre propio: solo respalda la frase si aparece tal cual.
+        def many(self,pairs): return [.99 if claim in passage else .2 for claim,passage in pairs]
+    client=Client()
+    return client, lambda: audit_audio(plan,client,tmp_path,Gate())
+
+
+def test_audio_audit_accepts_homophone_spelling_without_second_listening(tmp_path):
+    client,run=audit(tmp_path,['El equipo gestiona las carteras P1-P4. La Sección Alfa selecciona 20 valores. '
+                               'Las tesis se firman como Equipo de Gestión Sección Alfa.'])
+    run()
+    assert client.calls==1
+
+
+def test_audio_audit_reports_the_scene_whose_words_changed(tmp_path):
+    from b5t4.agents.onboarding.v2_media import AudioMismatch
+    heard=('El equipo gestiona las carteras P1-P4. La Sección Alpha selecciona 30 valores. '
+           'Las tesis se firman como Equipo de Gestión Sección Alpha.')
+    client,run=audit(tmp_path,[heard,heard])
+    with pytest.raises(AudioMismatch) as error: run()
+    assert error.value.scenes==['one'] and client.calls==2 and 'treinta' in str(error.value)
+
+
+def test_key_messages_fit_the_voice_and_cite_each_fact_once(bank):
+    from b5t4.agents.onboarding.v2_content import validate_messages, message_facts
+    from b5t4.agents.onboarding.v2_schemas import KeyMessages
+    select=lambda *ids: KeyMessages(messages=[{"title":"Mensaje","claim_ids":[cid]} for cid in ids])
+    with pytest.raises(ValueError,match="no publicados"): validate_messages(select("team-01","team-02","team-03"),bank,30)
+    with pytest.raises(ValueError,match="único mensaje"): validate_messages(select("team-01","team-02","team-01"),bank,30)
+    bank.chapters[0].facts[2].status="publicar"
+    chosen=select("team-01","team-02","team-03")
+    with pytest.raises(ValueError,match="al menos 5 mensajes"): validate_messages(chosen,bank,200)
+    with pytest.raises(ValueError,match="suman 22 palabras"): validate_messages(chosen,bank,100)
+    validate_messages(chosen,bank,30)
+    assert list(message_facts(chosen,bank))==["team-01","team-02","team-03"]
+
+
+def test_script_sees_only_the_direction_backed_by_its_messages(bank):
+    from b5t4.agents.onboarding.v2_content import focus_direction, validate_scope, validate_density
+    from b5t4.agents.onboarding.v2_schemas import Direction
+    facts={"team-02":"Se abre el maestro antes de validar el control."}
+    items=[{"id":"a","label":"Ana y Luis","claim_ids":["team-01"]},
+           {"id":"b","label":"Abrir el maestro","claim_ids":["team-02"]},
+           {"id":"c","label":"Validar el control","claim_ids":["team-02"]}]
+    direction=Direction(narrative_arc="Del equipo al proceso semanal.",learning_goals=["Equipo","Proceso"],
+        illustrations=[{"id":"desk","subject":"Una mesa de trabajo ordenada","purpose":"Abrir el vídeo con calma"}],
+        modules=[{"kind":"process","title":"Proceso","items":items,"edges":[{"from_id":"a","to_id":"b","claim_ids":["team-02"]}]},
+                 {"kind":"map","title":"Personas","items":items[:1]},
+                 {"kind":"focus","title":"Control","items":items},{"kind":"map","title":"Mapa","items":items}])
+    focused=focus_direction(direction,facts)["modules"]
+    assert [module["title"] for module in focused]==["Proceso","Control","Mapa"]
+    assert focused[0]["kind"]=="map" and not focused[0]["edges"]
+    assert [item["id"] for item in focused[0]["items"]]==["b","c"]
+    plan=synthetic_storyboard()
+    validate_scope(plan.scenes,facts)
+    plan.scenes[1].items[0].claim_ids=["team-01"]
+    with pytest.raises(ValueError,match="team-01"): validate_scope(plan.scenes,facts)
+    validate_density([("s1","palabra "*45,["team-02"])],45)
+    with pytest.raises(ValueError,match="46 palabras"): validate_density([("s1","palabra "*46,["team-02"])],45)
+    with pytest.raises(ValueError,match="5 hechos"): validate_density([("s1","Una idea.",["a","b","c","d","e"])],45)
+
+
 def test_one_process_owns_each_execution_folder(tmp_path):
     first=ExecutionLease(tmp_path)
     try:
