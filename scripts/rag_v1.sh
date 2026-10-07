@@ -5,7 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 cmd="${1:-ui}"; shift || true
-VOZ=(--with "faster-whisper>=1.2")
+VOZ=(--with "faster-whisper>=1.2" --with "av<19")   # av 19 quitó un parámetro que usa faster-whisper 1.2.1
 EMB=(--with "sentence-transformers>=6.1.0" --with "transformers>=5.19" --with "torch>=2.6" --with "torchvision")
 case "$cmd" in
   ui)      uv run "${VOZ[@]}" "${EMB[@]}" python -m b5t4.app.ui_rag "$@" ;;

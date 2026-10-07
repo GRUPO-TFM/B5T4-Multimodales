@@ -11,7 +11,7 @@ $ErrorActionPreference = "Stop"
 $env:HF_HUB_DISABLE_SYMLINKS_WARNING = "1"   # Windows sin modo desarrollador: aviso inofensivo de la caché
 Set-Location (Split-Path $PSScriptRoot -Parent)
 
-$voz = @("--with", "faster-whisper>=1.2")
+$voz = @("--with", "faster-whisper>=1.2", "--with", "av<19")   # av 19 quitó un parámetro que usa faster-whisper 1.2.1
 $emb = @("--with", "sentence-transformers>=6.1.0", "--with", "transformers>=5.19", "--with", "torch>=2.6", "--with", "torchvision")
 
 switch ($cmd) {
