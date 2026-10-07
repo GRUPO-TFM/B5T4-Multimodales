@@ -54,8 +54,8 @@ flowchart TB
 | Configuración | `src/b5t4/config.py`, `config/b5t4.toml`, `.env` | Rutas, claves, modelos y parámetros; nada está escrito a fuego en el código | Hecho |
 | Datos | `src/b5t4/corpus/` | Leer el manifiesto, los contextos (troceados por sección) y el texto de cualquier fichero; rasterizar páginas de PDF | Hecho |
 | Modelos | `src/b5t4/models/` | Un adaptador por modalidad con interfaz mínima | LLM, Jev y TTS hechos; STT y embeddings pendientes |
-| Salidas | `src/b5t4/render/` | Informe HTML responsive, infografía, vídeo por fotogramas | Informe y vídeo hechos (motor del prototipo); infografía pendiente |
-| Lógica | `src/b5t4/agents/` | Los tres agentes | Agente 3: v0 funcionando (BM25 + LLM con citas + voz; recall@8 = 14/14 en el golden set). Agente 2: v1 de texto y gráficos (selección → extracción texto+visión → diff determinista → frase por cambio + Jev → HTML/PNG/JSON). Agente 1: primer paso hecho |
+| Salidas | `src/b5t4/render/` | Informe HTML responsive, infografía, vídeo por fotogramas | Informe, infografía y escenas de onboarding implementados; motor de vídeo compartido por los agentes 1 y 2 (el 2 aporta su plantilla y su voz) |
+| Lógica | `src/b5t4/agents/` | Los tres agentes | Agente 1: onboarding v1/v2 completo. Agente 2: v2 completa (selección → extracción texto+visión con caché → diff determinista → frase por cambio + porqué con cita literal, ambos con Jev → HTML/PNG/JSON → vídeo con Gemini TTS). Agente 3: v0 funcionando (BM25 + LLM con citas + voz; recall@8 = 14/14 en el golden set) |
 | Interfaz | `src/b5t4/app/`, `cli.py` | Gradio y línea de comandos | Hecho (muestra «pendiente» donde corresponde) |
 
 ## 3. Por qué la carpeta de datos importa tanto
@@ -77,20 +77,25 @@ La copia estructurada (`Tarea MIAX`) no es una carpeta cualquiera. Se preparó p
 
 ```mermaid
 flowchart LR
-    C["Secciones 1-5 de<br/>cada 00_CONTEXTO.md"] --> D["dosier<br/>(gather_material)"]
+    C["Contextos completos<br/>metadatos, reglas y fuentes"] --> D["evidencias y dosier<br/>(collect_material)"]
     D --> O["índice del onboarding<br/>LLM → OnboardingOutline"]
-    O --> R["informe Markdown<br/>LLM, con fuentes"]
+    O --> DOC["documentos vigentes<br/>manifiesto y extracción"]
+    DOC --> R["hechos con ids de evidencia<br/>LLM → BlockDraft"]
     R --> V{"Jev: ¿cada afirmación<br/>está en su fuente?"}
     V -->|sí| RF["informe verificado"]
     V -->|no| X["se marca o se quita"]
     RF --> H["informe.html"]
-    RF --> I["infografía<br/>Mermaid → PNG"]
+    RF --> I["tarjetas verificadas<br/>HTML/CSS → PNG"]
     RF --> S["storyboard ≤ 120 s<br/>orgchart · people · flow · timeline"]
-    S --> T["voz Kokoro"] --> F["fotogramas Playwright"] --> M["video.mp4"]
+    S --> T["voz Kokoro<br/>medir y acortar si supera 120 s"] --> F["fotogramas Playwright"] --> M["video.mp4<br/>decodificación y duración"]
 ```
 
 La regla del prototipo se mantiene: **el informe verificado es la única fuente** de la infografía y del vídeo.
 Ninguno vuelve a leer documentos ni se inventa nombres o cifras. Presupuesto: 2 min ≈ 250 palabras de locución.
+
+Cada bloque conserva hechos, evidencias, probabilidades y pendientes. Las tarjetas y la locución se comprueban
+contra los hechos publicables del informe. Las etapas JSON y los hashes permiten reanudar una ejecución cuando
+sus fuentes no han cambiado. Detalle operativo: [ONBOARDING.md](ONBOARDING.md).
 
 ### 4.2 Agente 2 · Evolución de la Opinión Corporativa
 
@@ -144,7 +149,7 @@ flowchart LR
 | Voz (pregunta hablada) | Entrada | agente 3 | faster-whisper |
 | Texto estructurado (JSON validado) | Interna | los tres | LLM |
 | Informe HTML | Salida | agentes 1 y 2 | — |
-| Infografía (diagramas) | Salida | agente 1 | Mermaid + Playwright |
+| Infografía (diagramas) | Salida | agente 1 | HTML/CSS + Playwright |
 | Voz sintética | Salida | agentes 1, 2 y 3 | Kokoro |
 | Vídeo con motion graphics | Salida | agentes 1 y 2 | Playwright + ffmpeg |
 

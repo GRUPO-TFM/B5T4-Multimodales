@@ -4,10 +4,10 @@
 
 | Persona | Agente | Carpeta | Primer paso hecho | Lo que falta |
 |---|---|---|---|---|
-| A | 1 · Onboarding | `src/b5t4/agents/onboarding/` | `gather_material()`: dosier de 72.000 caracteres con las secciones 1-5 de los 20 contextos | Índice (LLM) → informe → verificación → infografía → storyboard → vídeo ≤ 2 min; nuevas escenas `orgchart`, `people`, `flow`, `timeline` en `render/templates/scene.html` |
+| A | 1 · Onboarding | `src/b5t4/agents/onboarding/` | Flujo implementado: contextos completos → documentos vigentes → informe con citas → verificación → infografía → storyboard → voz y vídeo ≤ 2 min; interfaz y reanudación | Revisión editorial de las salidas para la entrega; instrucciones en `docs/ONBOARDING.md` |
 | B | 2 · Opinión Corporativa | `src/b5t4/agents/opinion/` | `list_editions()`: las 4 ediciones ordenadas por fecha | Extracción de recomendaciones (texto + visión) → diff → explicación → informe → vídeo de cambios |
 | C | 3 · RAG | `src/b5t4/agents/rag/` | `build_chunks()`: ~2.700 fragmentos con metadatos | Embeddings + BM25 → índice → router → respuesta con citas → Jev → voz; STT de la pregunta; medición con `evals/preguntas_rag.yaml` |
-| Todos | Común | `render/infographic.py`, `data/sample/`, README | — | Infografía; copia anonimizada para la demo; capturas y diagrama en el README; vídeo de la demo |
+| Todos | Común | `render/infographic.py`, `data/sample/`, README | Infografía y escenas del onboarding | Copia anonimizada para la demo; capturas y vídeo de la demo conjunta |
 
 **Repositorio:** `https://github.com/GRUPO-TFM/B5T4-Multimodales` (privado, rama `main`), dentro de la organización del
 equipo, como `GRUPO-TFM/B5T2-agentes`.

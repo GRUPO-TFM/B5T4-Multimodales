@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>{{ title }}</title>
+<style>
+:root{--ink:#172b39;--muted:#546979;--accent:#b32932;--paper:#f5f2ed;--line:#d8e0e2}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:24px/1.4 "Segoe UI",Arial,sans-serif}
+header{padding:54px 64px 34px;background:var(--ink);color:white;border-bottom:10px solid var(--accent)}
+.eyebrow{font-size:19px;letter-spacing:3px;text-transform:uppercase;color:#bdd2da}h1{font-size:42px;line-height:1.16;margin:16px 0 10px;max-width:1350px}
+.intro{font-size:21px;color:#dce5e7}main{padding:38px 48px;display:grid;grid-template-columns:1fr 1fr;gap:30px;align-items:start}
+section{background:#fff;border:1px solid var(--line);border-radius:18px;padding:30px;break-inside:avoid}h2{font-size:29px;line-height:1.2;margin:0 0 26px}
+.number{font-size:18px;font-weight:700;color:var(--accent);letter-spacing:2px;margin-bottom:10px}
+.card{padding:18px 20px;background:#f2f5f5;border-radius:12px;position:relative;margin:0 0 13px;border-left:4px solid #abc1ca}
+.label{font-weight:700;font-size:24px;line-height:1.2}.detail{font-size:21px;margin-top:7px;color:#3d5462;overflow-wrap:anywhere}
+.ref{font-size:13px;color:#687c86;margin-top:8px}.orgchart .card{text-align:center;border-left:none;border-top:4px solid var(--accent);margin-bottom:25px}
+.orgchart .card:not(:last-child):after{content:"↓";position:absolute;bottom:-28px;left:calc(50% - 9px);font-size:26px;color:var(--accent)}
+.flow{counter-reset:step}.flow .card{padding-left:58px}.flow .card:before{counter-increment:step;content:counter(step);position:absolute;left:16px;top:19px;background:var(--ink);color:white;width:28px;height:28px;border-radius:50%;text-align:center;font-size:18px;font-weight:700}
+.timeline .card{border-left:5px solid var(--accent)}footer{padding:6px 60px 34px;color:var(--muted);font-size:17px}
+</style></head><body><header><div class="eyebrow">{{ brand }} · guía de incorporación</div><h1>{{ title }}</h1><div class="intro">Personas, organización y trabajo cotidiano</div></header>
+<main>{% for block in blocks %}<section><div class="number">0{{ loop.index }} / ONBOARDING</div><h2>{{ block.title }}</h2>
+<div class="{{ block.kind }}">{% for item in block['items'] %}<div class="card"><div class="label">{{ item.label }}</div><div class="detail">{{ item.detail }}</div><div class="ref">Informe · {{ item.claim_ids | join(', ') }}</div></div>{% endfor %}</div></section>{% endfor %}</main>
+<footer>Documento interno · contenido derivado del informe verificado · referencias completas en informe.html</footer></body></html>

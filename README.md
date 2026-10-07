@@ -8,16 +8,22 @@ El MVP lee esa carpeta y lo convierte en tres productos:
 
 | # | Agente | Qué entrega | Modalidades |
 |---|---|---|---|
-| 1 | **Onboarding** | Informe escrito, infografía y **vídeo narrado de ≤ 2 min** que explica el equipo a una persona nueva: secciones, jerarquía, quién hace qué, objetivos, calendario y reglas | texto → informe HTML · diagramas · voz · vídeo |
+| 1 | **Onboarding** | Conversación guiada, documento completo de referencia, infografía y **vídeo personalizado de 1 a 5 min** | conversación → investigación · informe HTML · diagramas · ilustración · voz · vídeo |
 | 2 | **Opinión Corporativa** | Informe y **vídeo de los cambios** en la visión de la casa entre ediciones (p. ej. el bono de EE.UU. a 10 años pasa de infraponderar a sobreponderar) | PDF (texto e imagen) → visión → informe · voz · vídeo |
 | 3 | **Preguntas** | Un agente al que cualquier empleado pregunta: *¿a qué correo va la operativa de Luxemburgo?* Responde **citando la fuente**, en **texto y en voz** | voz/texto → recuperación híbrida → texto · voz |
 
 Caso real: la carpeta del equipo de **Gestión Discrecional de Andbank España** (1.185 ficheros, 7 secciones de
 cartera, 17 personas).
 
-> **Estado (5-oct-2026):** estructura, configuración, capa de datos, motor de vídeo e interfaz funcionando. De
-> cada agente está hecho el primer paso; el resto está especificado en el docstring de su `pipeline.py`. Ver
-> [docs/PLAN.md](docs/PLAN.md).
+> **Onboarding v2 (7-oct-2026):** conversación y confirmación del encargo, capítulos adaptados al perfil,
+> revisiones documentales/editoriales/audiovisuales, marca Andbank y presupuesto por ejecución.
+> Uso, contratos y límites: [docs/ONBOARDING_V2.md](docs/ONBOARDING_V2.md).
+> Validación real: vídeos de 112,04 y 278,98 s y presupuesto verificado; revisión de integración documentada.
+> Evidencia y ejemplos: [docs/VALIDACION_ONBOARDING_V2.md](docs/VALIDACION_ONBOARDING_V2.md).
+> V1 se conserva en `codex/onboarding-completo`, commit `95fe4c5`, y sigue disponible sin `--brief`.
+> Su validación: [docs/VALIDACION_ONBOARDING.md](docs/VALIDACION_ONBOARDING.md).
+> Integra el agente 3 v0 ya disponible en `main`; el agente 2 conserva el listado de ediciones.
+> Preparación del merge y puntos compartidos: [docs/INTEGRACION_ONBOARDING.md](docs/INTEGRACION_ONBOARDING.md).
 
 ---
 
@@ -29,10 +35,10 @@ flowchart LR
     CORPUS --> A1["Agente 1<br/>Onboarding"]
     CORPUS --> A2["Agente 2<br/>Opinión Corporativa"]
     CORPUS --> A3["Agente 3<br/>Preguntas (RAG)"]
-    A1 --> OUT1["informe · infografía · vídeo ≤ 2 min"]
+    A1 --> OUT1["referencia personalizada · infografía · vídeo 1–5 min"]
     A2 --> OUT2["informe de cambios · vídeo"]
     A3 --> OUT3["respuesta citada · voz"]
-    MODELS["models<br/>LLM y visión · Jev · Kokoro · Whisper · embeddings"] -.-> A1
+    MODELS["models<br/>Gemini texto/visión/imagen/TTS · Jev<br/>Kokoro v1 · Whisper · embeddings"] -.-> A1
     MODELS -.-> A2
     MODELS -.-> A3
 ```
@@ -43,12 +49,12 @@ Tres ideas sostienen el diseño (detalle en [docs/ARQUITECTURA.md](docs/ARQUITEC
    plantilla de 11 secciones (Qué es · Responsables · Objetivos · …). Hay además un `00_MANIFIESTO.csv` con el
    estado de cada fichero (vigente, archivo o duplicado). Los agentes filtran antes de buscar y trocean por
    sección, no por número de caracteres.
-2. **El LLM redacta; el código decide.** Extraer, comparar, maquetar y dibujar el vídeo es determinista. Lo que
-   escribe un modelo se valida contra un esquema y se verifica contra su fuente con Jev, un verificador con
-   probabilidad calibrada.
-3. **El vídeo se dibuja, no se genera.** Primero se escribe un storyboard. La voz (Kokoro, local) fija la duración
-   de cada escena. Chromium dibuja los fotogramas y ffmpeg monta el MP4. Cada cifra y cada nombre en pantalla
-   sale de un documento.
+2. **El modelo propone; los contratos y verificaciones controlan la entrega.** Los LLM seleccionan, redactan
+   y dirigen la narrativa. Jev comprueba el respaldo documental; otras llamadas revisan la calidad editorial
+   y visual. El código controla marca, presupuesto, persistencia y composición.
+3. **El storyboard y la voz medida fijan el montaje.** Gemini TTS produce la voz de v2; Kokoro mantiene v1.
+   Chromium dibuja componentes con GSAP/D3 y ffmpeg monta el MP4. Textos, cifras, logos y diagramas se dibujan
+   por código; las ilustraciones generadas son conceptuales y se revisan.
 
 ---
 
@@ -58,7 +64,7 @@ Requisitos: [uv](https://docs.astral.sh/uv/) y Python 3.12. Windows, macOS o Lin
 
 ```powershell
 git clone https://github.com/GRUPO-TFM/B5T4-Multimodales.git; cd B5T4-Multimodales
-copy .env.example .env          # y rellena B5T4_DATA_DIR y OPENROUTER_API_KEY
+copy .env.example .env          # rellena B5T4_DATA_DIR, OPENROUTER_API_KEY y JEV_API_KEY
 uv sync                          # crea .venv con todas las dependencias
 uv run playwright install chromium
 uv run python scripts/download_models.py     # voz Kokoro, ~350 MB, una sola vez
@@ -85,8 +91,11 @@ copia anonimizada en `data/sample/` (pendiente).
 | Comando | Qué hace | Estado |
 |---|---|---|
 | `uv run b5t4 check` | Comprueba la carpeta de datos, el manifiesto, los contextos, las claves, la voz y ffmpeg | ✅ |
-| `uv run b5t4 onboarding` | Agente 1. Hoy escribe el dosier de partida en `out/onboarding/` | 🟡 paso 1 de 6 |
-| `uv run b5t4 opinion` | Agente 2. Informe para clientes de los cambios entre las dos últimas Opinión Corporativa: HTML (móvil) con la fuente de cada dato (línea literal + página + enlace al PDF), el «porqué» de cada cambio con cita literal verificada, 3 gráficos PNG y `cambios.json` en `out/opinion/` | ✅ v1 |
+| `uv run b5t4 onboarding --brief "encargo.json"` | Agente 1 v2 personalizado: referencia, infografía y vídeo de 1–5 min | ✅ |
+| `uv run b5t4 onboarding` | Agente 1 v1. Informe verificado, infografía y vídeo ≤ 120 s | ✅ |
+| `uv run b5t4 onboarding --report-only` | Agente 1. Genera el informe; permite borrador si no hay Jev | ✅ |
+| `uv run b5t4 onboarding --resume "out/onboarding/<ejecución>"` | Agente 1. Reutiliza las etapas terminadas si las fuentes no cambiaron | ✅ |
+| `uv run b5t4 opinion` | Agente 2. Informe para clientes de los cambios entre las dos últimas Opinión Corporativa: HTML (móvil) con la fuente de cada dato (línea literal + página + enlace al PDF), el «porqué» de cada cambio con cita literal verificada, 3 gráficos PNG y `cambios.json` en `out/opinion/` | ✅ v2 |
 | `uv run b5t4 opinion --referencia` | Agente 2 sin LLM en la lectura de los PDF (extracción de referencia de `evals/`): para probar sin claves | ✅ |
 | `uv run b5t4 opinion --eval` | Agente 2. ¿Lee bien el LLM los PDF? Aciertos frente a la referencia, por bloque | ✅ |
 | `uv run b5t4 opinion --video` | Agente 2. Además del informe, vídeo resumen de ≤ 2 min (voz Gemini TTS por OpenRouter, ≈ 0,03 $; Kokoro local de respaldo) con los cambios y el «porqué» de la casa, en `out/opinion/<fecha>/video/video.mp4` | ✅ v2 |
@@ -95,7 +104,7 @@ copia anonimizada en `data/sample/` (pendiente).
 | `uv run b5t4 rag ask "…" [--voice]` | Agente 3. Respuesta citada; en voz con `--voice`. Sin clave de OpenRouter, modo extractivo (enseña el pasaje) | ✅ v0 |
 | `uv run b5t4 rag eval [--answers]` | Agente 3. Mide el buscador con el golden set: recall@1/3/8 (hoy 5 · 12 · 14 de 14) | ✅ |
 | `uv run b5t4 ui [--share]` | Interfaz Gradio con las tres pestañas | ✅ (muestra «pendiente» donde corresponde) |
-| `uv run pytest` | Pruebas de la capa de datos y del render | ✅ 7 pruebas |
+| `uv run pytest` | Pruebas de datos, fuentes, verificación, reanudación, interfaz y render | Incluye regresiones del onboarding |
 
 ---
 
@@ -116,14 +125,14 @@ copia anonimizada en `data/sample/` (pendiente).
 │   ├── config.py                configuración (toml + .env)
 │   ├── cli.py                   línea de comandos «b5t4 …»
 │   ├── corpus/                  CAPA DE DATOS: manifest.py · contexts.py · extract.py
-│   ├── models/                  CAPA DE IA: llm.py (texto, JSON, visión) · verifier.py (Jev) · tts.py (Kokoro)
+│   ├── models/                  CAPA DE IA: openrouter.py (multimodal/presupuesto) · llm.py · verifier.py · tts.py
 │   │                            · stt.py · embeddings.py (pendientes)
-│   ├── render/                  CAPA DE SALIDA: report.py · video.py · infographic.py (pendiente) · templates/
+│   ├── render/                  CAPA DE SALIDA: report.py · video.py · infographic.py · templates/
 │   ├── agents/                  LÓGICA DE NEGOCIO, un agente por carpeta
 │   │   ├── onboarding/          agente 1
 │   │   ├── opinion/             agente 2 (tts.py: voz Gemini con caché por frase y respaldo Kokoro)
 │   │   └── rag/                 agente 3: index.py · answer.py
-│   └── app/ui.py                CAPA DE INTERFAZ (Gradio)
+│   └── app/                     CAPA DE INTERFAZ: ui.py (aplicación) · ui_onboarding.py (pestaña 1)
 ├── evals/preguntas_rag.yaml     golden set del agente 3 (15 preguntas con fuente; 1 trampa)
 ├── notebooks/                   exploración del corpus
 ├── scripts/                     download_models.py · jev_benchmark.py
@@ -135,10 +144,14 @@ copia anonimizada en `data/sample/` (pendiente).
 
 ## Costes y privacidad
 
-- **Coste por ejecución:** modelos baratos por OpenRouter (DeepSeek / Gemini Flash). Voz, vídeo y embeddings
-  corren en local y gratis. Las cifras medidas se añadirán al cerrar cada agente.
-- **Privacidad:** los datos de la empresa, el índice del RAG y las salidas generadas no salen del PC: están
-  fuera de Git. El `golden set` contiene correos internos de mesas, así que el repositorio debe ser **privado**.
+- **Coste por ejecución v2:** presupuesto inicial de 5 USD en OpenRouter para texto, revisiones, ilustraciones
+  y voz. Reserva antes de llamar y registro del coste comunicado. Jev se contabiliza por separado.
+  Chromium y ffmpeg funcionan localmente. V1 conserva su voz local.
+- **Datos:** el corpus y los artefactos se guardan localmente y quedan fuera de Git. La redacción envía los
+  fragmentos seleccionados a OpenRouter; la verificación envía afirmaciones y pasajes a Jev/TypeSafe.
+  En v2 la síntesis de voz también utiliza OpenRouter; la composición y el montaje se ejecutan localmente.
+  El `golden set` contiene correos internos de
+  mesas, así que el repositorio debe ser **privado**.
 
 ## Equipo
 

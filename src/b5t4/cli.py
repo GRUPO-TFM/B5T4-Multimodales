@@ -2,11 +2,12 @@
 Línea de comandos. Todo lo que hace la app se puede lanzar también desde aquí (útil para depurar y para la demo).
 
     uv run b5t4 check                      ¿encuentro la carpeta de datos, las claves y los modelos de voz?
-    uv run b5t4 onboarding                 agente 1 (hoy: escribe el dosier de partida y se detiene)
+    uv run b5t4 onboarding                 agente 1: informe, infografía y vídeo verificados
+    uv run b5t4 onboarding --resume RUTA   reanuda las etapas de una ejecución
     uv run b5t4 opinion                    agente 2: informe de cambios entre las dos últimas Opinión Corporativa
     uv run b5t4 opinion --referencia       agente 2 sin LLM en la lectura (extracción de referencia): para probar
     uv run b5t4 opinion --eval             agente 2: ¿lee bien el LLM los PDF? (frente a la referencia)
-    uv run b5t4 opinion --video            agente 2: informe + vídeo resumen de 60-90 s en out/opinion/<fecha>/video/
+    uv run b5t4 opinion --video            agente 2: informe + vídeo resumen de ≤ 2 min en out/opinion/<fecha>/video/
     uv run b5t4 rag chunks                 agente 3: trocea el corpus y enseña estadísticas
     uv run b5t4 rag index                  agente 3: (re)construye el índice en index/ (hacerlo si cambian los datos)
     uv run b5t4 rag ask "¿…?" [--voice]    agente 3: pregunta; respuesta citada (y en voz con --voice)
@@ -61,10 +62,13 @@ def cmd_check(_args) -> int:
     return 0
 
 
-def cmd_onboarding(_args) -> int:
+def cmd_onboarding(args) -> int:
     from .agents.onboarding import run
+    from pathlib import Path
+    import json
 
-    return _run_agent(run)
+    brief = json.loads(Path(args.brief).read_text(encoding="utf-8")) if args.brief else None
+    return _run_agent(lambda: run(resume=Path(args.resume) if args.resume else None, report_only=args.report_only, brief=brief))
 
 
 def cmd_opinion(args) -> int:
@@ -173,12 +177,16 @@ def main(argv: list[str] | None = None) -> None:
     p = argparse.ArgumentParser(prog="b5t4", description="MVP B5-T4 · onboarding, opinión corporativa y preguntas sobre la carpeta del equipo")
     sub = p.add_subparsers(dest="cmd", required=True)
     sub.add_parser("check", help="comprueba datos, claves y modelos").set_defaults(fn=cmd_check)
-    sub.add_parser("onboarding", help="agente 1: informe + infografía + vídeo de onboarding").set_defaults(fn=cmd_onboarding)
-    o = sub.add_parser("opinion", help="agente 2: cambios en la Opinión Corporativa (informe, gráficos y JSON)")
+    onboarding = sub.add_parser("onboarding", help="agente 1: informe + infografía + vídeo de onboarding")
+    onboarding.add_argument("--resume", metavar="CARPETA", help="reanudar una ejecución conservando las etapas terminadas")
+    onboarding.add_argument("--brief", metavar="JSON", help="encargo personalizado v2 en JSON")
+    onboarding.add_argument("--report-only", action="store_true", help="solo informe; v1 permite borrador sin Jev, v2 exige verificación")
+    onboarding.set_defaults(fn=cmd_onboarding)
+    o = sub.add_parser("opinion", help="agente 2: cambios en la Opinión Corporativa (informe, gráficos, JSON y vídeo)")
     o.add_argument("--referencia", action="store_true", help="usar la extracción de referencia (sin LLM) en el paso 2")
     o.add_argument("--sin-cache", action="store_true", help="volver a leer los PDF con el LLM aunque ya estén extraídos")
     o.add_argument("--eval", action="store_true", help="medir la extracción con LLM frente a la de referencia")
-    o.add_argument("--video", action="store_true", help="además del informe, el vídeo resumen (voz Kokoro + fotogramas)")
+    o.add_argument("--video", action="store_true", help="además del informe, el vídeo resumen (voz Gemini TTS o Kokoro + fotogramas)")
     o.set_defaults(fn=cmd_opinion)
     r = sub.add_parser("rag", help="agente 3: preguntas de empleados")
     r.add_argument("action", choices=["chunks", "index", "ask", "eval"])
