@@ -86,7 +86,10 @@ copia anonimizada en `data/sample/` (pendiente).
 |---|---|---|
 | `uv run b5t4 check` | Comprueba la carpeta de datos, el manifiesto, los contextos, las claves, la voz y ffmpeg | ✅ |
 | `uv run b5t4 onboarding` | Agente 1. Hoy escribe el dosier de partida en `out/onboarding/` | 🟡 paso 1 de 6 |
-| `uv run b5t4 opinion` | Agente 2. Hoy lista las ediciones de la Opinión Corporativa | 🟡 paso 1 de 5 |
+| `uv run b5t4 opinion` | Agente 2. Informe para clientes de los cambios entre las dos últimas Opinión Corporativa: HTML (móvil) con la fuente de cada dato (línea literal + página + enlace al PDF), el «porqué» de cada cambio con cita literal verificada, 3 gráficos PNG y `cambios.json` en `out/opinion/` | ✅ v1 |
+| `uv run b5t4 opinion --referencia` | Agente 2 sin LLM en la lectura de los PDF (extracción de referencia de `evals/`): para probar sin claves | ✅ |
+| `uv run b5t4 opinion --eval` | Agente 2. ¿Lee bien el LLM los PDF? Aciertos frente a la referencia, por bloque | ✅ |
+| `uv run b5t4 opinion --video` | Agente 2. Además del informe, vídeo resumen de ≤ 2 min (voz Gemini TTS por OpenRouter, ≈ 0,03 $; Kokoro local de respaldo) con los cambios y el «porqué» de la casa, en `out/opinion/<fecha>/video/video.mp4` | ✅ v2 |
 | `uv run b5t4 rag chunks` | Agente 3. Trocea el corpus (~2.700 fragmentos con metadatos) | ✅ |
 | `uv run b5t4 rag index` | Agente 3. Construye el índice BM25 en `index/` (≈ 3 s; repetir si cambian los datos) | ✅ |
 | `uv run b5t4 rag ask "…" [--voice]` | Agente 3. Respuesta citada; en voz con `--voice`. Sin clave de OpenRouter, modo extractivo (enseña el pasaje) | ✅ v0 |
@@ -118,7 +121,7 @@ copia anonimizada en `data/sample/` (pendiente).
 │   ├── render/                  CAPA DE SALIDA: report.py · video.py · infographic.py (pendiente) · templates/
 │   ├── agents/                  LÓGICA DE NEGOCIO, un agente por carpeta
 │   │   ├── onboarding/          agente 1
-│   │   ├── opinion/             agente 2
+│   │   ├── opinion/             agente 2 (tts.py: voz Gemini con caché por frase y respaldo Kokoro)
 │   │   └── rag/                 agente 3: index.py · answer.py
 │   └── app/ui.py                CAPA DE INTERFAZ (Gradio)
 ├── evals/preguntas_rag.yaml     golden set del agente 3 (15 preguntas con fuente; 1 trampa)

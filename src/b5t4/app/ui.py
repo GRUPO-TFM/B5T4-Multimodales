@@ -28,12 +28,26 @@ def _onboarding():
     return f"Salida en `{out}`"
 
 
-def _opinion():
-    from ..agents.opinion import list_editions, run
+def _opinion(reference: bool = False, video: bool = False):
+    """Ejecuta el agente 2 y devuelve (resumen en Markdown, ruta del informe HTML, gráficos PNG, vídeo o None)."""
+    import json
 
-    eds = list_editions()
-    head = "Ediciones encontradas:\n\n" + "\n".join(f"- {e.date} · {e.label}" for e in eds) + "\n\n"
-    return head + str(_safe(run))
+    from ..agents.opinion import run
+
+    out = run(reference=reference)
+    mp4 = None
+    if video:
+        from ..agents.opinion.video import make_video
+
+        mp4 = str(make_video(out))
+    data = json.loads((out / "cambios.json").read_text(encoding="utf-8"))
+    ed = " → ".join(f"{e['label']} ({e['fecha']})" for e in data["ediciones"])
+    heads = [c for c in data["cambios"] if c["kind"] == "postura"]
+    md = [f"**{ed}**", "", data.get("resumen") or ""]
+    md += [f"- **{c['label']}**: {c['before']} → **{c['after']}**" for c in heads]
+    md += ["", f"Informe completo: `{out / 'informe.html'}`", "", f"<sub>{data['estadisticas'].get('verified', '')} · "
+           f"{data['estadisticas'].get('segundos', {}).get('total', '?')} s</sub>"]
+    return "\n".join(md), str(out / "informe.html"), [str(p) for p in sorted(out.glob("*.png"))], mp4
 
 
 def _ask(question: str, want_voice: bool):
@@ -58,9 +72,21 @@ def build():
             b1, o1 = gr.Button("Generar onboarding", variant="primary"), gr.Markdown()
             b1.click(lambda: _safe(_onboarding), outputs=o1)
         with gr.Tab("2 · Opinión Corporativa"):
-            gr.Markdown("Qué ha cambiado entre ediciones de la Opinión Corporativa: informe y vídeo de los cambios.")
-            b2, o2 = gr.Button("Comparar ediciones", variant="primary"), gr.Markdown()
-            b2.click(lambda: _safe(_opinion), outputs=o2)
+            gr.Markdown("Qué ha cambiado entre las dos últimas ediciones de la Opinión Corporativa: informe para clientes, gráficos y JSON.")
+            with gr.Row():
+                ref = gr.Checkbox(label="Extracción de referencia (sin LLM en la lectura de los PDF)", value=False)
+                vid = gr.Checkbox(label="Generar también el vídeo resumen (≈ 2 min de proceso)", value=False)
+            b2 = gr.Button("Comparar las dos últimas ediciones", variant="primary")
+            o2 = gr.Markdown()
+            with gr.Row():
+                f2, v2 = gr.File(label="Informe HTML"), gr.Video(label="Vídeo resumen")
+            g2 = gr.Gallery(label="Gráficos", columns=3, height="auto")
+
+            def _op(r, v):
+                res = _safe(_opinion, r, v)
+                return (res, None, [], None) if isinstance(res, str) else res
+
+            b2.click(_op, inputs=[ref, vid], outputs=[o2, f2, g2, v2])
         with gr.Tab("3 · Pregunta"):
             gr.Markdown("Pregunta lo que preguntaría cualquier empleado. Respuesta citada, en texto y en voz.")
             q = gr.Textbox(label="Pregunta", placeholder="¿A qué correo hay que enviar la operativa de Luxemburgo?")

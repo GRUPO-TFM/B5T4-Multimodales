@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }}</title>
+<style>
+  :root{--rojo:#D52B1E;--gris:#928B81;--fondo:#f4f2f0;--tinta:#1d1d1b;--linea:#e2ddd7;--verde:#3f8a53;--ambar:#b7791f;
+        --v-sob:#4f9a63;--v-nsob:#a9cdb0;--v-neu:#dcd7d1;--v-ninf:#e9b3ad;--v-inf:#c9564c;--v-neg:#a8322a}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--fondo);color:var(--tinta);font:16px/1.55 "Myriad Pro",Calibri,"Segoe UI",Arial,sans-serif}
+  header{background:#fff;border-bottom:4px solid var(--rojo);padding:18px 20px}
+  header .marca{font-weight:700;color:var(--rojo);letter-spacing:.5px}
+  header h1{margin:6px 0 4px;font-size:1.55rem;line-height:1.2}
+  header .meta{color:var(--gris);font-size:.9rem}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .chip{background:var(--fondo);border:1px solid var(--linea);border-radius:999px;padding:4px 12px;font-size:.85rem}
+  .chip a{color:var(--tinta);text-decoration:none;border-bottom:1px dotted var(--gris)}
+  main{max-width:980px;margin:0 auto;padding:20px}
+  h2{color:var(--rojo);margin:2.2rem 0 .8rem;border-bottom:1px solid var(--linea);padding-bottom:.3rem;font-size:1.3rem}
+  h3{margin:1.4rem 0 .6rem;font-size:1.05rem}
+  p{margin:.5rem 0}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+  .kpi{background:#fff;border-radius:8px;padding:12px 14px;border-left:4px solid var(--rojo)}
+  .kpi b{display:block;font-size:1.6rem;line-height:1.1}
+  .kpi span{color:var(--gris);font-size:.82rem}
+  .lead{background:#fff;border-radius:8px;padding:14px 16px;border-left:4px solid var(--gris)}
+  .card{background:#fff;border-radius:8px;padding:14px 16px;margin:10px 0;border:1px solid var(--linea)}
+  .card .top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px}
+  .region{font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;color:var(--gris)}
+  .asset{font-weight:700;font-size:1.02rem}
+  .flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0 8px;font-size:.92rem}
+  .pill{display:inline-block;border-radius:5px;padding:2px 9px;font-size:.82rem;font-weight:600;white-space:nowrap}
+  .arrow{color:var(--gris)}
+  .s-SOBREPONDERAR,.s-FAVORABLE{background:var(--v-sob);color:#fff}
+  .s-NEUTRAL-SOBREPONDERAR{background:var(--v-nsob)}
+  .s-NEUTRAL{background:var(--v-neu)}
+  .s-NEUTRAL-INFRAPONDERAR{background:var(--v-ninf)}
+  .s-INFRAPONDERAR{background:var(--v-inf);color:#fff}
+  .s-NEGATIVO{background:var(--v-neg);color:#fff}
+  .s-none{background:#fff;border:1px dashed var(--gris);color:var(--gris)}
+  .badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .badge{font-size:.75rem;border-radius:999px;padding:2px 9px;background:var(--fondo);border:1px solid var(--linea);color:var(--tinta)}
+  .badge.ok{border-color:var(--verde);color:var(--verde)}
+  .badge.warn{border-color:var(--ambar);color:var(--ambar)}
+  .badge.muted{color:var(--gris)}
+  .badge.new{border-color:var(--rojo);color:var(--rojo)}
+  .ctx{color:#5c5852;font-size:.8rem;margin-top:6px;line-height:1.4}
+  details{margin-top:8px;font-size:.88rem}
+  details summary{cursor:pointer;color:var(--rojo);font-weight:600;list-style:none}
+  details summary::before{content:"▸ "} details[open] summary::before{content:"▾ "}
+  .quote{background:var(--fondo);border-left:3px solid var(--rojo);padding:8px 12px;margin:6px 0;border-radius:4px}
+  .quote .src{display:block;color:var(--gris);font-size:.8rem;margin-top:3px}
+  .quote a{color:var(--rojo)}
+  .tw{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:1rem 0;background:#fff;border-radius:6px}
+  table{border-collapse:collapse;width:100%;min-width:560px;font-size:.9rem}
+  th{background:var(--rojo);color:#fff;text-align:left;padding:8px 10px;white-space:nowrap}
+  td{border-top:1px solid var(--linea);padding:7px 10px;vertical-align:top}
+  td.num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  td details{margin:0} td details summary{font-weight:500}
+  .up{color:var(--verde);font-weight:600} .down{color:var(--rojo);font-weight:600}
+  figure{margin:1rem 0;background:#fff;border-radius:8px;padding:10px;border:1px solid var(--linea)}
+  figure img{max-width:100%;height:auto;display:block;margin:0 auto}
+  figcaption{color:var(--gris);font-size:.82rem;padding:6px 2px 0}
+  .legend{font-size:.82rem;color:var(--gris)}
+  .why{margin-top:8px;background:var(--fondo);border-radius:6px;padding:8px 12px}
+  .why-h{font-size:.78rem;text-transform:uppercase;letter-spacing:.5px;color:var(--rojo);font-weight:700;margin-bottom:2px}
+  .why ul{margin:4px 0 0 18px;padding:0} .why li{margin:3px 0}
+  details.inline{display:inline;margin:0 0 0 6px;font-size:.82rem} details.inline summary{display:inline;color:var(--gris)}
+  details.inline .quote{margin-top:6px}
+  .card.slim{padding:10px 14px}
+  .method li{margin:.25rem 0}
+  footer{color:var(--gris);font-size:.78rem;text-align:center;padding:24px 16px}
+  .legal{font-size:.82rem;color:#5c5852;background:#fff;border-radius:8px;padding:12px 14px;border:1px solid var(--linea)}
+  @media (max-width:600px){header h1{font-size:1.25rem} main{padding:14px} .kpi b{font-size:1.35rem}}
+</style>
+</head>
+<body>
+<header>
+  <div class="marca">{{ brand }}</div>
+  <h1>{{ title }}</h1>
+  <div class="meta">Resumen informativo para clientes · generado el {{ date }}</div>
+  <div class="chips">
+    {% for e in editions %}<span class="chip">{{ e.role }}: <a href="{{ e.uri }}" title="{{ e.file }}">{{ e.label }}</a> · {{ e.date }}</span>{% endfor %}
+  </div>
+</header>
+<main>
+
+<div class="kpis">
+  <div class="kpi"><b>{{ kpi.stance }}</b><span>cambios de recomendación</span></div>
+  <div class="kpi"><b>{{ kpi.targets }}</b><span>objetivos revisados</span></div>
+  <div class="kpi"><b>{{ kpi.trends }}</b><span>temas que entran o salen</span></div>
+  {% if kpi.why %}<div class="kpi"><b>{{ kpi.why }}</b><span>argumentos de la casa con cita literal{% if kpi.why_new %} · {{ kpi.why_new }} nuevos{% endif %}</span></div>{% endif %}
+  <div class="kpi"><b>{{ kpi.verified }}</b><span>{{ kpi.verified_label }}</span></div>
+</div>
+
+<h2>Lo esencial</h2>
+<div class="lead">
+  {% if summary %}<p>{{ summary }}</p>{% endif %}
+  <ul>
+  {% for c in headline %}<li>{{ c.text }}</li>{% endfor %}
+  </ul>
+</div>
+
+{% macro badges(c) %}
+<div class="badges">
+  {% if c.status == 'publicar' %}<span class="badge ok">✓ verificada por Jev{% if c.support is not none %} ({{ '%.0f'|format(c.support*100) }} %){% endif %}</span>
+  {% elif c.status == 'factual' %}<span class="badge muted">frase factual (sin LLM)</span>
+  {% elif c.status == 'revisar' %}<span class="badge warn">a revisar{% if c.support is not none %} (respaldo {{ '%.0f'|format(c.support*100) }} %){% endif %}</span>
+  {% elif c.status.startswith('sustituida') %}<span class="badge warn">{{ c.status }}</span>
+  {% else %}<span class="badge muted">{{ c.status }}</span>{% endif %}
+  {% for ch in c.checks %}<span class="badge {{ 'warn' if ch.startswith('⚠') else 'ok' }}">{{ ch }}</span>{% endfor %}
+</div>
+{% endmacro %}
+
+{% macro why(c) %}
+{% if c.rationale %}
+<div class="why"><div class="why-h">Por qué, según la casa</div>
+  <ul>
+  {% for p in c.rationale %}<li>{{ p.point }}{% if p.new %} <span class="badge new">nuevo en esta edición</span>{% endif %}{% if p.status == 'revisar' %} <span class="badge warn">a revisar</span>{% endif %}
+    <details class="inline"><summary>cita</summary><div class="quote">«{{ p.quote }}»<span class="src">{{ curr.label }}, p. {{ p.page }} · <a href="{{ curr.uri }}#page={{ p.page }}">abrir el PDF</a>{% if p.support is not none %} · respaldo {{ '%.0f'|format(p.support*100) }} %{% endif %}</span>
+      {% if p.contexto %}<div class="ctx">En su contexto: «…{{ p.contexto }}…»</div>{% endif %}</div></details></li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+{% endmacro %}
+
+{% macro source(c) %}
+{% if c.evidence_after or c.evidence_before %}
+<details><summary>Ver la fuente</summary>
+  {% if c.evidence_before %}<div class="quote">«{{ c.evidence_before }}»<span class="src">{{ prev.label }}, p. {{ c.page_before }} · <a href="{{ prev.uri }}#page={{ c.page_before }}">abrir el PDF</a></span></div>{% endif %}
+  {% if c.evidence_after %}<div class="quote">«{{ c.evidence_after }}»<span class="src">{{ curr.label }}, p. {{ c.page_after }} · <a href="{{ curr.uri }}#page={{ c.page_after }}">abrir el PDF</a></span></div>{% endif %}
+</details>
+{% endif %}
+{% endmacro %}
+
+{% if stance %}
+<h2>Cambios de recomendación</h2>
+{% for c in stance %}
+<div class="card">
+  <div class="top"><span class="region">{{ c.group }}</span><span class="asset">{{ c.label }}</span></div>
+  <div class="flow"><span class="pill s-{{ c.s_before }}">{{ c.before }}</span><span class="arrow">→</span><span class="pill s-{{ c.s_after }}">{{ c.after }}</span>
+    {% if c.delta_txt %}<span class="{{ 'up' if c.delta > 0 else 'down' }}">{{ c.delta_txt }}</span>{% endif %}</div>
+  <p>{{ c.explanation }}</p>
+  {{ why(c) }}
+  {{ badges(c) }}
+  {{ source(c) }}
+</div>
+{% endfor %}
+{% endif %}
+
+{% if gone_new %}
+<h3>Activos que entran o salen del documento</h3>
+{% for c in gone_new %}
+<div class="card">
+  <div class="top"><span class="region">{{ c.group }}</span><span class="asset">{{ c.label }}</span></div>
+  <div class="flow"><span class="pill s-{{ c.s_before }}">{{ c.before or 'no figuraba' }}</span><span class="arrow">→</span><span class="pill s-{{ c.s_after }}">{{ c.after or 'no figura' }}</span></div>
+  <p>{{ c.explanation }}</p>
+  {{ badges(c) }}
+  {{ source(c) }}
+</div>
+{% endfor %}
+{% endif %}
+
+{% if charts.stances %}
+<figure><img src="{{ charts.stances }}" alt="Mapa de recomendaciones por activo"><figcaption>Mapa de recomendaciones por activo. Verde: sobreponderar o favorable · gris: neutral · rojo: infraponderar o negativo. Con ●, los activos con algún cambio.</figcaption></figure>
+{% endif %}
+
+{% if targets %}
+<h2>Objetivos revisados en las recomendaciones</h2>
+<div class="tw"><table>
+<tr><th>Región</th><th>Activo</th><th>{{ prev.label }}</th><th>{{ curr.label }}</th><th>Cambio</th><th>Fuente</th></tr>
+{% for c in targets %}
+<tr><td>{{ c.group }}</td><td>{{ c.label }}</td><td>{{ c.before }}</td><td><b>{{ c.after }}</b></td>
+  <td class="num {{ 'up' if c.direction == 'al alza' else ('down' if c.direction == 'a la baja' else '') }}">{{ c.delta_txt or ('▲' if c.direction == 'al alza' else ('▼' if c.direction == 'a la baja' else '■')) }}</td>
+  <td><details><summary>p. {{ c.page_after }}</summary><div class="quote">«{{ c.evidence_after }}»<span class="src"><a href="{{ curr.uri }}#page={{ c.page_after }}">abrir el PDF</a></span></div>
+      {% if c.evidence_before %}<div class="quote">«{{ c.evidence_before }}»<span class="src">{{ prev.label }}, p. {{ c.page_before }}</span></div>{% endif %}</details></td></tr>
+{% endfor %}
+</table></div>
+{% for c in targets %}
+<div class="card slim"><p><b>{{ c.label }}.</b> {{ c.explanation }}{% if c.status == 'revisar' %} <span class="badge warn">a revisar</span>{% endif %}</p>{{ why(c) }}</div>
+{% endfor %}
+{% endif %}
+
+{% if charts.pb %}<figure><img src="{{ charts.pb }}" alt="Rendimientos y diferenciales objetivo revisados"><figcaption>Cambio en los rendimientos y diferenciales objetivo (puntos básicos). Un objetivo de rendimiento más alto implica un precio objetivo del bono más bajo.</figcaption></figure>{% endif %}
+{% if charts.pct %}<figure><img src="{{ charts.pct }}" alt="Objetivos de índices, divisas y materias primas"><figcaption>Cambio en los objetivos de índices, divisas y materias primas (%).</figcaption></figure>{% endif %}
+
+{% if table_rows %}
+<h2>Tabla sinóptica de rentabilidades esperadas</h2>
+<p class="legend">Objetivos a cierre de año leídos de la imagen de la tabla con un modelo de visión. En renta fija el objetivo es un rendimiento (%) y el cambio se mide en puntos básicos; en crédito, un diferencial (pb). En índices, divisas y materias primas se comprueba que la rentabilidad esperada publicada coincide con objetivo/precio − 1 («suma de control»).</p>
+<ul>{% for c in groups %}<li>{{ c.explanation }}</li>{% endfor %}</ul>
+<div class="tw"><table>
+<tr><th>Bloque</th><th>Activo</th><th>Objetivo {{ prev.label }}</th><th>Objetivo {{ curr.label }}</th><th>Cambio</th><th>Control</th></tr>
+{% for c in table_rows %}
+<tr><td>{{ c.group_es }}</td><td>{{ c.label }}</td><td class="num">{{ c.before }}</td><td class="num"><b>{{ c.after }}</b></td>
+  <td class="num {{ 'up' if c.delta > 0 else 'down' }}">{{ c.delta_txt }}</td>
+  <td>{% for ch in c.checks %}<span class="badge {{ 'warn' if ch.startswith('⚠') else 'ok' }}">{{ '⚠ revisar' if ch.startswith('⚠') else '✓' }}</span>{% else %}<span class="badge muted">n/a</span>{% endfor %}</td></tr>
+{% endfor %}
+</table></div>
+{% if table_image %}
+<details><summary>Ver la tabla original ({{ curr.label }}, p. {{ table_page }})</summary>
+  <figure><img src="{{ table_image }}" alt="Tabla sinóptica original"><figcaption>Página {{ table_page }} del PDF · <a href="{{ curr.uri }}#page={{ table_page }}">abrir el PDF</a></figcaption></figure>
+</details>
+{% endif %}
+{% endif %}
+
+{% if trends or current_trends %}
+<h2>Tendencias estructurales</h2>
+{% for c in trends %}
+<div class="card">
+  <div class="top"><span class="region">{{ 'tema nuevo' if c.kind == 'tendencia_nueva' else ('deja de figurar' if c.kind == 'tendencia_sale' else 'cambia la conclusión') }}</span><span class="asset">{{ c.label }}</span></div>
+  <div class="flow"><span class="pill s-none">{{ c.before or '—' }}</span><span class="arrow">→</span><span class="pill s-none">{{ c.after or '—' }}</span></div>
+  <p>{{ c.explanation }}</p>
+  {{ why(c) }}
+  {{ badges(c) }}
+  {{ source(c) }}
+</div>
+{% endfor %}
+{% if current_trends %}
+<div class="tw"><table><tr><th>Tema ({{ curr.label }})</th><th>Conclusión de la casa</th><th>Fuente</th></tr>
+{% for t in current_trends %}<tr><td>{{ t.title }}</td><td><b>{{ t.conclusion }}</b></td><td><details><summary>p. {{ t.page }}</summary><div class="quote">«{{ t.evidence or '—' }}»<span class="src"><a href="{{ curr.uri }}#page={{ t.page }}">abrir el PDF</a></span></div></details></td></tr>{% endfor %}
+</table></div>
+{% endif %}
+{% endif %}
+
+{% if risks %}
+<h2>Oro: riesgos que vigila la casa</h2>
+{% for c in risks %}
+<div class="card">
+  <div class="top"><span class="asset">{{ c.label }}</span></div>
+  <div class="flow"><span class="pill s-none">{{ c.before }}</span><span class="arrow">→</span><span class="pill s-none">{{ c.after }}</span></div>
+  <p>{{ c.explanation }}</p>
+  {{ why(c) }}
+  {{ badges(c) }}
+  <details><summary>Ver la fuente</summary><div class="quote">{{ curr.label }}, p. {{ c.page_after }} · <a href="{{ curr.uri }}#page={{ c.page_after }}">abrir el PDF</a></div></details>
+</div>
+{% endfor %}
+{% endif %}
+
+{% if same %}
+<h2>Lo que se mantiene</h2>
+<div class="tw"><table><tr><th>Región</th><th>Activo</th><th>Recomendación</th></tr>
+{% for r, l, s in same %}<tr><td>{{ r }}</td><td>{{ l }}</td><td>{{ s }}</td></tr>{% endfor %}
+</table></div>
+{% endif %}
+
+<h2>Cómo se ha elaborado</h2>
+<ul class="method">
+  <li><b>Fuentes:</b> {% for e in editions %}<a href="{{ e.uri }}">{{ e.file }}</a>{{ ' y ' if not loop.last }}{% endfor %}. Cada dato enlaza con la página de la que procede; el texto entre comillas es literal del PDF.</li>
+  <li><b>Lectura:</b> {{ stats.views_a }} y {{ stats.views_b }} recomendaciones extraídas del texto ({{ stats.extraccion }}); la tabla sinóptica ({{ stats.rows_b }} filas) se ha leído de la imagen de la página con un modelo de visión y se ha comprobado fila a fila.</li>
+  <li><b>Comparación:</b> automática y determinista, activo por activo. Ningún cambio procede de una interpretación libre. Donde el mismo objetivo aparece en el texto y en la tabla, se ha cruzado ({{ stats.cross }}).</li>
+  <li><b>Verificación de las frases:</b> {{ stats.verified }}.</li>
+  <li><b>Coste y tiempo de esta ejecución:</b> {{ stats.cost }} · {{ stats.time }}.</li>
+</ul>
+<p class="legend">Marcas: <span class="badge ok">✓</span> comprobación superada · <span class="badge warn">⚠</span> algo no cuadra y conviene mirar la fuente · <span class="badge muted">frase factual</span> texto generado sin modelo de lenguaje · <span class="badge new">nuevo en esta edición</span> argumento que no aparecía en la edición anterior.</p>
+
+<h2>Aviso legal</h2>
+<div class="legal">{{ legal }}</div>
+</main>
+<footer>Andbank · Resumen informativo de la Opinión Corporativa · no constituye recomendación personalizada</footer>
+</body>
+</html>

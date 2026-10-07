@@ -33,7 +33,7 @@ height = 1080
 voice = "em_alex"          # Kokoro: em_alex (masculina) · ef_dora (femenina)
 speed = 1.1
 max_seconds = 120          # tope del vídeo de onboarding (2 minutos)
-words_per_second = 2.3     # ≈ 140 palabras/min en español: sirve para presupuestar la locución antes de sintetizar
+words_per_second = 2.8     # medido con Kokoro em_alex a 1,1 (7-oct-2026): sirve para presupuestar la locución antes de sintetizar
 brand = "Gestión Discrecional"
 
 [rag]
@@ -41,3 +41,27 @@ index_dir = "index"                                  # se genera en local; no se
 embedding_model = "intfloat/multilingual-e5-small"   # propuesta; se decide al construir el agente 3
 chunk_tokens = 450
 top_k = 8
+
+[opinion]
+# Agente 2 (Opinión Corporativa). Lo lee agents/opinion/llmcall.py; no pasa por config.py.
+# model_text  = "google/gemini-3.8-flash"     # lectura de los bloques de texto y redacción (por defecto, llm.model_main)
+# model_vision = "google/gemini-3.8-flash"    # tabla sinóptica (imagen)                      (por defecto, llm.model_vision)
+reasoning = "low"                              # OpenRouter reasoning.effort. Gemini 3.8 Flash no admite «none» (exige razonar): «low» es el mínimo
+                                               # que acepta. Si un modelo rechaza el nivel, el agente baja solo (minimal → low → sin parámetro)
+pdf_url_base = ""                              # si los PDF están publicados (intranet/SharePoint), los enlaces «abrir el PDF» apuntan ahí;
+                                               # vacío = enlace al fichero local (sirve al equipo, no a un cliente externo)
+
+# Voz del vídeo (--video). provider = "gemini" (OpenRouter, ≈ 0,03 $/vídeo, mejor prosodia) | "kokoro" (local, gratis).
+# Si Gemini falla por lo que sea, el vídeo entero se hace con Kokoro. Voces de Gemini: Charon (informativa, masculina),
+# Kore (firme), Algieba (suave), Achernar (suave, femenina)… La instrucción de estilo va en lenguaje natural.
+[opinion.tts]
+provider = "gemini"
+model = "google/gemini-3.8-flash-tts"
+voice = "Charon"
+style = "Lee en español de España como un presentador de informes financieros: tono sereno, claro y pausado, sin énfasis dramático. Pronuncia las cifras y los porcentajes de forma natural."
+
+# Precios USD por millón de tokens (entrada, salida), solo para estimar el coste de cada ejecución
+[opinion.prices]
+"google/gemini-3.8-flash" = [0.75, 3.75]
+"deepseek/deepseek-v4.1-flash" = [0.055, 1.32]
+"google/gemini-3.8-flash-tts" = [0.5, 9.0]     # salida = tokens de audio (≈ 32 por segundo de voz); se duplica el 1-ene-2027

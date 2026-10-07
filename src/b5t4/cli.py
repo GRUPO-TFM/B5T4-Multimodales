@@ -3,7 +3,10 @@ Línea de comandos. Todo lo que hace la app se puede lanzar también desde aquí
 
     uv run b5t4 check                      ¿encuentro la carpeta de datos, las claves y los modelos de voz?
     uv run b5t4 onboarding                 agente 1 (hoy: escribe el dosier de partida y se detiene)
-    uv run b5t4 opinion                    agente 2 (hoy: lista las ediciones y se detiene)
+    uv run b5t4 opinion                    agente 2: informe de cambios entre las dos últimas Opinión Corporativa
+    uv run b5t4 opinion --referencia       agente 2 sin LLM en la lectura (extracción de referencia): para probar
+    uv run b5t4 opinion --eval             agente 2: ¿lee bien el LLM los PDF? (frente a la referencia)
+    uv run b5t4 opinion --video            agente 2: informe + vídeo resumen de 60-90 s en out/opinion/<fecha>/video/
     uv run b5t4 rag chunks                 agente 3: trocea el corpus y enseña estadísticas
     uv run b5t4 rag index                  agente 3: (re)construye el índice en index/ (hacerlo si cambian los datos)
     uv run b5t4 rag ask "¿…?" [--voice]    agente 3: pregunta; respuesta citada (y en voz con --voice)
@@ -64,10 +67,22 @@ def cmd_onboarding(_args) -> int:
     return _run_agent(run)
 
 
-def cmd_opinion(_args) -> int:
+def cmd_opinion(args) -> int:
+    if args.eval:
+        from .agents.opinion.evaluate import run_eval
+
+        return _run_agent(lambda: run_eval(use_cache=not args.sin_cache))
     from .agents.opinion import run
 
-    return _run_agent(run)
+    def go():
+        out = run(use_cache=not args.sin_cache, reference=args.referencia)
+        if args.video:
+            from .agents.opinion.video import make_video
+
+            print("6 vídeo")
+            print(f"   {make_video(out)}")
+
+    return _run_agent(go)
 
 
 def cmd_rag(args) -> int:
@@ -159,7 +174,12 @@ def main(argv: list[str] | None = None) -> None:
     sub = p.add_subparsers(dest="cmd", required=True)
     sub.add_parser("check", help="comprueba datos, claves y modelos").set_defaults(fn=cmd_check)
     sub.add_parser("onboarding", help="agente 1: informe + infografía + vídeo de onboarding").set_defaults(fn=cmd_onboarding)
-    sub.add_parser("opinion", help="agente 2: cambios en la Opinión Corporativa").set_defaults(fn=cmd_opinion)
+    o = sub.add_parser("opinion", help="agente 2: cambios en la Opinión Corporativa (informe, gráficos y JSON)")
+    o.add_argument("--referencia", action="store_true", help="usar la extracción de referencia (sin LLM) en el paso 2")
+    o.add_argument("--sin-cache", action="store_true", help="volver a leer los PDF con el LLM aunque ya estén extraídos")
+    o.add_argument("--eval", action="store_true", help="medir la extracción con LLM frente a la de referencia")
+    o.add_argument("--video", action="store_true", help="además del informe, el vídeo resumen (voz Kokoro + fotogramas)")
+    o.set_defaults(fn=cmd_opinion)
     r = sub.add_parser("rag", help="agente 3: preguntas de empleados")
     r.add_argument("action", choices=["chunks", "index", "ask", "eval"])
     r.add_argument("question", nargs="*", help="pregunta (solo con «ask»)")

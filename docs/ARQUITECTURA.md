@@ -55,7 +55,7 @@ flowchart TB
 | Datos | `src/b5t4/corpus/` | Leer el manifiesto, los contextos (troceados por sección) y el texto de cualquier fichero; rasterizar páginas de PDF | Hecho |
 | Modelos | `src/b5t4/models/` | Un adaptador por modalidad con interfaz mínima | LLM, Jev y TTS hechos; STT y embeddings pendientes |
 | Salidas | `src/b5t4/render/` | Informe HTML responsive, infografía, vídeo por fotogramas | Informe y vídeo hechos (motor del prototipo); infografía pendiente |
-| Lógica | `src/b5t4/agents/` | Los tres agentes | Agente 3: v0 funcionando (BM25 + LLM con citas + voz; recall@8 = 14/14 en el golden set). Agentes 1 y 2: primer paso hecho |
+| Lógica | `src/b5t4/agents/` | Los tres agentes | Agente 3: v0 funcionando (BM25 + LLM con citas + voz; recall@8 = 14/14 en el golden set). Agente 2: v1 de texto y gráficos (selección → extracción texto+visión → diff determinista → frase por cambio + Jev → HTML/PNG/JSON). Agente 1: primer paso hecho |
 | Interfaz | `src/b5t4/app/`, `cli.py` | Gradio y línea de comandos | Hecho (muestra «pendiente» donde corresponde) |
 
 ## 3. Por qué la carpeta de datos importa tanto

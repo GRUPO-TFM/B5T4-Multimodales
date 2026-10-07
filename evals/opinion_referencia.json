@@ -1,0 +1,1425 @@
+{
+ "nota": "Extracción de referencia (golden set del agente 2): recomendaciones tomadas de 00_EVOLUCION_RECOMENDACIONES.md; tabla sinóptica transcrita de la imagen (columna de objetivo y color de revisión); tendencias y riesgos del oro del texto. Sirve para medir la extracción con LLM y para probar el agente sin claves.",
+ "ediciones": {
+  "3T 2026": {
+   "fichero": "2026-07-10_Opinion_Corporativa_3T_2026.pdf",
+   "views": [
+    {
+     "asset_id": "us.equity",
+     "label": "Renta variable EE.UU. (S&P 500)",
+     "region": "EE.UU.",
+     "stance": "SOBREPONDERAR",
+     "stance_raw": "SOBREPONDERAR",
+     "target_raw": null,
+     "target_value": null,
+     "target_unit": null,
+     "page": 5
+    },
+    {
+     "asset_id": "us.govt10y",
+     "label": "Bono del Tesoro a 10 años (UST10)",
+     "region": "EE.UU.",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": "rend. objetivo: 4,50%",
+     "target_value": 4.5,
+     "target_unit": "%",
+     "page": 5
+    },
+    {
+     "asset_id": "us.ig",
+     "label": "Crédito grado de inversión EE.UU. (CDX IG)",
+     "region": "EE.UU.",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": "dif. objetivo: 75 pb",
+     "target_value": 75,
+     "target_unit": "pb",
+     "page": 5
+    },
+    {
+     "asset_id": "us.hy",
+     "label": "Crédito high yield EE.UU. (CDX HY)",
+     "region": "EE.UU.",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": "diferencial objetivo: 400 pb",
+     "target_value": 400,
+     "target_unit": "pb",
+     "page": 5
+    },
+    {
+     "asset_id": "us.fx",
+     "label": "Dólar (índice DXY)",
+     "region": "EE.UU.",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": null,
+     "target_value": null,
+     "target_unit": null,
+     "page": 5
+    },
+    {
+     "asset_id": "eu.equity",
+     "label": "Renta variable europea (Stoxx Europe)",
+     "region": "Europa",
+     "stance": "NEUTRAL-INFRAPONDERAR",
+     "stance_raw": "NEUTRAL-INFRAPONDERAR",
+     "target_raw": null,
+     "target_value": null,
+     "target_unit": null,
+     "page": 6
+    },
+    {
+     "asset_id": "eu.govt_core",
+     "label": "Deuda soberana países centrales (Bund)",
+     "region": "Europa",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": "Bund, rendimiento objetivo: 3,0%",
+     "target_value": 3.0,
+     "target_unit": "%",
+     "page": 6
+    },
+    {
+     "asset_id": "eu.govt_periphery",
+     "label": "Deuda soberana periferia (IT, ES, PT, IR, GR)",
+     "region": "Europa",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": "IT 3,75%; ES 3,5%; PT 3,4%; IR 3,3%; GR 3,8%",
+     "target_value": null,
+     "target_unit": "%",
+     "page": 6
+    },
+    {
+     "asset_id": "eu.ig",
+     "label": "Crédito grado de inversión europeo (iTraxx IG)",
+     "region": "Europa",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": "diferencial objetivo: 60 pb",
+     "target_value": 60,
+     "target_unit": "pb",
+     "page": 6
+    },
+    {
+     "asset_id": "eu.hy",
+     "label": "Crédito high yield europeo (iTraxx HY)",
+     "region": "Europa",
+     "stance": "SOBREPONDERAR",
+     "stance_raw": "SOBREPONDERAR",
+     "target_raw": "diferencial objetivo: 260 pb",
+     "target_value": 260,
+     "target_unit": "pb",
+     "page": 6
+    },
+    {
+     "asset_id": "cn.equity_shanghai",
+     "label": "Bolsa de Shanghái",
+     "region": "China",
+     "stance": "INFRAPONDERAR",
+     "stance_raw": "INFRAPONDERAR",
+     "target_raw": null,
+     "target_value": null,
+     "target_unit": null,
+     "page": 7
+    },
+    {
+     "asset_id": "cn.equity_shenzhen",
+     "label": "Bolsa de Shenzhen",
+     "region": "China",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": null,
+     "target_value": null,
+     "target_unit": null,
+     "page": 7
+    },
+    {
+     "asset_id": "cn.equity_star50",
+     "label": "STAR 50",
+     "region": "China",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": null,
+     "target_value": null,
+     "target_unit": null,
+     "page": 7
+    },
+    {
+     "asset_id": "cn.govt10y",
+     "label": "Bono soberano chino a 10 años",
+     "region": "China",
+     "stance": "INFRAPONDERAR",
+     "stance_raw": "INFRAPONDERAR",
+     "target_raw": "rend. objetivo: 1,75%",
+     "target_value": 1.75,
+     "target_unit": "%",
+     "page": 7
+    },
+    {
+     "asset_id": "cn.fx",
+     "label": "Yuan (CNY/USD)",
+     "region": "China",
+     "stance": "INFRAPONDERAR",
+     "stance_raw": "INFRAPONDERAR",
+     "target_raw": "objetivo: 7,00",
+     "target_value": 7.0,
+     "target_unit": "tipo de cambio",
+     "page": 7
+    },
+    {
+     "asset_id": "jp.equity",
+     "label": "Renta variable japonesa (Topix)",
+     "region": "Japón",
+     "stance": "SOBREPONDERAR",
+     "stance_raw": "SOBREPONDERAR",
+     "target_raw": null,
+     "target_value": null,
+     "target_unit": null,
+     "page": 8
+    },
+    {
+     "asset_id": "jp.govt",
+     "label": "Deuda soberana japonesa",
+     "region": "Japón",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": "rendimiento objetivo: 2,75%",
+     "target_value": 2.75,
+     "target_unit": "%",
+     "page": 8
+    },
+    {
+     "asset_id": "jp.fx",
+     "label": "Yen (USD/JPY)",
+     "region": "Japón",
+     "stance": "FAVORABLE",
+     "stance_raw": "FAVORABLE",
+     "target_raw": "objetivo 155",
+     "target_value": 155,
+     "target_unit": "tipo de cambio",
+     "page": 8
+    },
+    {
+     "asset_id": "il.equity",
+     "label": "Renta variable israelí (TLV35)",
+     "region": "Israel",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": null,
+     "target_value": null,
+     "target_unit": null,
+     "page": 9
+    },
+    {
+     "asset_id": "il.govt",
+     "label": "Deuda soberana israelí a 10 años",
+     "region": "Israel",
+     "stance": "SOBREPONDERAR",
+     "stance_raw": "SOBREPONDERAR",
+     "target_raw": null,
+     "target_value": null,
+     "target_unit": null,
+     "page": 9
+    },
+    {
+     "asset_id": "il.corp",
+     "label": "Deuda corporativa israelí",
+     "region": "Israel",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": null,
+     "target_value": null,
+     "target_unit": null,
+     "page": 9
+    },
+    {
+     "asset_id": "il.fx",
+     "label": "Séquel (ILS/USD)",
+     "region": "Israel",
+     "stance": "INFRAPONDERAR",
+     "stance_raw": "INFRAPONDERAR",
+     "target_raw": null,
+     "target_value": null,
+     "target_unit": null,
+     "page": 9
+    },
+    {
+     "asset_id": "br.equity",
+     "label": "Renta variable brasileña (Bovespa)",
+     "region": "Brasil",
+     "stance": "INFRAPONDERAR",
+     "stance_raw": "INFRAPONDERAR",
+     "target_raw": null,
+     "target_value": null,
+     "target_unit": null,
+     "page": 10
+    },
+    {
+     "asset_id": "br.debt_local",
+     "label": "Deuda brasileña en reales (BRL)",
+     "region": "Brasil",
+     "stance": "SOBREPONDERAR",
+     "stance_raw": "SOBREPONDERAR",
+     "target_raw": "900 pb; 13,50%",
+     "target_value": null,
+     "target_unit": null,
+     "page": 10
+    },
+    {
+     "asset_id": "br.debt_usd",
+     "label": "Deuda brasileña en dólares",
+     "region": "Brasil",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": "200 pb; 6,50%",
+     "target_value": null,
+     "target_unit": null,
+     "page": 10
+    },
+    {
+     "asset_id": "br.fx",
+     "label": "Real brasileño (BRL/USD)",
+     "region": "Brasil",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": "5,20",
+     "target_value": 5.2,
+     "target_unit": "tipo de cambio",
+     "page": 10
+    },
+    {
+     "asset_id": "mx.equity",
+     "label": "Renta variable mexicana (IPC)",
+     "region": "México",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": null,
+     "target_value": null,
+     "target_unit": null,
+     "page": 11
+    },
+    {
+     "asset_id": "mx.debt_local",
+     "label": "Deuda mexicana en pesos (MXN)",
+     "region": "México",
+     "stance": "INFRAPONDERAR",
+     "stance_raw": "INFRAPONDERAR",
+     "target_raw": "500 pb; 9,50%",
+     "target_value": null,
+     "target_unit": null,
+     "page": 11
+    },
+    {
+     "asset_id": "mx.debt_usd",
+     "label": "Deuda mexicana en dólares",
+     "region": "México",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": "200 pb; 6,50%",
+     "target_value": null,
+     "target_unit": null,
+     "page": 11
+    },
+    {
+     "asset_id": "mx.fx",
+     "label": "Peso mexicano (MXN/USD)",
+     "region": "México",
+     "stance": "INFRAPONDERAR",
+     "stance_raw": "INFRAPONDERAR",
+     "target_raw": "18,50",
+     "target_value": 18.5,
+     "target_unit": "tipo de cambio",
+     "page": 11
+    },
+    {
+     "asset_id": "ar.govt_usd",
+     "label": "Deuda soberana argentina a 10 años en USD",
+     "region": "Argentina",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": null,
+     "target_value": null,
+     "target_unit": null,
+     "page": 12
+    },
+    {
+     "asset_id": "ar.fx",
+     "label": "Peso argentino (USD/ARS)",
+     "region": "Argentina",
+     "stance": "NEGATIVO",
+     "stance_raw": "NEGATIVO",
+     "target_raw": "objetivo cierre 2026: 1.600",
+     "target_value": 1600,
+     "target_unit": "tipo de cambio",
+     "page": 12
+    }
+   ],
+   "targets": [
+    {
+     "asset_class": "Equity",
+     "index": "USA - S&P 500",
+     "target": 7734,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Equity",
+     "index": "Europe - Stoxx Europe 600",
+     "target": 619,
+     "revision": "al alza"
+    },
+    {
+     "asset_class": "Equity",
+     "index": "SPAIN - IBEX 35",
+     "target": 18360,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Equity",
+     "index": "MEXICO - MXSE IPC",
+     "target": 72600,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Equity",
+     "index": "BRAZIL - BOVESPA",
+     "target": 191900,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Equity",
+     "index": "JAPAN TOPIX",
+     "target": 4291,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Equity",
+     "index": "China SSE Comp. A share",
+     "target": 4355,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Equity",
+     "index": "CHINA - SHENZEN COMPOSITE",
+     "target": 2969,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Equity",
+     "index": "INDIA - SENSEX",
+     "target": 80500,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Equity",
+     "index": "VIETNAM - VN Index",
+     "target": 1918,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Equity",
+     "index": "MSCI EM ASIA (in USD)",
+     "target": 1042,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Core countries",
+     "index": "US Treasury 10 year Govie",
+     "target": 4.5,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Core countries",
+     "index": "UK 10 year Gilt",
+     "target": 4.75,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Core countries",
+     "index": "German 10 year BUND",
+     "target": 3.0,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Core countries",
+     "index": "Japanese 10 year Govie",
+     "target": 2.75,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Peripheral",
+     "index": "Spain - 10yr Gov bond",
+     "target": 3.5,
+     "revision": "al alza"
+    },
+    {
+     "asset_class": "Fixed Income Peripheral",
+     "index": "Italy - 10yr Gov bond",
+     "target": 3.75,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Peripheral",
+     "index": "Portugal - 10yr Gov bond",
+     "target": 3.4,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Peripheral",
+     "index": "Ireland - 10yr Gov bond",
+     "target": 3.3,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Peripheral",
+     "index": "Greece - 10yr Gov bond",
+     "target": 3.8,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Credit",
+     "index": "Credit EUR IG-Itraxx Europe",
+     "target": 60,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Credit",
+     "index": "Credit EUR HY-Itraxx Xover",
+     "target": 260,
+     "revision": "al alza"
+    },
+    {
+     "asset_class": "Fixed Income Credit",
+     "index": "Credit USD IG - CDX IG",
+     "target": 75,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Credit",
+     "index": "Credit USD HY - CDX HY",
+     "target": 400,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income EMEA",
+     "index": "Turkey - 10yr Gov bond (local)",
+     "target": 30.0,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Asia",
+     "index": "China - 10yr Gov bond (local)",
+     "target": 1.75,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Asia",
+     "index": "India - 10yr Gov bond (local)",
+     "target": 6.0,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Asia",
+     "index": "Singapore - 10yr Gov bond (loc",
+     "target": 2.0,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Asia",
+     "index": "Indonesia - 10yr Gov bond (loc",
+     "target": 6.0,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Asia",
+     "index": "South Korea - 10yr Gov bond (l",
+     "target": 3.5,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Asia",
+     "index": "Taiwan - 10yr Gov bond (local)",
+     "target": 1.75,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Asia",
+     "index": "Philippines - 10yr Gov bond (loc",
+     "target": 7.0,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Asia",
+     "index": "Malaysia - 10yr Gov bond (loca",
+     "target": 3.0,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Asia",
+     "index": "Thailand - 10yr Gov bond (loca",
+     "target": 2.25,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Asia",
+     "index": "Vietnam - 10yr Gov bond (local",
+     "target": 5.25,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Latam",
+     "index": "Mexico - 10yr Govie (Loc)",
+     "target": 9.5,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Latam",
+     "index": "Mexico - 10yr Govie (USD)",
+     "target": 6.5,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Latam",
+     "index": "Brazil - 10yr Govie (Loc)",
+     "target": 13.5,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Latam",
+     "index": "Brazil - 10yr Govie (USD)",
+     "target": 6.5,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Commodities",
+     "index": "Oil (WTI)",
+     "target": 70.0,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Commodities",
+     "index": "GOLD",
+     "target": 4000,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "EURUSD (price of 1 EUR)",
+     "target": 1.15,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "GBPUSD (price of 1 GBP)",
+     "target": 1.34,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "EURGBP (price of 1 EUR)",
+     "target": 0.86,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "USDCHF (price of 1 USD)",
+     "target": 0.77,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "EURCHF (price of 1 EUR)",
+     "target": 0.89,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "USDJPY (price of 1 USD)",
+     "target": 155.0,
+     "revision": "a la baja"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "EURJPY (price of 1 EUR)",
+     "target": 178.3,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "USDMXN (price of 1 USD)",
+     "target": 18.5,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "EURMXN (price of 1 EUR)",
+     "target": 21.28,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "USDBRL (price of 1 USD)",
+     "target": 5.2,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "EURBRL (price of 1 EUR)",
+     "target": 5.98,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "USDARS (price of 1 USD)",
+     "target": 1600,
+     "revision": "a la baja"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "USDINR (price of 1 USD)",
+     "target": 95,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "CNY (price of 1 USD)",
+     "target": 7.0,
+     "revision": "sin marcar"
+    }
+   ],
+   "trends": [
+    {
+     "title": "Sector de las tierras raras",
+     "conclusion": "POSITIVA",
+     "summary": "Voluntad firme de EE.UU., UE y Japón de no depender de China en extracción y procesado.",
+     "page": 3
+    },
+    {
+     "title": "Sector «Space»",
+     "conclusion": "NEUTRAL",
+     "summary": "Temática muy interesante, pero con valoraciones elevadas y expectativas por materializar.",
+     "page": 3
+    },
+    {
+     "title": "Desarrolladores de grandes modelos LLM (Claude Mythos) y hardware",
+     "conclusion": "POSITIVA",
+     "summary": "Impacto positivo para los AI labs y mayor adopción; también para la ciberseguridad.",
+     "page": 4
+    },
+    {
+     "title": "Demanda futura de cómputo (Loop Engineering)",
+     "conclusion": "NEUTRAL",
+     "summary": "Posible ralentización de ingresos de los AI labs; la adopción acelerada beneficia a la cadena de infraestructura.",
+     "page": 4
+    }
+   ],
+   "gold_risks": [
+    {
+     "risk": "Tipos nominales y reales en USD más altos",
+     "level": "BAJO-MEDIO",
+     "page": 20
+    },
+    {
+     "risk": "Apreciación del USD",
+     "level": "MEDIO",
+     "page": 20
+    },
+    {
+     "risk": "Pérdida de impulso de los compradores emergentes",
+     "level": "BAJO",
+     "page": 20
+    }
+   ]
+  },
+  "4T 2026": {
+   "fichero": "2026-09-30_Opinion_Corporativa_4T_2026.pdf",
+   "views": [
+    {
+     "asset_id": "us.equity",
+     "label": "Renta variable EE.UU. (S&P 500)",
+     "region": "EE.UU.",
+     "stance": "SOBREPONDERAR",
+     "stance_raw": "SOBREPONDERAR",
+     "target_raw": null,
+     "target_value": null,
+     "target_unit": null,
+     "page": 5
+    },
+    {
+     "asset_id": "us.govt10y",
+     "label": "Bono del Tesoro a 10 años (UST10)",
+     "region": "EE.UU.",
+     "stance": "SOBREPONDERAR",
+     "stance_raw": "SOBREPONDERAR",
+     "target_raw": "rend. objetivo: 5,00%",
+     "target_value": 5.0,
+     "target_unit": "%",
+     "page": 5
+    },
+    {
+     "asset_id": "us.ig",
+     "label": "Crédito grado de inversión EE.UU. (CDX IG)",
+     "region": "EE.UU.",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": "dif. objetivo: 75 pb",
+     "target_value": 75,
+     "target_unit": "pb",
+     "page": 5
+    },
+    {
+     "asset_id": "us.hy",
+     "label": "Crédito high yield EE.UU. (CDX HY)",
+     "region": "EE.UU.",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": "diferencial objetivo: 400 pb",
+     "target_value": 400,
+     "target_unit": "pb",
+     "page": 5
+    },
+    {
+     "asset_id": "us.fx",
+     "label": "Dólar (índice DXY)",
+     "region": "EE.UU.",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": null,
+     "target_value": null,
+     "target_unit": null,
+     "page": 5
+    },
+    {
+     "asset_id": "eu.equity",
+     "label": "Renta variable europea (Stoxx Europe)",
+     "region": "Europa",
+     "stance": "NEUTRAL-SOBREPONDERAR",
+     "stance_raw": "NEUTRAL-SOBREPONDERAR",
+     "target_raw": null,
+     "target_value": null,
+     "target_unit": null,
+     "page": 6
+    },
+    {
+     "asset_id": "eu.govt_core",
+     "label": "Deuda soberana países centrales (Bund)",
+     "region": "Europa",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": "Bund, rendimiento objetivo: 3,5%",
+     "target_value": 3.5,
+     "target_unit": "%",
+     "page": 6
+    },
+    {
+     "asset_id": "eu.govt_periphery",
+     "label": "Deuda soberana periferia (IT, ES, PT, IR, GR)",
+     "region": "Europa",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": "IT 4,25%; ES 4,0%; PT 3,9%; IR 3,8%; GR 4,3%",
+     "target_value": null,
+     "target_unit": "%",
+     "page": 6
+    },
+    {
+     "asset_id": "eu.ig",
+     "label": "Crédito grado de inversión europeo (iTraxx IG)",
+     "region": "Europa",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": "diferencial objetivo: 60 pb",
+     "target_value": 60,
+     "target_unit": "pb",
+     "page": 6
+    },
+    {
+     "asset_id": "eu.hy",
+     "label": "Crédito high yield europeo (iTraxx HY)",
+     "region": "Europa",
+     "stance": "SOBREPONDERAR",
+     "stance_raw": "SOBREPONDERAR",
+     "target_raw": "diferencial objetivo: 260 pb",
+     "target_value": 260,
+     "target_unit": "pb",
+     "page": 6
+    },
+    {
+     "asset_id": "cn.equity_shanghai",
+     "label": "Bolsa de Shanghái",
+     "region": "China",
+     "stance": "INFRAPONDERAR",
+     "stance_raw": "INFRAPONDERAR",
+     "target_raw": null,
+     "target_value": null,
+     "target_unit": null,
+     "page": 7
+    },
+    {
+     "asset_id": "cn.equity_shenzhen",
+     "label": "Bolsa de Shenzhen",
+     "region": "China",
+     "stance": "INFRAPONDERAR",
+     "stance_raw": "INFRAPONDERAR",
+     "target_raw": null,
+     "target_value": null,
+     "target_unit": null,
+     "page": 7
+    },
+    {
+     "asset_id": "cn.equity_star50",
+     "label": "STAR 50",
+     "region": "China",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": null,
+     "target_value": null,
+     "target_unit": null,
+     "page": 7
+    },
+    {
+     "asset_id": "cn.govt10y",
+     "label": "Bono soberano chino a 10 años",
+     "region": "China",
+     "stance": "INFRAPONDERAR",
+     "stance_raw": "INFRAPONDERAR",
+     "target_raw": "rend. objetivo: 1,50%",
+     "target_value": 1.5,
+     "target_unit": "%",
+     "page": 7
+    },
+    {
+     "asset_id": "cn.fx",
+     "label": "Yuan (CNY/USD)",
+     "region": "China",
+     "stance": "INFRAPONDERAR",
+     "stance_raw": "INFRAPONDERAR",
+     "target_raw": "objetivo: 7,00",
+     "target_value": 7.0,
+     "target_unit": "tipo de cambio",
+     "page": 7
+    },
+    {
+     "asset_id": "jp.equity",
+     "label": "Renta variable japonesa (Topix)",
+     "region": "Japón",
+     "stance": "SOBREPONDERAR",
+     "stance_raw": "SOBREPONDERAR",
+     "target_raw": null,
+     "target_value": null,
+     "target_unit": null,
+     "page": 8
+    },
+    {
+     "asset_id": "jp.govt",
+     "label": "Deuda soberana japonesa",
+     "region": "Japón",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": "rendimiento objetivo: 3,00%",
+     "target_value": 3.0,
+     "target_unit": "%",
+     "page": 8
+    },
+    {
+     "asset_id": "jp.fx",
+     "label": "Yen (USD/JPY)",
+     "region": "Japón",
+     "stance": "FAVORABLE",
+     "stance_raw": "FAVORABLE",
+     "target_raw": "objetivo 155",
+     "target_value": 155,
+     "target_unit": "tipo de cambio",
+     "page": 8
+    },
+    {
+     "asset_id": "br.equity",
+     "label": "Renta variable brasileña (Bovespa)",
+     "region": "Brasil",
+     "stance": "INFRAPONDERAR",
+     "stance_raw": "INFRAPONDERAR",
+     "target_raw": null,
+     "target_value": null,
+     "target_unit": null,
+     "page": 9
+    },
+    {
+     "asset_id": "br.debt_local",
+     "label": "Deuda brasileña en reales (BRL)",
+     "region": "Brasil",
+     "stance": "SOBREPONDERAR",
+     "stance_raw": "SOBREPONDERAR",
+     "target_raw": "900 pb; 14%",
+     "target_value": null,
+     "target_unit": null,
+     "page": 9
+    },
+    {
+     "asset_id": "br.debt_usd",
+     "label": "Deuda brasileña en dólares",
+     "region": "Brasil",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": "200 pb; 7%",
+     "target_value": null,
+     "target_unit": null,
+     "page": 9
+    },
+    {
+     "asset_id": "br.fx",
+     "label": "Real brasileño (BRL/USD)",
+     "region": "Brasil",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": "5,20",
+     "target_value": 5.2,
+     "target_unit": "tipo de cambio",
+     "page": 9
+    },
+    {
+     "asset_id": "mx.equity",
+     "label": "Renta variable mexicana (IPC)",
+     "region": "México",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": null,
+     "target_value": null,
+     "target_unit": null,
+     "page": 10
+    },
+    {
+     "asset_id": "mx.debt_local",
+     "label": "Deuda mexicana en pesos (MXN)",
+     "region": "México",
+     "stance": "INFRAPONDERAR",
+     "stance_raw": "INFRAPONDERAR",
+     "target_raw": "500 pb; 10%",
+     "target_value": null,
+     "target_unit": null,
+     "page": 10
+    },
+    {
+     "asset_id": "mx.debt_usd",
+     "label": "Deuda mexicana en dólares",
+     "region": "México",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": "200 pb; 7%",
+     "target_value": null,
+     "target_unit": null,
+     "page": 10
+    },
+    {
+     "asset_id": "mx.fx",
+     "label": "Peso mexicano (MXN/USD)",
+     "region": "México",
+     "stance": "INFRAPONDERAR",
+     "stance_raw": "INFRAPONDERAR",
+     "target_raw": "18,50",
+     "target_value": 18.5,
+     "target_unit": "tipo de cambio",
+     "page": 10
+    },
+    {
+     "asset_id": "ar.govt_usd",
+     "label": "Deuda soberana argentina a 10 años en USD",
+     "region": "Argentina",
+     "stance": "NEUTRAL",
+     "stance_raw": "NEUTRAL",
+     "target_raw": null,
+     "target_value": null,
+     "target_unit": null,
+     "page": 11
+    },
+    {
+     "asset_id": "ar.fx",
+     "label": "Peso argentino (USD/ARS)",
+     "region": "Argentina",
+     "stance": "NEGATIVO",
+     "stance_raw": "NEGATIVO",
+     "target_raw": "objetivo cierre 2026: 1.600",
+     "target_value": 1600,
+     "target_unit": "tipo de cambio",
+     "page": 11
+    }
+   ],
+   "targets": [
+    {
+     "asset_class": "Equity",
+     "index": "USA - S&P 500",
+     "target": 8205,
+     "revision": "al alza"
+    },
+    {
+     "asset_class": "Equity",
+     "index": "Europe - Stoxx Europe 600",
+     "target": 679,
+     "revision": "al alza"
+    },
+    {
+     "asset_class": "Equity",
+     "index": "SPAIN - IBEX 35",
+     "target": 19584,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Equity",
+     "index": "MEXICO - MXSE IPC",
+     "target": 67760,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Equity",
+     "index": "BRAZIL - BOVESPA",
+     "target": 189000,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Equity",
+     "index": "JAPAN TOPIX",
+     "target": 4405,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Equity",
+     "index": "China SSE Comp. A share",
+     "target": 4099,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Equity",
+     "index": "CHINA - SHENZEN COMPOSITE",
+     "target": 2544,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Equity",
+     "index": "INDIA - SENSEX",
+     "target": 76028,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Equity",
+     "index": "VIETNAM - VN Index",
+     "target": 1918,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Equity",
+     "index": "MSCI EM ASIA (in USD)",
+     "target": 1042,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Core countries",
+     "index": "US Treasury 10 year Govie",
+     "target": 5.0,
+     "revision": "a la baja"
+    },
+    {
+     "asset_class": "Fixed Income Core countries",
+     "index": "UK 10 year Gilt",
+     "target": 5.5,
+     "revision": "a la baja"
+    },
+    {
+     "asset_class": "Fixed Income Core countries",
+     "index": "German 10 year BUND",
+     "target": 3.5,
+     "revision": "a la baja"
+    },
+    {
+     "asset_class": "Fixed Income Core countries",
+     "index": "Japanese 10 year Govie",
+     "target": 3.0,
+     "revision": "a la baja"
+    },
+    {
+     "asset_class": "Fixed Income Peripheral",
+     "index": "Spain - 10yr Gov bond",
+     "target": 4.0,
+     "revision": "a la baja"
+    },
+    {
+     "asset_class": "Fixed Income Peripheral",
+     "index": "Italy - 10yr Gov bond",
+     "target": 4.25,
+     "revision": "a la baja"
+    },
+    {
+     "asset_class": "Fixed Income Peripheral",
+     "index": "Portugal - 10yr Gov bond",
+     "target": 3.9,
+     "revision": "a la baja"
+    },
+    {
+     "asset_class": "Fixed Income Peripheral",
+     "index": "Ireland - 10yr Gov bond",
+     "target": 3.8,
+     "revision": "a la baja"
+    },
+    {
+     "asset_class": "Fixed Income Peripheral",
+     "index": "Greece - 10yr Gov bond",
+     "target": 4.3,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Credit",
+     "index": "Credit EUR IG-Itraxx Europe",
+     "target": 60,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Credit",
+     "index": "Credit EUR HY-Itraxx Xover",
+     "target": 260,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Credit",
+     "index": "Credit USD IG - CDX IG",
+     "target": 75,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Credit",
+     "index": "Credit USD HY - CDX HY",
+     "target": 400,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income EMEA",
+     "index": "Turkey - 10yr Gov bond (local)",
+     "target": 30.0,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Asia",
+     "index": "China - 10yr Gov bond",
+     "target": 1.5,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Asia",
+     "index": "India - 10yr Gov bond",
+     "target": 6.5,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Asia",
+     "index": "Singapore - 10yr Gov bond",
+     "target": 2.5,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Asia",
+     "index": "Indonesia - 10yr Gov bond",
+     "target": 6.0,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Asia",
+     "index": "South Korea - 10yr Gov bond",
+     "target": 4.0,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Asia",
+     "index": "Taiwan - 10yr Gov bond",
+     "target": 2.5,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Asia",
+     "index": "Philippines - 10yr Gov bond",
+     "target": 7.0,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Asia",
+     "index": "Malaysia - 10yr Gov bond",
+     "target": 3.25,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Asia",
+     "index": "Thailand - 10yr Gov bond",
+     "target": 2.25,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Asia",
+     "index": "Vietnam - 10yr Gov bond",
+     "target": 5.25,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Latam",
+     "index": "Mexico - 10yr Govie (Loc)",
+     "target": 10.0,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Latam",
+     "index": "Mexico - 10yr Govie (USD)",
+     "target": 7.0,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Latam",
+     "index": "Brazil - 10yr Govie (Loc)",
+     "target": 14.0,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fixed Income Latam",
+     "index": "Brazil - 10yr Govie (USD)",
+     "target": 7.0,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Commodities",
+     "index": "Oil (WTI)",
+     "target": 80.0,
+     "revision": "al alza"
+    },
+    {
+     "asset_class": "Commodities",
+     "index": "GOLD",
+     "target": 4000,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "EURUSD (price of 1 EUR)",
+     "target": 1.15,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "GBPUSD (price of 1 GBP)",
+     "target": 1.33,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "EURGBP (price of 1 EUR)",
+     "target": 0.86,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "USDCHF (price of 1 USD)",
+     "target": 0.8,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "EURCHF (price of 1 EUR)",
+     "target": 0.92,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "USDJPY (price of 1 USD)",
+     "target": 155.0,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "EURJPY (price of 1 EUR)",
+     "target": 178.3,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "USDMXN (price of 1 USD)",
+     "target": 18.5,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "EURMXN (price of 1 EUR)",
+     "target": 21.28,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "USDBRL (price of 1 USD)",
+     "target": 5.2,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "EURBRL (price of 1 EUR)",
+     "target": 5.98,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "USDARS (price of 1 USD)",
+     "target": 1600,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "USDINR (price of 1 USD)",
+     "target": 95,
+     "revision": "sin marcar"
+    },
+    {
+     "asset_class": "Fx",
+     "index": "CNY (price of 1 USD)",
+     "target": 7.0,
+     "revision": "sin marcar"
+    }
+   ],
+   "trends": [
+    {
+     "title": "Energía nuclear: ¿solución al cuello de botella energético?",
+     "conclusion": "FAVORABLE, pero matizada",
+     "summary": "Valor hoy en operadores con flota y en la cadena de combustible; en SMR el mercado exige licencias y obra física.",
+     "page": 3
+    },
+    {
+     "title": "Retrasos en centros de datos por rechazo social y outlook de semiconductores",
+     "conclusion": "FAVORABLE",
+     "summary": "Los obstáculos tenderán a resolverse donde los proyectos acrediten beneficios locales.",
+     "page": 3
+    },
+    {
+     "title": "Sector de las tierras raras",
+     "conclusion": "FAVORABLE",
+     "summary": "Misma tesis que en el trimestre anterior.",
+     "page": 4
+    },
+    {
+     "title": "Sector «Space»",
+     "conclusion": "NEUTRAL",
+     "summary": "Misma tesis que en el trimestre anterior.",
+     "page": 4
+    }
+   ],
+   "gold_risks": [
+    {
+     "risk": "Tipos nominales y reales en USD más altos",
+     "level": "MEDIO-ALTO",
+     "page": 19
+    },
+    {
+     "risk": "Apreciación del USD",
+     "level": "MEDIO",
+     "page": 19
+    },
+    {
+     "risk": "Pérdida de impulso de los compradores emergentes",
+     "level": "BAJO",
+     "page": 19
+    }
+   ]
+  }
+ }
+}

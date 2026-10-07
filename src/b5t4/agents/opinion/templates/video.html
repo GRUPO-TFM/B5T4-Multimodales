@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<style>
+  :root{--rojo:#D52B1E;--gris:#928B81;--fondo:#f4f2f0;--tinta:#1d1d1b;--linea:#e2ddd7;--card:#fff;
+        --sob:#4f9a63;--nsob:#a9cdb0;--neu:#dcd7d1;--ninf:#e9b3ad;--inf:#c9564c;--neg:#a8322a}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{width:1920px;height:1080px;overflow:hidden;background:var(--fondo);
+    font-family:"Carlito","DejaVu Sans","FreeSans",sans-serif;color:var(--tinta)}
+  .stage{position:absolute;inset:0}
+  .scene{position:absolute;inset:0;opacity:0}
+  .chrome{position:absolute;inset:0;pointer-events:none}
+  .brand{position:absolute;left:72px;top:44px;font-weight:700;font-size:34px;color:var(--rojo);letter-spacing:.5px}
+  .brand small{display:block;font-size:22px;color:var(--gris);font-weight:400;letter-spacing:0}
+  .tick{position:absolute;right:72px;top:48px;font-size:28px;font-weight:700;color:var(--gris);
+    border:3px solid var(--linea);padding:10px 22px;border-radius:14px;background:#fff}
+  .progress{position:absolute;left:0;bottom:0;height:10px;background:var(--rojo);width:0}
+  .source{position:absolute;left:72px;bottom:36px;font-size:24px;color:var(--gris)}
+  .band{position:absolute;left:0;right:0;bottom:0;height:14px;background:var(--rojo)}
+  /* title */
+  .kicker{position:absolute;left:72px;top:250px;font-size:40px;color:var(--gris);font-weight:700;letter-spacing:4px}
+  .title{position:absolute;left:72px;top:320px;font-size:112px;font-weight:700;line-height:1.02;width:1600px}
+  .subtitle{position:absolute;left:72px;top:640px;font-size:46px;width:1500px;line-height:1.3}
+  .subtitle span{background:var(--rojo);color:#fff;padding:6px 18px;border-radius:12px;margin-right:12px}
+  .h2{position:absolute;left:72px;top:160px;font-size:60px;font-weight:700;width:1776px}
+  .h3{position:absolute;left:72px;top:238px;font-size:34px;color:var(--gris);font-weight:700;text-transform:uppercase;letter-spacing:2px}
+  /* shift */
+  .flow{position:absolute;left:72px;top:330px;display:flex;align-items:center;gap:40px}
+  .pill{font-size:52px;font-weight:700;padding:26px 44px;border-radius:22px;background:var(--neu);white-space:nowrap}
+  .pill.SOBREPONDERAR,.pill.FAVORABLE{background:var(--sob);color:#fff}
+  .pill.NEUTRAL-SOBREPONDERAR{background:var(--nsob)} .pill.NEUTRAL-INFRAPONDERAR{background:var(--ninf)}
+  .pill.INFRAPONDERAR{background:var(--inf);color:#fff} .pill.NEGATIVO{background:var(--neg);color:#fff}
+  .pill small{display:block;font-size:30px;font-weight:400;opacity:.9;margin-top:4px}
+  .arrow{font-size:80px;color:var(--gris)}
+  .delta{font-size:52px;font-weight:700;color:var(--rojo);margin-left:20px}
+  .why{position:absolute;left:72px;top:540px;width:1776px}
+  .why .lab{font-size:30px;color:var(--rojo);font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:18px}
+  .item{display:flex;align-items:center;gap:30px;background:#fff;border-radius:22px;padding:26px 40px;margin-bottom:20px;
+    box-shadow:0 18px 50px rgba(27,31,59,.07);font-size:38px;line-height:1.25}
+  .item .ic{width:70px;height:70px;border-radius:18px;background:var(--rojo);color:#fff;display:flex;align-items:center;
+    justify-content:center;font-size:40px;font-weight:700;flex:none}
+  /* hbars */
+  .hbars{position:absolute;left:72px;top:330px;width:1776px}
+  .hrow{display:flex;align-items:center;gap:30px;margin-bottom:28px;font-size:36px}
+  .hrow .lab{width:620px;text-align:right;font-weight:700}
+  .hrow .track{width:900px;height:56px;background:#fff;border-radius:28px;box-shadow:inset 0 0 0 3px var(--linea);overflow:hidden}
+  .hrow .fill{height:100%;width:0;background:var(--rojo);border-radius:28px}
+  .hrow .fill.down{background:var(--gris)}
+  .hrow .val{width:180px;font-weight:700;color:var(--rojo)}
+  /* cards (trends) */
+  .cards{position:absolute;left:72px;top:330px;display:flex;gap:40px;width:1776px}
+  .card{background:#fff;border-radius:28px;padding:40px 48px;flex:1;box-shadow:0 24px 60px rgba(27,31,59,.08);min-height:520px}
+  .card .lab{font-size:30px;color:var(--rojo);font-weight:700;text-transform:uppercase;letter-spacing:2px}
+  .card .big{font-size:52px;font-weight:700;line-height:1.15;margin-top:14px}
+  .card .tag{display:inline-block;margin-top:22px;background:var(--fondo);border:3px solid var(--linea);border-radius:40px;padding:8px 24px;font-size:34px;font-weight:700}
+  .card .txt{font-size:34px;line-height:1.3;margin-top:22px;color:#3a3734}
+  .card.out{opacity:.75} .card.out .lab{color:var(--gris)}
+  /* close */
+  .stats{position:absolute;left:72px;top:330px;display:flex;gap:40px}
+  .stat{background:#fff;border-radius:28px;padding:40px 48px;width:560px;box-shadow:0 24px 60px rgba(27,31,59,.08)}
+  .stat .lab{font-size:30px;color:var(--gris);font-weight:700}
+  .stat .val{font-size:104px;font-weight:700;line-height:1.05;margin-top:6px;color:var(--rojo)}
+  .disc{position:absolute;left:72px;top:700px;width:1700px;font-size:28px;color:var(--gris);line-height:1.35}
+</style>
+</head>
+<body>
+<div class="stage" id="stage"></div>
+<div class="chrome">
+  <div class="brand" id="brand">ANDBANK<small>Gestión Discrecional</small></div>
+  <div class="tick" id="tick"></div>
+  <div class="source" id="source"></div>
+  <div class="band"></div>
+  <div class="progress" id="progress"></div>
+</div>
+<script>
+const SB = __SB__; const TL = __TL__;
+const stage = document.getElementById('stage');
+const ease = x => 1 - Math.pow(1 - Math.max(0, Math.min(1, x)), 3);
+const clamp01 = x => Math.max(0, Math.min(1, x));
+const cls = s => (s || '').split('(')[0].trim().toUpperCase().replace(/\s+/g, '');
+const scenes = SB.scenes.map((sc, i) => {
+  const el = document.createElement('div'); el.className = 'scene'; el.id = sc.id;
+  const d = sc.data;
+  if (sc.kind === 'title') el.innerHTML = `<div class="kicker">${d.kicker}</div><div class="title">${d.title}</div>
+      <div class="subtitle">${(d.chips || []).map(c => `<span>${c}</span>`).join('')}${d.subtitle || ''}</div>`;
+  if (sc.kind === 'shift') el.innerHTML = `<div class="h3">${d.region || ''}</div><div class="h2">${d.title}</div>
+      <div class="flow"><div class="pill ${cls(d.before)}">${d.before_main}<small>${d.before_sub || ''}</small></div><div class="arrow">→</div>
+      <div class="pill ${cls(d.after)}">${d.after_main}<small>${d.after_sub || ''}</small></div>${d.delta ? `<div class="delta">${d.delta}</div>` : ''}</div>
+      <div class="why">${d.items.length ? '<div class="lab">Por qué, según la casa</div>' : ''}${d.items.map((it, j) => `<div class="item"><div class="ic">${j + 1}</div><div>${it}</div></div>`).join('')}</div>`;
+  if (sc.kind === 'hbars') {
+    const max = Math.max(...d.rows.map(r => Math.abs(r.value))) || 1;
+    el.innerHTML = `<div class="h3">${d.kicker || ''}</div><div class="h2">${d.title}</div><div class="hbars">${d.rows.map(r => `
+      <div class="hrow"><div class="lab">${r.label}</div><div class="track"><div class="fill ${r.value < 0 ? 'down' : ''}" data-w="${Math.abs(r.value) / max * 100}"></div></div><div class="val">${r.text}</div></div>`).join('')}</div>`;
+  }
+  if (sc.kind === 'cards') el.innerHTML = `<div class="h3">${d.kicker || ''}</div><div class="h2">${d.title}</div><div class="cards">${d.cards.map(c => `
+      <div class="card ${c.out ? 'out' : ''}"><div class="lab">${c.lab}</div><div class="big">${c.big}</div>${c.tag ? `<div class="tag">${c.tag}</div>` : ''}<div class="txt">${c.txt || ''}</div></div>`).join('')}</div>`;
+  if (sc.kind === 'close') el.innerHTML = `<div class="h2">${d.title}</div><div class="stats">${d.stats.map(s => `
+      <div class="stat"><div class="lab">${s.label}</div><div class="val">${s.value}</div></div>`).join('')}</div><div class="disc">${d.disclaimer}</div>`;
+  stage.appendChild(el);
+  return {sc, el, tl: TL.scenes[i]};
+});
+document.getElementById('tick').textContent = SB.scenes[0].data.ticker || '';
+if (SB.brand) document.getElementById('brand').innerHTML = SB.brand;
+
+function render(t) {
+  document.getElementById('progress').style.width = (clamp01(t / TL.total) * 1920) + 'px';
+  scenes.forEach(({sc, el, tl}) => {
+    const lt = t - tl.start;
+    const on = lt >= 0 && lt < tl.duration;
+    el.style.opacity = on ? Math.min(ease(lt / 0.35), ease((tl.duration - lt) / 0.3)) : 0;
+    if (!on) return;
+    document.getElementById('source').textContent = sc.data.source ? 'Fuente: ' + sc.data.source : '';
+    const slide = (node, t0, dur, dy = 40) => { if (!node) return; const e = ease((lt - t0) / dur); node.style.opacity = e; node.style.transform = `translateY(${(1 - e) * dy}px)`; };
+    if (sc.kind === 'title') { slide(el.querySelector('.kicker'), 0.1, 0.5); slide(el.querySelector('.title'), 0.3, 0.7, 60); slide(el.querySelector('.subtitle'), 1.0, 0.6); }
+    if (sc.kind === 'shift') {
+      const pills = el.querySelectorAll('.pill'); slide(pills[0], 0.2, 0.5, 30); slide(el.querySelector('.arrow'), 0.9, 0.4, 0); slide(pills[1], 1.2, 0.5, 30); slide(el.querySelector('.delta'), 1.8, 0.4, 0);
+      slide(el.querySelector('.why .lab'), 2.3, 0.4, 20);
+      el.querySelectorAll('.item').forEach((it, j) => { const e = ease((lt - 2.6 - j * 1.6) / 0.6); it.style.opacity = e; it.style.transform = `translateX(${(1 - e) * -80}px)`; });
+    }
+    if (sc.kind === 'hbars') el.querySelectorAll('.hrow').forEach((r, j) => { slide(r, 0.2 + j * 0.35, 0.5, 20); r.querySelector('.fill').style.width = (r.querySelector('.fill').dataset.w * ease((lt - 0.5 - j * 0.35) / 0.9)) + '%'; });
+    if (sc.kind === 'cards') el.querySelectorAll('.card').forEach((c, j) => slide(c, 0.3 + j * 0.6, 0.6, 60));
+    if (sc.kind === 'close') { el.querySelectorAll('.stat').forEach((s, j) => slide(s, 0.3 + j * 0.5, 0.6, 60)); slide(el.querySelector('.disc'), 2.4, 0.6, 20); }
+  });
+}
+window.render = render;
+</script>
+</body>
+</html>

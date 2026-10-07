@@ -14,6 +14,7 @@ Coste: cero APIs. 60 s de vídeo a 25 fps son 1.500 capturas: ≈ 1-2 min de CPU
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
@@ -72,7 +73,7 @@ def render(sb: Storyboard, tl: dict, out: Path, template: str = "scene.html", lo
     frames.mkdir()
     n = int(round(tl["total"] * s.fps))
     with sync_playwright() as p:
-        b = p.chromium.launch()
+        b = p.chromium.launch(executable_path=os.environ.get("B5T4_CHROMIUM") or None)   # B5T4_CHROMIUM: un Chromium ya instalado (sin «playwright install»)
         pg = b.new_page(viewport={"width": s.width, "height": s.height})
         pg.set_content(html, wait_until="load")
         pg.wait_for_timeout(300)
