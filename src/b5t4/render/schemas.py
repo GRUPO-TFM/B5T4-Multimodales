@@ -7,16 +7,16 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
-# Tipos de escena que sabe dibujar templates/scene.html hoy, más los que necesita el vídeo de onboarding
-# (marcados «pendiente»: hay que añadir su bloque de HTML/CSS y su animación en render(t)).
+# Tipos de escena dibujados por templates/scene.html. Las escenas del prototipo conservan sus contratos.
 SceneKind = Literal[
     "title", "kpi", "bars", "bullets", "compare", "close",   # existentes (heredadas del prototipo de vídeo)
-    "orgchart",   # pendiente: organigrama (consejo → directores → secciones → personas)
-    "flow",       # pendiente: diagrama de flujo de un proceso (cajas y flechas que aparecen en orden)
-    "people",     # pendiente: rejilla de personas con su rol
-    "timeline",   # pendiente: calendario de entregables / evolución de una recomendación entre ediciones
+    "orgchart",   # niveles de jerarquía
+    "flow",       # pasos numerados de un proceso
+    "people",     # rejilla de personas/secciones con su rol
+    "timeline",   # cadencias y entregables
+    "hero", "organisation", "map", "process", "illustration", "focus",
 ]
 
 
@@ -27,12 +27,40 @@ class Scene(BaseModel):
     min_seconds: float = 3.0
     data: dict = Field(default_factory=dict, description="lo que la plantilla pinta; depende de `kind`")
 
+    @model_validator(mode="after")
+    def validate_onboarding_layout(self):
+        if self.data.get("layout") == "onboarding_v2":
+            from ..agents.onboarding.v2_schemas import DirectedScene
+            DirectedScene.model_validate({"id": self.id, "kind": self.kind, "narration": self.narration,
+                                          **{k: v for k, v in self.data.items() if k in DirectedScene.model_fields}})
+            return self
+        if self.kind in ("orgchart", "people", "flow", "timeline") or self.data.get("layout") == "onboarding":
+            if not isinstance(self.data.get("title"), str) or not self.data["title"].strip():
+                raise ValueError("Una escena de onboarding necesita un título")
+            items = self.data.get("items")
+            if not isinstance(items, list) or not 2 <= len(items) <= 7:
+                raise ValueError("Una escena de onboarding necesita entre 2 y 7 tarjetas")
+            if self.kind == "orgchart" and len(items) > 3:
+                raise ValueError("El organigrama del vídeo admite un máximo de tres niveles")
+            if self.kind == "flow" and len(items) > 4:
+                raise ValueError("El proceso del vídeo admite un máximo de cuatro pasos resumidos")
+            for item in items:
+                if not isinstance(item, dict) or not all(isinstance(item.get(k), str) and item[k].strip() for k in ("label", "detail")):
+                    raise ValueError("Cada tarjeta necesita label y detail")
+        return self
+
 
 class Storyboard(BaseModel):
     topic: str
     language: str = "es"
     voice: str = "em_alex"
-    scenes: list[Scene]
+    scenes: list[Scene] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def unique_ids(self):
+        if len({s.id for s in self.scenes}) != len(self.scenes):
+            raise ValueError("Los identificadores de escena deben ser únicos")
+        return self
 
     def words(self) -> int:
         return sum(len(s.narration.split()) for s in self.scenes)

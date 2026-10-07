@@ -1,0 +1,16 @@
+[
+  {
+    "name": "gsap",
+    "version": "3.15.0",
+    "source": "https://registry.npmjs.org/gsap/-/gsap-3.15.0.tgz",
+    "licenses": []
+  },
+  {
+    "name": "d3",
+    "version": "7.9.0",
+    "source": "https://registry.npmjs.org/d3/-/d3-7.9.0.tgz",
+    "licenses": [
+      "package/LICENSE"
+    ]
+  }
+]

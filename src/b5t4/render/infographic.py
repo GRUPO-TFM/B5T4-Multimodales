@@ -1,19 +1,34 @@
-"""
-Infografía (pendiente — agente 1): una página con diagramas de flujo y organigrama, exportable a PNG/PDF.
+"""Infografía de datos verificados: organigrama, secciones, proceso y calendario.
 
-Propuesta (sin modelos generativos de imagen, que inventan texto y cifras):
-  1. el agente produce los diagramas en Mermaid (organigrama, flujo semanal/mensual, mapa de secciones);
-  2. una plantilla HTML los pinta con mermaid.js (vía CDN o empaquetado) junto a tarjetas de datos;
-  3. Playwright captura la página a PNG (y a PDF con page.pdf()).
-El mismo HTML sirve de pieza del informe y de fondo para escenas del vídeo.
-
-Interfaz que espera el agente de onboarding (no cambiarla al implementar):
-    write_infographic(blocks: list[dict], title: str, out: Path) -> Path   # devuelve el PNG
+HTML/CSS y Playwright producen HTML y PNG sin CDN ni servicios de imágenes.
+Se conserva la interfaz write_infographic(blocks, title, out) -> Path.
 """
 from __future__ import annotations
 
 from pathlib import Path
 
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+
+from ..config import get_settings
+
 
 def write_infographic(blocks: list[dict], title: str, out: Path) -> Path:
-    raise NotImplementedError("Infografía pendiente: ver docstring del módulo.")
+    """Dibuja los datos ya verificados con HTML/CSS local, sin dependencias de red."""
+    from playwright.sync_api import sync_playwright
+
+    out.mkdir(parents=True, exist_ok=True)
+    s = get_settings()
+    env = Environment(loader=FileSystemLoader(s.templates_dir), autoescape=select_autoescape(["html"]))
+    html = env.get_template("infographic.html").render(title=title, brand=s.brand, blocks=blocks)
+    (out / "infografia.html").write_text(html, encoding="utf-8")
+    target = out / "infografia.png"
+    with sync_playwright() as p:
+        browser = p.chromium.launch()
+        try:
+            page = browser.new_page(viewport={"width": 1600, "height": 900}, device_scale_factor=1)
+            page.set_content(html, wait_until="load")
+            page.evaluate("document.fonts.ready")
+            page.screenshot(path=str(target), full_page=True)
+        finally:
+            browser.close()
+    return target

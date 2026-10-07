@@ -2,3 +2,8 @@
 * text=auto eol=lf
 # Los .bat necesitan CRLF para ejecutarse bien en Windows
 *.bat text eol=crlf
+
+# Conserva los bytes y el formato originales de los recursos de marca y bibliotecas.
+src/b5t4/render/vendor/* -text -whitespace
+src/b5t4/render/brand/andbank/* -text
+src/b5t4/render/brand/andbank/SKILL.md whitespace=-blank-at-eol

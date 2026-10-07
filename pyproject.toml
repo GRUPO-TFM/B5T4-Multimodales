@@ -27,7 +27,7 @@ dependencies = [
     "imageio-ffmpeg>=0.6.0", # ffmpeg empaquetado (no hace falta instalarlo en Windows)
     "matplotlib>=3.11.2",
     # interfaz
-    "gradio>=5.0",
+    "gradio>=6.0",
     # búsqueda (RAG): raíz de las palabras en español para BM25 («operativa» ≈ «operativo»)
     "snowballstemmer>=2.2",
 ]

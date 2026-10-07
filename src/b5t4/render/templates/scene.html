@@ -15,6 +15,7 @@
   .brand b{color:var(--accent)}
   .tick{position:absolute;right:72px;top:48px;font-size:30px;font-weight:700;color:var(--muted);
     border:3px solid var(--soft);padding:12px 24px;border-radius:14px;background:#fff}
+  .tick:empty{display:none}
   .progress{position:absolute;left:0;bottom:0;height:10px;background:var(--accent);width:0}
   .source{position:absolute;left:72px;bottom:40px;font-size:24px;color:var(--muted)}
   .sky{position:absolute;left:0;right:0;bottom:0;height:420px;opacity:.9}
@@ -69,7 +70,26 @@
   .stat .val{font-size:110px;font-weight:700;line-height:1.05;margin-top:6px}
   .disc{position:absolute;left:72px;top:690px;width:1500px;font-size:30px;color:var(--muted);line-height:1.35}
   .disc b{color:var(--warn)}
+  /* Onboarding: datos estructurados, texto escapado y relaciones explícitas. */
+  .scene.onboarding{background:#f5f2ed;color:#172b39}
+  .onboarding .ob-title{position:absolute;left:80px;top:190px;width:1760px;font-size:64px;line-height:1.12;font-weight:700}
+  .ob-grid{position:absolute;left:80px;top:335px;width:1760px;display:grid;grid-template-columns:1fr 1fr;gap:28px}
+  .ob-card{background:white;border-radius:22px;padding:30px 34px;border-top:6px solid #b32932;min-height:205px;box-shadow:0 16px 40px #172b3910;position:relative}
+  .ob-label{font-size:35px;font-weight:700;line-height:1.15}.ob-detail{font-size:29px;line-height:1.28;margin-top:16px;color:#435d6d;overflow-wrap:anywhere}
+  .ob-grid.count-5,.ob-grid.count-6,.ob-grid.count-7{grid-template-columns:repeat(3,1fr)}
+  .count-5 .ob-card,.count-6 .ob-card,.count-7 .ob-card{padding:24px 26px}
+  .count-5 .ob-label,.count-6 .ob-label,.count-7 .ob-label{font-size:30px}
+  .count-5 .ob-detail,.count-6 .ob-detail,.count-7 .ob-detail{font-size:25px}
+  .ob-grid.orgchart{left:330px;width:1260px;top:295px;grid-template-columns:1fr;gap:30px}
+  .orgchart .ob-card{min-height:0;padding:18px 32px;text-align:center}.orgchart .ob-detail{margin-top:8px;font-size:28px}
+  .orgchart .ob-card:not(:last-child):after{content:'↓';position:absolute;left:calc(50% - 12px);bottom:-33px;font-size:34px;color:#b32932}
+  .ob-grid.flow{grid-template-columns:repeat(2,1fr);counter-reset:steps}.flow .ob-card{padding-left:92px}
+  .flow .ob-card:before{counter-increment:steps;content:counter(steps);position:absolute;left:26px;top:30px;width:46px;height:46px;border-radius:50%;background:#172b39;color:white;text-align:center;font-size:30px;font-weight:700}
+  .ob-grid.timeline .ob-card{border-top:0;border-left:7px solid #b32932}
+  body.onboarding-video .brand{background:#172b39}body.onboarding-video .progress{background:#b32932}
+  body.onboarding-video .source{left:80px;bottom:34px;font-size:20px;max-width:1760px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 </style>
+<style>__V2_CSS__</style>
 </head>
 <body>
 <div class="stage" id="stage"></div>
@@ -79,12 +99,17 @@
   <div class="source" id="source"></div>
   <div class="progress" id="progress"></div>
 </div>
+__V2_LIBS__
+<script>__V2_JS__</script>
 <script>
 const SB = __SB__; const TL = __TL__;
 const stage = document.getElementById('stage');
 const ease = x => 1 - Math.pow(1 - Math.max(0, Math.min(1, x)), 3);
 const clamp01 = x => Math.max(0, Math.min(1, x));
 const fmt = (v, d) => v.toLocaleString('es-ES', {minimumFractionDigits: d, maximumFractionDigits: d});
+const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const onboarding = sc => sc.data.layout === 'onboarding' || ['orgchart','people','flow','timeline'].includes(sc.kind);
+const onboardingV2 = sc => sc.data.layout === 'onboarding_v2';
 const skyline = (c) => {
   // simple vector skyline, drawn once from a seed so it is deterministic
   let x = 0, parts = [];
@@ -103,6 +128,17 @@ const skyline = (c) => {
 const scenes = SB.scenes.map((sc, i) => {
   const el = document.createElement('div'); el.className = 'scene'; el.id = sc.id;
   const d = sc.data;
+  if (onboardingV2(sc)) {
+    el.classList.add('onboarding-v2'); stage.appendChild(el);
+    const animation = window.onboardingV2.build(el, {...d,kind:sc.kind}, TL.scenes[i]);
+    return {sc,el,tl:TL.scenes[i],animation};
+  }
+  if (onboarding(sc)) {
+    el.classList.add('onboarding');
+    el.innerHTML = `<div class="ob-title">${esc(d.title)}</div><div class="ob-grid ${esc(sc.kind)} count-${d.items.length}">${d.items.map(it => `<div class="ob-card"><div class="ob-label">${esc(it.label)}</div><div class="ob-detail">${esc(it.detail)}</div></div>`).join('')}</div>`;
+    stage.appendChild(el);
+    return {sc, el, tl: TL.scenes[i]};
+  }
   if (sc.kind === 'title') el.innerHTML = `${skyline('#C9C4E3')}<div class="kicker">${d.kicker}</div>
       <div class="title">${d.title}</div><div class="subtitle"><span>${d.subtitle}</span></div>`;
   if (sc.kind === 'kpi') el.innerHTML = `<div class="h2">${d.title || 'Lo publicado frente a lo esperado'}</div><div class="cards">${d.cards.map(c => `
@@ -126,19 +162,36 @@ const scenes = SB.scenes.map((sc, i) => {
   return {sc, el, tl: TL.scenes[i]};
 });
 document.getElementById('tick').textContent = SB.scenes[0].data.ticker || '';
-if (SB.brand) document.getElementById('brand').innerHTML = SB.brand;
+if (SB.brand) document.getElementById('brand').textContent = SB.brand;
+if (SB.scenes.every(onboarding)) document.body.classList.add('onboarding-video');
+if (SB.scenes.every(onboardingV2)) {
+  document.body.classList.add('onboarding-v2-video');
+  document.getElementById('brand').classList.add('andbank-logo');
+  document.getElementById('brand').innerHTML = `<img alt="Andbank Private Bankers" src="${esc(SB.logo_url)}">`;
+  gsap.ticker.sleep();
+}
 
 // ---------- per-frame render(t) ----------
 function render(t) {
   document.getElementById('progress').style.width = (clamp01(t / TL.total) * 1920) + 'px';
-  scenes.forEach(({sc, el, tl}) => {
+  scenes.forEach(({sc, el, tl, animation}) => {
     const lt = t - tl.start, p = lt / tl.duration;
     const on = lt >= 0 && lt < tl.duration;
     el.style.opacity = on ? Math.min(ease(lt / 0.35), ease((tl.duration - lt) / 0.3)) : 0;
+    if (onboardingV2(sc)) {
+      animation.seek(Math.max(0, Math.min(tl.duration, lt)), true);
+      if (on) document.getElementById('source').textContent = sc.data.source || '';
+      return;
+    }
     if (!on) return;
     document.getElementById('source').textContent = sc.data.source ? 'Fuente: ' + sc.data.source : (sc.data.sources || '');
     const d = sc.data;
     const slide = (node, t0, dur, dy = 40) => { const e = ease((lt - t0) / dur); node.style.opacity = e; node.style.transform = `translateY(${(1 - e) * dy}px)`; };
+    if (onboarding(sc)) {
+      slide(el.querySelector('.ob-title'), 0.05, 0.4, 15);
+      el.querySelectorAll('.ob-card').forEach((card, j) => slide(card, 0.2 + j * 0.3, 0.5, 28));
+      return;
+    }
     if (sc.kind === 'title') {
       slide(el.querySelector('.kicker'), 0.1, 0.5); slide(el.querySelector('.title'), 0.3, 0.7, 60); slide(el.querySelector('.subtitle'), 1.0, 0.6);
       el.querySelector('.sky').style.transform = `translateY(${(1 - ease(lt / 1.2)) * 120}px)`;

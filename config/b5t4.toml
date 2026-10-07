@@ -36,6 +36,12 @@ max_seconds = 120          # tope del vídeo de onboarding (2 minutos)
 words_per_second = 2.3     # ≈ 140 palabras/min en español: sirve para presupuestar la locución antes de sintetizar
 brand = "Gestión Discrecional"
 
+[onboarding_v2]
+model_image = "google/gemini-3.1-flash-image"
+model_tts = "google/gemini-3.8-flash-tts"
+voice = "Algieba"
+budget_usd = 5.0
+
 [rag]
 index_dir = "index"                                  # se genera en local; no se sube al repo (contiene texto del corpus)
 embedding_model = "intfloat/multilingual-e5-small"   # propuesta; se decide al construir el agente 3
