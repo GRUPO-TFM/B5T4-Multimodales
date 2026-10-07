@@ -6,4 +6,5 @@ uv sync
 uv run playwright install chromium
 [ -f models/kokoro-v1.0.onnx ] || uv run python scripts/download_models.py
 uv run b5t4 check
-uv run b5t4 ui
+# Los argumentos pasan a la interfaz: «./run.sh --ngrok» abre además el enlace público.
+uv run b5t4 ui "$@"

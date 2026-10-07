@@ -56,7 +56,7 @@ flowchart TB
 | Modelos | `src/b5t4/models/` | Un adaptador por modalidad con interfaz mínima | LLM, Jev y TTS hechos; STT y embeddings pendientes |
 | Salidas | `src/b5t4/render/` | Informe HTML responsive, infografía, vídeo por fotogramas | Informe, infografía y escenas de onboarding implementados; motor de vídeo compartido por los agentes 1 y 2 (el 2 aporta su plantilla y su voz) |
 | Lógica | `src/b5t4/agents/` | Los tres agentes | Agente 1: onboarding v1/v2 completo. Agente 2: v2 completa (selección → extracción texto+visión con caché → diff determinista → frase por cambio + porqué con cita literal, ambos con Jev → HTML/PNG/JSON → vídeo con Gemini TTS). Agente 3: v0 funcionando (BM25 + LLM con citas + voz; recall@8 = 14/14 en el golden set) |
-| Interfaz | `src/b5t4/app/`, `cli.py` | Gradio y línea de comandos | Hecho (muestra «pendiente» donde corresponde) |
+| Interfaz | `src/b5t4/app/`, `cli.py` | Gradio y línea de comandos; enlace público opcional con ngrok (`b5t4 ui --ngrok`) | Hecho (muestra «pendiente» donde corresponde) |
 
 ## 3. Por qué la carpeta de datos importa tanto
 

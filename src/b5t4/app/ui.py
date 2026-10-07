@@ -4,6 +4,7 @@ llama a los agentes y enseña lo que devuelven (HTML, imagen, vídeo, audio).
 
     uv run b5t4 ui            → http://127.0.0.1:7860
     uv run b5t4 ui --share    → enlace público temporal (útil para enseñar la demo)
+    uv run b5t4 ui --ngrok    → enlace público por ngrok (NGROK_AUTHTOKEN en .env)
 
 Mientras un agente esté «pendiente», su pestaña muestra el mensaje de NotImplementedError en lugar de fallar.
 La pestaña 1 vive en ui_onboarding.py (agente 1); la 2 y la 3, aquí.
@@ -97,13 +98,33 @@ def build():
     return demo
 
 
-def launch(share: bool = False) -> None:
+def _ngrok(port: int, s) -> str:
+    """Abre un túnel ngrok hacia la interfaz local y devuelve la URL pública. Se cierra al terminar el proceso."""
+    import ngrok
+
+    options = {"domain": s.ngrok_domain} if s.ngrok_domain else {}
+    return ngrok.forward(port, authtoken=s.ngrok_authtoken, **options).url()
+
+
+def launch(share: bool = False, ngrok: bool = False) -> None:
     from ..config import get_settings
     import gradio as gr
+    s = get_settings()
+    if ngrok and not s.ngrok_authtoken:
+        raise SystemExit("Falta NGROK_AUTHTOKEN en .env. Se copia de https://dashboard.ngrok.com/get-started/your-authtoken")
+    auth = tuple(s.ui_auth.split(":", 1)) if ":" in s.ui_auth else None
+    if (share or ngrok) and not auth:
+        print("AVISO: enlace público sin contraseña; quien lo tenga puede consultar el corpus. "
+              "Para pedirla, define B5T4_UI_AUTH=usuario:clave en .env.")
     theme = gr.themes.Base(primary_hue=gr.themes.colors.red,
                           font=[gr.themes.Font(name) for name in ("Verdana", "Arial", "sans-serif")]).set(
         button_primary_background_fill="#D52B1E", button_primary_background_fill_hover="#762E2F",
         body_background_fill="#FFFFFF", body_text_color="#000000")
-    css = (get_settings().templates_dir / "onboarding-v2.css").read_text(encoding="utf-8")
+    css = (s.templates_dir / "onboarding-v2.css").read_text(encoding="utf-8")
     css += '\n.app-brand{display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #D52B1E;padding:8px 0}.app-brand>span{font-size:13px;letter-spacing:2px;color:#928B81}'
-    build().queue().launch(share=share, allowed_paths=[str(get_settings().out_dir)], theme=theme, css=css)
+    demo = build().queue()
+    # Con ngrok, Gradio no bloquea: primero se conoce el puerto, luego se abre el túnel y se espera.
+    demo.launch(share=share, auth=auth, prevent_thread_lock=ngrok, allowed_paths=[str(s.out_dir)], theme=theme, css=css)
+    if ngrok:
+        print(f"* Enlace público (ngrok): {_ngrok(demo.server_port, s)}")
+        demo.block_thread()
