@@ -51,6 +51,10 @@ de esa página y la cita aparece como «p. N (imagen)».
 Requisitos: lo de siempre (`uv sync`, `.env` con `B5T4_DATA_DIR` y `OPENROUTER_API_KEY`, `uv run b5t4 rag index`).
 `JEV_API_KEY` es opcional: sin ella la respuesta sale sin verificar y la interfaz lo dice.
 
+Al terminar de grabar **o al subir un archivo de audio**, se envía una pregunta nueva con su transcripción.
+El texto de una pregunta anterior no se reutiliza. Si se escribe una pregunta o se corrige la transcripción,
+el botón «Preguntar» usa ese texto sin volver a transcribir el audio anterior.
+
 Whisper y EmbeddingGemma 2 **no se añaden a `pyproject.toml`** a propósito: `transformers` 5.19 y `faster-whisper`
 obligan a bajar `huggingface-hub` (2.1 → 1.33) para todo el proyecto. Los scripts los cargan con `uv run --with`, en
 un entorno superpuesto que no toca el del resto del equipo.
@@ -132,6 +136,14 @@ de céntimo (estimación con el precio publicado, no factura medida). Whisper, e
 ### Ejemplo de por qué hace falta verificar
 En la prueba de Luxemburgo el LLM añadió el correo concreto de un banquero, mientras que la regla del documento
 dice «con copia al banquero del cliente», sin nombre. Es justo el tipo de dato de más que Jev marca o quita.
+
+La verificación conserva las citas junto a su frase tanto en `Dato [1].` como en `Dato. [1]`. Si se descarta una
+frase, las frases respaldadas se mantienen. Toda frase sin cita se marca para revisar, salvo la abstención
+completa «No consta» o «No consta en la documentación». Incluir esas palabras dentro de una afirmación más
+larga no evita la advertencia.
+
+Cada petición pasa sus propios fragmentos a `ask(..., hits=...)`; no cambia el buscador del módulo. Así, las
+llamadas al RAG original y al verificado pueden convivir sin intercambiar las fuentes de preguntas distintas.
 
 ## 4. Decisiones y parámetros (y por qué se cuestionan)
 

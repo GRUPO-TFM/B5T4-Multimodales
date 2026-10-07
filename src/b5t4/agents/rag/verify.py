@@ -7,16 +7,14 @@ los umbrales de la configuración (verifier.triage):
   publicar  (p ≥ 0,80)  la frase se queda tal cual;
   revisar   (0,30-0,80) se queda, marcada con ⚠️;
   descartar (p < 0,30)  se quita de la respuesta.
-Una frase sin cita no puede verificarse: se marca para revisar, salvo si dice que algo no consta (no hay nada
-que citar; se deja «sin verificar», sin ⚠️).
+Una frase sin cita se marca para revisar, salvo la abstención canónica «No consta en la documentación».
 
 Sin JEV_API_KEY no se verifica nada: la respuesta pasa igual y `verified=False` lo deja claro en la interfaz.
-Se usa desde `ask_verified()`, que envuelve el `ask()` existente sin modificarlo.
+Se usa desde `ask_verified()`, que pasa a `ask()` los fragmentos de esa petición.
 """
 from __future__ import annotations
 
 import re
-import threading
 import time
 from typing import Callable, Optional
 
@@ -29,8 +27,11 @@ from .index import Chunk, search
 PASSAGE_CHARS = 6000          # el pasaje que ve Jev: el fragmento completo, con tope
 WARN = "⚠️"
 _CITE = re.compile(r"\[(\d+)\]")
-_NO_CONSTA = re.compile(r"\bno consta\b", re.IGNORECASE)
-_ASK_LOCK = threading.Lock()   # ask() se reutiliza cambiando su buscador un instante: una petición cada vez
+_NO_CONSTA = re.compile(r"no consta(?: en la documentación)?[.!?]?", re.IGNORECASE)
+_SENTENCE_END = re.compile(
+    r"(?<=[.!?])(?<!\b[A-ZÁÉÍÓÚÑ]\.)"
+    r"(?:\s*\[\d+\](?:\s*,?\s*\[\d+\])*)?\s+(?=[A-ZÁÉÍÓÚÑ¿¡«(])"
+)
 
 
 class SentenceCheck(BaseModel):
@@ -59,9 +60,12 @@ class VerifiedAnswer(BaseModel):
 def split_sentences(text: str) -> list[str]:
     """Frases, dejando las marcas [n] pegadas a la frase a la que siguen («… .lu [1], [2]. Asimismo …»)."""
     text = re.sub(r"\s+", " ", text).strip()
-    # corta tras . ! ? (con citas opcionales detrás) cuando sigue una mayúscula o un signo de apertura,
-    # pero no tras una inicial («J. Lissignoli»)
-    parts = re.split(r"(?<=[.!?])(?<!\b[A-ZÁÉÍÓÚÑ]\.)\s+(?=[A-ZÁÉÍÓÚÑ¿¡«(])", text)
+    # La frontera incluye las citas posteriores al punto: pertenecen a la frase anterior.
+    parts, start = [], 0
+    for boundary in _SENTENCE_END.finditer(text):
+        parts.append(text[start:boundary.end()])
+        start = boundary.end()
+    parts.append(text[start:])
     return [p.strip() for p in parts if p.strip()]
 
 
@@ -78,7 +82,8 @@ def check_sentences(text: str, passages: list[Chunk],
         ns = cited(sen, len(passages))
         claim = _CITE.sub("", sen).strip()
         if not ns:
-            out.append(SentenceCheck(text=sen, decision="sin verificar" if _NO_CONSTA.search(sen) else "revisar"))
+            abstention = not _CITE.search(sen) and _NO_CONSTA.fullmatch(sen)
+            out.append(SentenceCheck(text=sen, decision="sin verificar" if abstention else "revisar"))
             continue
         passage = "\n\n".join(f"[{n}] {passages[n - 1].text}" for n in ns)[:PASSAGE_CHARS]
         p = supports(claim, passage)
@@ -98,7 +103,7 @@ def rebuild(checks: list[SentenceCheck]) -> str:
 def ask_verified(question: str, voice: bool = False, k: int | None = None, search_fn=search,
                  verify: bool = True, log=print) -> VerifiedAnswer:
     """
-    `ask()` + verificación. `search_fn` permite usar otro buscador (p. ej. hybrid.search_hybrid) sin tocar ask():
+    `ask()` + verificación. `search_fn` permite usar otro buscador (p. ej. hybrid.search_hybrid):
     se le pasan a ask los mismos fragmentos que se verificarán, para que los números [n] coincidan.
     """
     from . import answer as answer_mod
@@ -106,13 +111,7 @@ def ask_verified(question: str, voice: bool = False, k: int | None = None, searc
     t0 = time.perf_counter()
     hits = search_fn(question, k) if k else search_fn(question)
     t_search = round(time.perf_counter() - t0, 2)
-    with _ASK_LOCK:
-        original_search = answer_mod.search
-        answer_mod.search = lambda *_a, **_k: hits      # ask() usa exactamente estos fragmentos
-        try:
-            ans = ask(question, voice=False, k=k, log=log)
-        finally:
-            answer_mod.search = original_search
+    ans = ask(question, voice=False, k=k, log=log, hits=hits)
     ans.timings["buscar"] = t_search
 
     passages = [c for _, c in hits]

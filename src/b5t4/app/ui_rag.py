@@ -42,8 +42,10 @@ def answer(audio_path, typed: str, retriever: str, verify: bool, voice: bool):
     """Devuelve (pregunta, respuesta en Markdown, audio). Nunca lanza: la demo no debe caerse."""
     try:
         t0 = time.perf_counter()
-        heard, t_stt = _transcribe(audio_path)
-        question = (typed or "").strip() or heard
+        question = (typed or "").strip()
+        t_stt = 0.0
+        if not question:
+            question, t_stt = _transcribe(audio_path)
         if not question:
             return "", "Graba una pregunta o escríbela.", None
         from ..agents.rag.verify import ask_verified
@@ -70,6 +72,11 @@ def answer(audio_path, typed: str, retriever: str, verify: bool, voice: bool):
         return typed or "", f"**Error:** {e}\n\n```\n{traceback.format_exc()[-1500:]}\n```", None
 
 
+def answer_audio(audio_path, retriever: str, verify: bool, voice: bool):
+    """Un audio nuevo inicia una pregunta, sin reutilizar el texto de la respuesta anterior."""
+    return answer(audio_path, "", retriever, verify, voice)
+
+
 def build_tab():
     import gradio as gr
 
@@ -86,9 +93,9 @@ def build_tab():
     btn = gr.Button("Preguntar", variant="primary")
     out_md, out_audio = gr.Markdown(), gr.Audio(label="Respuesta en voz", type="filepath")
     btn.click(answer, inputs=[mic, q, retr, ver, voz], outputs=[q, out_md, out_audio])
-    # al terminar de grabar se pregunta lo que se ha dicho (no el texto de la pregunta anterior)
-    mic.stop_recording(lambda a, r, v, vz: answer(a, "", r, v, vz), inputs=[mic, retr, ver, voz],
-                       outputs=[q, out_md, out_audio])
+    # Grabar y subir un archivo comparten el mismo flujo de pregunta nueva.
+    mic.stop_recording(answer_audio, inputs=[mic, retr, ver, voz], outputs=[q, out_md, out_audio])
+    mic.upload(answer_audio, inputs=[mic, retr, ver, voz], outputs=[q, out_md, out_audio])
 
 
 def build():
