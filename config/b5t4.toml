@@ -33,14 +33,8 @@ height = 1080
 voice = "em_alex"          # Kokoro: em_alex (masculina) · ef_dora (femenina)
 speed = 1.1
 max_seconds = 120          # tope del vídeo de onboarding (2 minutos)
-words_per_second = 2.8     # medido con Kokoro em_alex a 1,1 (7-oct-2026): sirve para presupuestar la locución antes de sintetizar
+words_per_second = 2.7     # medido con Kokoro em_alex a 1,1 (7-oct-2026, 318 palabras → 116 s): para presupuestar la locución antes de sintetizar
 brand = "Gestión Discrecional"
-
-[onboarding_v2]
-model_image = "google/gemini-3.1-flash-image"
-model_tts = "google/gemini-3.8-flash-tts"
-voice = "Algieba"
-budget_usd = 5.0
 
 [rag]
 index_dir = "index"                                  # se genera en local; no se sube al repo (contiene texto del corpus)
@@ -57,14 +51,15 @@ reasoning = "low"                              # OpenRouter reasoning.effort. Ge
 pdf_url_base = ""                              # si los PDF están publicados (intranet/SharePoint), los enlaces «abrir el PDF» apuntan ahí;
                                                # vacío = enlace al fichero local (sirve al equipo, no a un cliente externo)
 
-# Voz del vídeo (--video). provider = "gemini" (OpenRouter, ≈ 0,03 $/vídeo, mejor prosodia) | "kokoro" (local, gratis).
+# Voz del vídeo (--video). provider = "gemini" (OpenRouter POST /audio/speech, ≈ 0,03 $/vídeo, mejor prosodia) | "kokoro" (local, gratis).
 # Si Gemini falla por lo que sea, el vídeo entero se hace con Kokoro. Voces de Gemini: Charon (informativa, masculina),
-# Kore (firme), Algieba (suave), Achernar (suave, femenina)… La instrucción de estilo va en lenguaje natural.
+# Kore (firme), Algieba (suave), Achernar (suave, femenina)… `style`: instrucción opcional antepuesta al texto («Lee con
+# tono sereno y pausado:»); vacía por defecto hasta comprobar de oído que el modelo no la lee en voz alta.
 [opinion.tts]
 provider = "gemini"
 model = "google/gemini-3.8-flash-tts"
 voice = "Charon"
-style = "Lee en español de España como un presentador de informes financieros: tono sereno, claro y pausado, sin énfasis dramático. Pronuncia las cifras y los porcentajes de forma natural."
+style = ""
 
 # Precios USD por millón de tokens (entrada, salida), solo para estimar el coste de cada ejecución
 [opinion.prices]

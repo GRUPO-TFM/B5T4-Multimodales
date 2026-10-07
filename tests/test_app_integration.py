@@ -40,14 +40,20 @@ def test_rag_callback_preserves_citations_audio_and_timings(monkeypatch):
     assert audio == "respuesta.wav"
 
 
-def test_opinion_placeholder_stays_accessible(monkeypatch):
+def test_opinion_tab_survives_agent_errors(monkeypatch):
+    """La pestaña 2 llama al agente con sus opciones y, si el agente falla, la interfaz enseña el error en vez de caerse.
+    (Antes el agente 2 era un marcador «pendiente»; desde el 7-oct-2026 está implementado y la pestaña pasa
+    referencia/vídeo a run().)"""
     from b5t4.agents import opinion
 
-    monkeypatch.setattr(opinion, "list_editions", lambda: [])
-    def pending():
-        raise NotImplementedError("Comparación de ediciones")
-    monkeypatch.setattr(opinion, "run", pending)
-    assert "Pendiente de implementar" in ui._opinion()
+    received = []
+    def failing(**kwargs):
+        received.append(kwargs)
+        raise RuntimeError("sin datos de prueba")
+    monkeypatch.setattr(opinion, "run", failing)
+    text = ui._safe(ui._opinion, True, False)
+    assert received == [{"reference": True}]
+    assert "Error" in text and "sin datos de prueba" in text
 
 
 def test_cli_passes_brief_and_options_to_onboarding(tmp_path, monkeypatch):

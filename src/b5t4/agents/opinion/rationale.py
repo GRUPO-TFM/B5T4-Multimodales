@@ -177,7 +177,7 @@ def add_rationale(changes: list[Change], before: EditionData, after: EditionData
         for p in c.rationale:
             p.pop("context", None)
     published = sum(p["status"] in ("publicar", "sin verificar") for c in cands for p in c.rationale)
-    n_new = sum(p["new"] for c in cands for p in c.rationale)
+    n_new = sum(p["new"] for c in cands for p in c.rationale if p["status"] in ("publicar", "sin verificar"))
     log(f"  porqué: {len(cands)} cambios explicados · {published} argumentos con cita literal publicados ({n_new} nuevos respecto a la edición anterior) · "
         f"{dropped} citas descartadas por no estar en el texto · {dup} repetidas · {sum(p['status'] == 'revisar' for c in cands for p in c.rationale)} a revisar "
         f"(respaldo {SHOW_MIN:.0%}-{cfg.publish_threshold:.0%}); por debajo de {SHOW_MIN:.0%} no se publican")

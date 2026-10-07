@@ -15,7 +15,6 @@ Configuración en config/b5t4.toml, sección [opinion.tts]: provider = "gemini" 
 """
 from __future__ import annotations
 
-import base64
 import hashlib
 import io
 import json
@@ -39,8 +38,7 @@ class TTSConfig:
     provider: str = "gemini"
     model: str = "google/gemini-3.8-flash-tts"
     voice: str = "Charon"                # voz de estudio de Gemini, timbre masculino e informativo
-    style: str = ("Lee en español de España como un presentador de informes financieros: tono sereno, claro y "
-                  "pausado, sin énfasis dramático. Pronuncia las cifras y los porcentajes de forma natural.")
+    style: str = ""                      # instrucción de estilo antepuesta al texto (vacía por defecto: ver _gemini)
 
 
 def load_tts_config() -> TTSConfig:
@@ -69,41 +67,28 @@ def _decode(raw: bytes) -> tuple[np.ndarray, int]:
 
 
 def _gemini(text: str, cfg: TTSConfig, usage: Usage | None, log) -> tuple[np.ndarray, int]:
-    """Una frase → audio, por el endpoint de chat de OpenRouter con salida de audio (va en streaming SSE:
-    se concatenan los trozos base64 de delta.audio.data)."""
+    """Una frase → audio por el endpoint de voz de OpenRouter (POST /audio/speech: devuelve los bytes del audio,
+    PCM 16 bits a 24 kHz; el endpoint de chat rechaza los modelos TTS). Estilo: si cfg.style no está vacío se
+    antepone al texto como instrucción en lenguaje natural (Google documenta «Di con tono sereno: …»); por defecto
+    va vacío porque, si el modelo la leyera en voz alta, estropearía todo el vídeo. Probar primero con una frase."""
     s = get_settings()
     if not s.openrouter_api_key:
         raise RuntimeError("sin OPENROUTER_API_KEY")
-    payload = {"model": cfg.model, "stream": True, "modalities": ["text", "audio"],
-               "audio": {"voice": cfg.voice, "format": "pcm16"},
-               "messages": [{"role": "system", "content": cfg.style}, {"role": "user", "content": text}]}
-    r = requests.post(s.llm_url, timeout=120, json=payload, stream=True, headers={
+    url = s.llm_url.rsplit("/chat/completions", 1)[0] + "/audio/speech"
+    payload = {"model": cfg.model, "input": (f"{cfg.style.strip()} {text}" if cfg.style.strip() else text),
+               "voice": cfg.voice, "response_format": "pcm"}
+    r = requests.post(url, timeout=120, json=payload, headers={
         "Authorization": f"Bearer {s.openrouter_api_key}", "Content-Type": "application/json", "X-Title": "MIAX B5-T4 · opinion"})
     if r.status_code != 200:
         raise RuntimeError(f"OpenRouter {r.status_code}: {r.text[:200]}")
-    chunks, u = [], {}
-    for line in r.iter_lines(decode_unicode=True):
-        if not line or not line.startswith("data:"):
-            continue
-        body = line[5:].strip()
-        if body == "[DONE]":
-            break
-        try:
-            d = json.loads(body)
-        except ValueError:
-            continue
-        u = d.get("usage") or u
-        for ch in d.get("choices", []):
-            a = (ch.get("delta") or {}).get("audio") or (ch.get("message") or {}).get("audio") or {}
-            if a.get("data"):
-                chunks.append(a["data"])
-    if not chunks:
-        raise RuntimeError("OpenRouter no ha devuelto audio")
-    if usage is not None and u:
-        usage.add(cfg.model, u)
-    samples, sr = _decode(base64.b64decode("".join(chunks)))
+    ctype = r.headers.get("Content-Type", "")
+    if "json" in ctype:
+        raise RuntimeError(f"OpenRouter no ha devuelto audio: {r.text[:200]}")
+    samples, sr = _decode(r.content)
     if len(samples) < sr * 0.3:
         raise RuntimeError("audio demasiado corto")
+    if usage is not None:   # el endpoint no devuelve tokens: se estima (≈ 32 tokens de audio por segundo, medido por terceros)
+        usage.add(cfg.model, {"prompt_tokens": max(1, len(payload["input"]) // 4), "completion_tokens": int(len(samples) / sr * 32)})
     return samples, sr
 
 
