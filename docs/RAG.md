@@ -106,16 +106,22 @@ Posición de la primera fuente correcta (— = fuera de las 8 primeras):
 el texto, 4 min las imágenes), 1,5 GB de modelo y ~20 s de carga al arrancar. **Decisión:** la interfaz arranca con
 BM25 y deja el híbrido como opción; el híbrido es el que aporta la búsqueda por imagen.
 
-Tiempos de una pregunta completa (7-oct-2026, PC de Javi, CPU; v0 con BM25):
+Tiempos de una pregunta completa (7-oct-2026, PC de Javi, CPU, buscador BM25):
 
-| Paso | Tiempo |
-|---|---|
-| Voz → texto (Whisper) | _pendiente_ |
-| Búsqueda | 0,37 s |
-| LLM (4.296 tokens de entrada → 530 de salida) | 6,1 s |
-| Jev | _pendiente_ |
-| Voz (Kokoro) | 8,3 s |
-| **Total** | **14,8 s** |
+| Paso | v0 · escrita | v1 · hablada + Jev |
+|---|---|---|
+| Voz → texto (Whisper `small`) | — | 6,5 s (*) |
+| Búsqueda | 0,37 s | 0,33 s |
+| LLM | 6,1 s (4.296 tokens de entrada → 530 de salida) | 3,4 s |
+| Jev (3 frases) | — | 0,8 s |
+| Voz (Kokoro) | 8,3 s | 7,4 s |
+| **Total** | **14,8 s** | **18,6 s** |
+
+Pregunta de la columna v1: «¿Quién lleva la sección High Yield?», dicha al micro; respuesta correcta con las
+3 frases respaldadas por Jev (0,84 · 0,81 · 0,95).
+
+(*) Primera pregunta tras arrancar: incluye cargar Whisper. El LLM varía mucho entre llamadas: una pregunta doble
+tardó 35 s en la misma sesión.
 
 El cuello de botella es la **síntesis de voz en CPU**, no el LLM. Mejora posible: sintetizar por frases y empezar
 a reproducir la primera mientras se generan las demás.
