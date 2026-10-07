@@ -37,6 +37,7 @@ def retrievers():
 def recall(fn, qs, k):
     hits = {1: 0, 3: 0, k: 0}
     times, rows = [], []
+    fn(qs[0]["pregunta"], k)   # calentar: la 1.ª llamada carga índice y modelo; no debe contar como latencia
     for q in qs:
         t0 = time.perf_counter()
         ranked = [c.source for _, c in fn(q["pregunta"], k)]
@@ -44,7 +45,7 @@ def recall(fn, qs, k):
         pos = next((i + 1 for i, s in enumerate(ranked) if s in set(q["fuentes"])), None)
         for kk in hits:
             hits[kk] += bool(pos and pos <= kk)
-        rows.append({"id": q["id"], "pos": pos})
+        rows.append({"id": q["id"], "pos": pos, "top3": ranked[:3]})
     return hits, statistics.mean(times), rows
 
 
