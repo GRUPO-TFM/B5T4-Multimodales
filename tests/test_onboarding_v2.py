@@ -90,7 +90,7 @@ def test_residual_audio_tempo_preserves_whole_track_and_rejects_large_changes(tm
 
 def test_progress_does_not_restore_old_conversation_state(monkeypatch):
     import gradio as gr
-    from b5t4.app import ui
+    from b5t4.app import ui_onboarding as ui
     state=conversation.new_session(); state['draft']={"instructions":""}
     monkeypatch.setattr(ui,'_onboarding',lambda **kwargs:iter([('inicio','',None,None,[]),('fin','',None,None,[])]))
     events=list(ui._personalized(state,'Analista','Junior','Conocer el equipo y sus controles','Alpha',2,5,False))

@@ -51,7 +51,7 @@ internos no se distribuyen con el repositorio. Los encargos reproducibles están
 
 ## Comprobaciones realizadas
 
-47 pruebas pasan: las 24 anteriores y 23 de v2. Cubren conversación y aislamiento, confirmación,
+En la validación inicial pasaron 47 pruebas: las 24 anteriores y 23 de v2. Cubren conversación y aislamiento, confirmación,
 presupuesto, costes inciertos y reconciliación, fuentes y briefing modificados, compatibilidad,
 reparación factual acotada, caché Jev entre procesos, reutilización de voz y bloqueo de una ejecución.
 Las pruebas de Chromium comprueban GSAP/D3 locales, logo, seis elementos en una composición focus,
@@ -94,3 +94,27 @@ uv run python scripts/validate_onboarding_v2.py "out/onboarding/20261007-003029-
 El resumen comprobado está en `out/validacion_onboarding_v2.json`; evidencia visual y de interacción
 en `out/validacion-v2-interfaz/`. El auditor verifica los hashes de fuentes, el umbral, las referencias,
 el presupuesto, las revisiones y la decodificación sin realizar llamadas a proveedores.
+
+## Revisión para la PR a main
+
+La rama incorpora `main` en `3d6d01b`. Se resolvió el conflicto de arquitectura conservando el estado
+actual de onboarding y del RAG v0. El código de `agents/rag/`, `agents/opinion/` y `corpus/` coincide
+con `main`; también se mantienen sus adaptadores de LLM, Jev y voz local. La pestaña 1 se ha separado
+en `app/ui_onboarding.py` para reducir modificaciones posteriores en el montaje común.
+
+- Suite portable, sin corpus ni claves: **51 pruebas pasan y 5 se omiten** por falta de datos.
+- Con la carpeta local: **55 pruebas pasan**; la prueba del golden set RAG no termina porque hay
+  **205 documentos de su alcance no legibles en OneDrive** (error de lectura de Windows).
+  Las cuatro pruebas de corpus sí pasan. Este impedimento pertenece a la disponibilidad de los
+  datos y no se ha ocultado cambiando el test o el código del agente 3.
+- Se añadieron seis regresiones de integración: pestañas y eventos, callbacks de opinión/RAG,
+  CLI de briefing, CLI `rag eval` y render de las seis composiciones originales, con saltos hacia atrás.
+- Ambas entregas reales vuelven a superar la auditoría de fuentes, costes y decodificación completa.
+- El wheel se construye correctamente e incluye interfaz, skill, logos, plantillas, GSAP y D3.
+- No se detectaron credenciales en los archivos versionados; los artefactos internos siguen fuera de Git.
+
+La evidencia adicional reside en `out/integration-data-availability.json`,
+`out/integration-ui/` y `out/package-check/`. El repositorio no tiene workflows de GitHub Actions:
+las comprobaciones descritas son locales. La prueba del RAG con corpus completo debe repetirse
+cuando sus documentos estén descargados y sean legibles. La prueba funcional de los tres agentes
+evolucionados queda pendiente de sus entregas e integración; véase `INTEGRACION_ONBOARDING.md`.

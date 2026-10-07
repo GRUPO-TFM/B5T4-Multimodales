@@ -54,8 +54,8 @@ flowchart TB
 | Configuración | `src/b5t4/config.py`, `config/b5t4.toml`, `.env` | Rutas, claves, modelos y parámetros; nada está escrito a fuego en el código | Hecho |
 | Datos | `src/b5t4/corpus/` | Leer el manifiesto, los contextos (troceados por sección) y el texto de cualquier fichero; rasterizar páginas de PDF | Hecho |
 | Modelos | `src/b5t4/models/` | Un adaptador por modalidad con interfaz mínima | LLM, Jev y TTS hechos; STT y embeddings pendientes |
-| Salidas | `src/b5t4/render/` | Informe HTML responsive, infografía, vídeo por fotogramas | Informe, infografía y escenas de onboarding implementados |
-| Lógica | `src/b5t4/agents/` | Los tres agentes | Onboarding completo; agentes 2 y 3 mantienen su primer paso |
+| Salidas | `src/b5t4/render/` | Informe HTML responsive, infografía, vídeo por fotogramas | Informe, infografía y escenas de onboarding implementados; motor anterior compatible |
+| Lógica | `src/b5t4/agents/` | Los tres agentes | Onboarding v1/v2 completo; agente 3 v0 funcionando (BM25 + LLM con citas + voz); agente 2 conserva el listado de ediciones |
 | Interfaz | `src/b5t4/app/`, `cli.py` | Gradio y línea de comandos | Hecho (muestra «pendiente» donde corresponde) |
 
 ## 3. Por qué la carpeta de datos importa tanto

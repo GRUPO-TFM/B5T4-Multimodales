@@ -135,7 +135,7 @@ del sistema operativo para impedir dos reanudaciones simultáneas; se libera si 
 | OpenRouter, modalidades y presupuesto | `models/openrouter.py` |
 | Marca y piezas escritas | `render/brand.py`, `render/onboarding.py` |
 | Escenas y animación | `render/templates/*v2*`, `scene.html`, `render/video.py` |
-| Frontal y CLI | `app/ui.py`, `cli.py` |
+| Frontal y CLI | `app/ui_onboarding.py`, `app/ui.py` (montaje), `cli.py` |
 
 ```powershell
 uv run pytest

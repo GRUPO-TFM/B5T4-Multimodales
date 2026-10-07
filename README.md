@@ -18,11 +18,12 @@ cartera, 17 personas).
 > **Onboarding v2 (7-oct-2026):** conversación y confirmación del encargo, capítulos adaptados al perfil,
 > revisiones documentales/editoriales/audiovisuales, marca Andbank y presupuesto por ejecución.
 > Uso, contratos y límites: [docs/ONBOARDING_V2.md](docs/ONBOARDING_V2.md).
-> Validación real: vídeos de 112,04 y 278,98 s, 47 pruebas y presupuesto verificado.
+> Validación real: vídeos de 112,04 y 278,98 s y presupuesto verificado; revisión de integración documentada.
 > Evidencia y ejemplos: [docs/VALIDACION_ONBOARDING_V2.md](docs/VALIDACION_ONBOARDING_V2.md).
 > V1 se conserva en `codex/onboarding-completo`, commit `95fe4c5`, y sigue disponible sin `--brief`.
 > Su validación: [docs/VALIDACION_ONBOARDING.md](docs/VALIDACION_ONBOARDING.md).
-> Los agentes 2 y 3 mantienen su estado inicial.
+> Integra el agente 3 v0 ya disponible en `main`; el agente 2 conserva el listado de ediciones.
+> Preparación del merge y puntos compartidos: [docs/INTEGRACION_ONBOARDING.md](docs/INTEGRACION_ONBOARDING.md).
 
 ---
 
@@ -96,7 +97,9 @@ copia anonimizada en `data/sample/` (pendiente).
 | `uv run b5t4 onboarding --resume "out/onboarding/<ejecución>"` | Reutiliza las etapas terminadas si las fuentes no cambiaron | Implementado |
 | `uv run b5t4 opinion` | Agente 2. Hoy lista las ediciones de la Opinión Corporativa | 🟡 paso 1 de 5 |
 | `uv run b5t4 rag chunks` | Agente 3. Trocea el corpus (~2.700 fragmentos con metadatos) | ✅ |
-| `uv run b5t4 rag index` / `rag ask "…"` | Agente 3. Índice y respuesta | ⏳ |
+| `uv run b5t4 rag index` | Agente 3. Construye el índice BM25 en `index/` (≈ 3 s; repetir si cambian los datos) | ✅ |
+| `uv run b5t4 rag ask "…" [--voice]` | Agente 3. Respuesta citada; en voz con `--voice`. Sin clave de OpenRouter, modo extractivo (enseña el pasaje) | ✅ v0 |
+| `uv run b5t4 rag eval [--answers]` | Agente 3. Mide el buscador con el golden set: recall@1/3/8 (hoy 5 · 12 · 14 de 14) | ✅ |
 | `uv run b5t4 ui [--share]` | Interfaz Gradio con las tres pestañas | ✅ (muestra «pendiente» donde corresponde) |
 | `uv run pytest` | Pruebas de datos, fuentes, verificación, reanudación, interfaz y render | Incluye regresiones del onboarding |
 
@@ -126,7 +129,7 @@ copia anonimizada en `data/sample/` (pendiente).
 │   │   ├── onboarding/          agente 1
 │   │   ├── opinion/             agente 2
 │   │   └── rag/                 agente 3: index.py · answer.py
-│   └── app/ui.py                CAPA DE INTERFAZ (Gradio)
+│   └── app/                     CAPA DE INTERFAZ: ui.py (aplicación) · ui_onboarding.py (pestaña 1)
 ├── evals/preguntas_rag.yaml     golden set del agente 3 (15 preguntas con fuente; 1 trampa)
 ├── notebooks/                   exploración del corpus
 ├── scripts/                     download_models.py · jev_benchmark.py

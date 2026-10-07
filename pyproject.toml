@@ -16,18 +16,20 @@ dependencies = [
     "jinja2>=3.1.6",
     "numpy>=2.0",
     # lectura del corpus
-    "pypdfium2>=4.30",          # texto y rasterizado de PDF (Apache-2.0 / BSD)
+    "pypdfium2>=4.30", # texto y rasterizado de PDF (Apache-2.0 / BSD)
     "python-pptx>=1.0.2",
     "pillow>=10.0",
     # salidas: voz, vídeo, gráficos
-    "kokoro-onnx>=0.6.1",       # TTS local
+    "kokoro-onnx>=0.6.1", # TTS local
     "soundfile>=0.14.0",
     "num2words>=0.5.14",
-    "playwright>=1.63.0",       # dibuja los fotogramas del vídeo e infografías
-    "imageio-ffmpeg>=0.6.0",    # ffmpeg empaquetado (no hace falta instalarlo en Windows)
+    "playwright>=1.63.0", # dibuja los fotogramas del vídeo e infografías
+    "imageio-ffmpeg>=0.6.0", # ffmpeg empaquetado (no hace falta instalarlo en Windows)
     "matplotlib>=3.11.2",
     # interfaz
-    "gradio>=5.0",
+    "gradio>=6.0",
+    # búsqueda (RAG): raíz de las palabras en español para BM25 («operativa» ≈ «operativo»)
+    "snowballstemmer>=2.2",
 ]
 
 [project.scripts]
