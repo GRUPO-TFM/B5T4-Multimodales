@@ -15,6 +15,7 @@ import numpy as np
 from ..config import get_settings
 
 SAMPLE_RATE = 24000
+_LETTER = re.compile(r"[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]")
 
 
 def verbalize(s: str) -> str:
@@ -35,11 +36,15 @@ def verbalize(s: str) -> str:
         t = t.replace(".", "").replace(",", ".")
         try:
             v = float(t)
-            return num2words(int(v) if v.is_integer() else round(v, 2), lang="es").replace(" punto ", " coma ")
+            words = num2words(int(v) if v.is_integer() else round(v, 2), lang="es").replace(" punto ", " coma ")
         except Exception:
             return m.group(0)
+        # «P1» y «F9» se leen «P uno» y «F nueve», no «Puno» ni «Fnueve».
+        before, after = s[m.start() - 1:m.start()], s[m.end():m.end() + 1]
+        return (" " if _LETTER.match(before) else "") + words + (" " if _LETTER.match(after) else "")
 
-    return re.sub(r"[+-]?\d[\d.]*(?:,\d+)?", num, s)
+    # El punto solo pertenece a la cifra si le siguen dígitos: «el 25. Si cae» conserva su final de frase.
+    return re.sub(r"[+-]?\d+(?:\.\d+)*(?:,\d+)?", num, s)
 
 
 @lru_cache(maxsize=1)
