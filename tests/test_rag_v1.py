@@ -38,6 +38,21 @@ def test_sentence_without_citation_needs_review():
     assert checks[0].decision == "revisar" and checks[0].p is None
 
 
+def test_initials_do_not_split_sentences():
+    hy = ("La gestión corre a cargo de Juan Ramón Casanovas [4] y J. Lissignoli (externo) [4], [8]. "
+          "Por su parte, los informes los hace Javier Hernández [4].")
+    s = split_sentences(hy)
+    assert len(s) == 2 and "J. Lissignoli" in s[0]
+
+
+def test_no_consta_sentence_is_not_flagged():
+    text = "La operativa va a privatedesk@andbank.lu [1]. El teléfono móvil de Alicia Arriero no consta en la documentación."
+    checks = check_sentences(text, [_chunk("a")], supports=lambda *_: 0.95,
+                             triage=lambda p: "publicar" if p >= 0.8 else "revisar")
+    assert [c.decision for c in checks] == ["publicar", "sin verificar"]
+    assert WARN not in rebuild(checks)
+
+
 def test_rrf_rewards_agreement_between_retrievers():
     a, b, c, d = (_chunk(x) for x in "abcd")
     lexical = [(9.0, a), (8.0, b), (7.0, c)]

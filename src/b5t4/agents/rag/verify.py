@@ -7,7 +7,8 @@ los umbrales de la configuración (verifier.triage):
   publicar  (p ≥ 0,80)  la frase se queda tal cual;
   revisar   (0,30-0,80) se queda, marcada con ⚠️;
   descartar (p < 0,30)  se quita de la respuesta.
-Una frase sin cita no puede verificarse: se marca para revisar.
+Una frase sin cita no puede verificarse: se marca para revisar, salvo si dice que algo no consta (no hay nada
+que citar; se deja «sin verificar», sin ⚠️).
 
 Sin JEV_API_KEY no se verifica nada: la respuesta pasa igual y `verified=False` lo deja claro en la interfaz.
 Se usa desde `ask_verified()`, que envuelve el `ask()` existente sin modificarlo.
@@ -28,6 +29,7 @@ from .index import Chunk, search
 PASSAGE_CHARS = 6000          # el pasaje que ve Jev: el fragmento completo, con tope
 WARN = "⚠️"
 _CITE = re.compile(r"\[(\d+)\]")
+_NO_CONSTA = re.compile(r"\bno consta\b", re.IGNORECASE)
 _ASK_LOCK = threading.Lock()   # ask() se reutiliza cambiando su buscador un instante: una petición cada vez
 
 
@@ -57,8 +59,9 @@ class VerifiedAnswer(BaseModel):
 def split_sentences(text: str) -> list[str]:
     """Frases, dejando las marcas [n] pegadas a la frase a la que siguen («… .lu [1], [2]. Asimismo …»)."""
     text = re.sub(r"\s+", " ", text).strip()
-    # corta tras . ! ? (con citas opcionales detrás) cuando sigue una mayúscula o un signo de apertura
-    parts = re.split(r"(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÑ¿¡«(])", text)
+    # corta tras . ! ? (con citas opcionales detrás) cuando sigue una mayúscula o un signo de apertura,
+    # pero no tras una inicial («J. Lissignoli»)
+    parts = re.split(r"(?<=[.!?])(?<!\b[A-ZÁÉÍÓÚÑ]\.)\s+(?=[A-ZÁÉÍÓÚÑ¿¡«(])", text)
     return [p.strip() for p in parts if p.strip()]
 
 
@@ -75,7 +78,7 @@ def check_sentences(text: str, passages: list[Chunk],
         ns = cited(sen, len(passages))
         claim = _CITE.sub("", sen).strip()
         if not ns:
-            out.append(SentenceCheck(text=sen, decision="revisar"))
+            out.append(SentenceCheck(text=sen, decision="sin verificar" if _NO_CONSTA.search(sen) else "revisar"))
             continue
         passage = "\n\n".join(f"[{n}] {passages[n - 1].text}" for n in ns)[:PASSAGE_CHARS]
         p = supports(claim, passage)
