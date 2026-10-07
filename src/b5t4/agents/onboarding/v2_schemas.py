@@ -148,7 +148,9 @@ class VisualModule(Record):
         if any(edge.from_id not in ids or edge.to_id not in ids or edge.from_id == edge.to_id for edge in self.edges):
             raise ValueError("Las relaciones deben unir nodos distintos presentes en el módulo")
         if self.kind == "organisation" and not self.edges:
-            raise ValueError("Un organigrama necesita relaciones jerárquicas documentadas")
+            # Sin relaciones documentadas no hay jerarquía que dibujar: los mismos nodos
+            # se muestran como mapa sin conectores, igual que cuando Jev rechaza una relación.
+            self.kind = "map"
         return self
 
 

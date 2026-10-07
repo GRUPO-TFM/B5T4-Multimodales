@@ -5,4 +5,5 @@ uv sync || exit /b 1
 uv run playwright install chromium
 if not exist models\kokoro-v1.0.onnx uv run python scripts\download_models.py
 uv run b5t4 check
-uv run b5t4 ui
+REM Los argumentos pasan a la interfaz: «run.bat --ngrok» abre además el enlace público.
+uv run b5t4 ui %*

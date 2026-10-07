@@ -67,6 +67,10 @@ class Settings:
     embedding_model: str = "intfloat/multilingual-e5-small"
     chunk_tokens: int = 450
     top_k: int = 8
+    # --- interfaz: enlace público (ngrok) y acceso ---
+    ngrok_authtoken: str = ""
+    ngrok_domain: str = ""  # vacío: el dominio que ngrok asigne a la cuenta
+    ui_auth: str = ""  # «usuario:clave»; vacío: la interfaz no pide contraseña
     # --- rutas del repo ---
     models_dir: Path = field(default_factory=lambda: ROOT / "models")
     out_dir: Path = field(default_factory=lambda: ROOT / "out")
@@ -139,4 +143,7 @@ def get_settings() -> Settings:
         embedding_model=r.get("embedding_model", Settings.embedding_model),
         chunk_tokens=int(r.get("chunk_tokens", 450)),
         top_k=int(r.get("top_k", 8)),
+        ngrok_authtoken=env("NGROK_AUTHTOKEN", ""),
+        ngrok_domain=env("NGROK_DOMAIN", ""),
+        ui_auth=env("B5T4_UI_AUTH", ""),
     )

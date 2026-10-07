@@ -12,7 +12,7 @@ from b5t4.agents.onboarding.v2_content import cited_passage, validate_modules, C
 from b5t4.agents.onboarding.v2_media import common_storyboard, previews, fit_audio_tempo, narrate, cached_timeline
 from b5t4.agents.onboarding.v2_pipeline import validate_resume, StageArtifacts, _hash, ExecutionLease
 from b5t4.agents.onboarding.v2_schemas import (OnboardingBrief, BriefReply, DirectedStoryboard,
-    FactBank, FactChapter, VisualModule)
+    FactBank, FactChapter, VisualModule, DirectedScene)
 from b5t4.agents.onboarding.schemas import VerifiedFact
 from b5t4.config import Settings
 from b5t4.models.openrouter import UsageLedger, BudgetExceeded, OpenRouter
@@ -61,6 +61,15 @@ def test_unverified_relation_becomes_map_without_weakening_fact_gate(bank):
             assert all(value >= .8 for value in self.many(pairs))
     validate_modules([module],bank,Gate(),repair_relationships=True)
     assert module.kind=="map" and not module.edges
+
+
+def test_organisation_without_relations_is_shown_as_map():
+    nodes = [{"id":"ana","label":"Ana","detail":"x"*120,"claim_ids":["team-01"]},
+             {"id":"luis","label":"Luis","claim_ids":["team-01"]}]
+    assert VisualModule(kind="organisation", title="Equipo", items=nodes).kind == "map"
+    scene = DirectedScene(kind="organisation", title="Equipo", items=nodes, id="scene-gov",
+                          narration="El equipo se organiza en torno a dos personas de referencia.", claim_ids=["team-01"])
+    assert scene.kind == "map" and not scene.edges
 
 
 def test_shared_jev_cache_reuses_passage_across_instances(tmp_path, monkeypatch):

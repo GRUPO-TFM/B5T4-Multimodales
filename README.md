@@ -72,7 +72,35 @@ uv run b5t4 check           # comprueba datos, claves y modelos
 uv run b5t4 ui              # interfaz en http://127.0.0.1:7860
 ```
 
-En Windows, `run.bat` hace todo lo anterior salvo el `.env`.
+En Windows, `run.bat` hace todo lo anterior salvo el `.env`; en macOS y Linux, `./run.sh`. Los dos pasan sus
+argumentos a `b5t4 ui` (por ejemplo, `run.bat --ngrok`).
+
+### Enlace público con ngrok
+
+Para enseñar la interfaz fuera de tu equipo sin desplegar nada:
+
+1. Crea una cuenta gratuita en [ngrok](https://dashboard.ngrok.com/signup) y copia tu authtoken desde
+   [Your Authtoken](https://dashboard.ngrok.com/get-started/your-authtoken).
+2. Añádelo a `.env`: `NGROK_AUTHTOKEN=…`. Si vas a compartir el enlace, define también una contraseña:
+   `B5T4_UI_AUTH=usuario:clave`.
+3. Arranca con `uv run b5t4 ui --ngrok`. La consola muestra la dirección local y, debajo,
+   `* Enlace público (ngrok): https://….ngrok-free.dev`.
+
+No hay que instalar el programa `ngrok`: el agente va dentro de la dependencia `ngrok` que instala `uv sync`.
+El túnel apunta al puerto que haya elegido Gradio (7860, o el siguiente libre) y se cierra con `Ctrl+C`,
+junto con la interfaz.
+
+- **Dirección.** La cuenta gratuita tiene un dominio fijo, que ngrok asigna solo. Para usar otro dominio
+  reservado, `NGROK_DOMAIN=mi-dominio.ngrok.app` en `.env`.
+- **Contraseña.** Sin `B5T4_UI_AUTH`, cualquiera con el enlace puede preguntar al corpus desde la pestaña 3; el
+  arranque lo avisa. Con ella, Gradio pide usuario y clave antes de cargar la interfaz, también en local.
+- **Un túnel por dirección.** Si ya hay un `ngrok` abierto con el mismo token (en esta máquina o en otra), el
+  arranque puede fallar con un error `ERR_NGROK_…` de sesión o de dirección en uso: cierra el otro antes.
+- **Primera visita.** En el plan gratuito, ngrok antepone una página de aviso («You are about to visit…») a
+  quien abre el enlace en un navegador; basta con aceptarla para llegar a la interfaz.
+- **Comprobación.** `uv run b5t4 check` indica si encuentra `NGROK_AUTHTOKEN` y si hay contraseña definida.
+
+`uv run b5t4 ui --share` sigue disponible: usa el enlace temporal de Gradio y no necesita cuenta.
 
 ### A qué carpeta apunta
 
@@ -85,6 +113,10 @@ C:/Users/javie/OneDrive/04. Andbank Work/Tarea MIAX
 
 Cada miembro del equipo pone su ruta en su `.env`. Para ejecutar la demo sin acceso a los datos reales habrá una
 copia anonimizada en `data/sample/` (pendiente).
+
+Si la carpeta está en OneDrive, el cliente de OneDrive tiene que estar abierto o la carpeta marcada como
+«Mantener siempre en este dispositivo». Con ficheros «solo en la nube» y OneDrive cerrado, la lectura falla con
+`OSError: [Errno 22] Invalid argument` en los `.md` y `PdfiumError: Data format error` en los PDF.
 
 ### Comandos
 
@@ -104,6 +136,7 @@ copia anonimizada en `data/sample/` (pendiente).
 | `uv run b5t4 rag ask "…" [--voice]` | Agente 3. Respuesta citada; en voz con `--voice`. Sin clave de OpenRouter, modo extractivo (enseña el pasaje) | ✅ v0 |
 | `uv run b5t4 rag eval [--answers]` | Agente 3. Mide el buscador con el golden set: recall@1/3/8 (hoy 5 · 12 · 14 de 14) | ✅ |
 | `uv run b5t4 ui [--share]` | Interfaz Gradio con las tres pestañas | ✅ (muestra «pendiente» donde corresponde) |
+| `uv run b5t4 ui --ngrok` | La misma interfaz con enlace público por ngrok (`NGROK_AUTHTOKEN` en `.env`; contraseña opcional con `B5T4_UI_AUTH`) | ✅ |
 | `uv run pytest` | Pruebas de datos, fuentes, verificación, reanudación, interfaz y render | Incluye regresiones del onboarding |
 
 ---
@@ -152,6 +185,9 @@ copia anonimizada en `data/sample/` (pendiente).
   En v2 la síntesis de voz también utiliza OpenRouter; la composición y el montaje se ejecutan localmente.
   El `golden set` contiene correos internos de
   mesas, así que el repositorio debe ser **privado**.
+- **Enlace público:** con `--ngrok` o `--share` la interfaz, y con ella las respuestas sobre el corpus, queda
+  accesible desde internet mientras el proceso esté abierto. Define `B5T4_UI_AUTH` antes de compartir el enlace
+  y cierra el proceso al terminar. El authtoken de ngrok es personal y vive solo en `.env`.
 
 ## Equipo
 

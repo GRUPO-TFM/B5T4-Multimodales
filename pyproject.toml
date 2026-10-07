@@ -28,6 +28,7 @@ dependencies = [
     "matplotlib>=3.11.2",
     # interfaz
     "gradio>=6.0",
+    "ngrok>=1.7",# enlace público de la interfaz (b5t4 ui --ngrok); el agente va dentro del paquete
     # búsqueda (RAG): raíz de las palabras en español para BM25 («operativa» ≈ «operativo»)
     "snowballstemmer>=2.2",
 ]

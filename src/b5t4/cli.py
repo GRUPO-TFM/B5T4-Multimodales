@@ -13,6 +13,7 @@ Línea de comandos. Todo lo que hace la app se puede lanzar también desde aquí
     uv run b5t4 rag ask "¿…?" [--voice]    agente 3: pregunta; respuesta citada (y en voz con --voice)
     uv run b5t4 rag eval [--answers]       agente 3: mide el buscador con el golden set (evals/preguntas_rag.yaml)
     uv run b5t4 ui                         interfaz web (Gradio)
+    uv run b5t4 ui --ngrok                 interfaz con enlace público por ngrok
 """
 from __future__ import annotations
 
@@ -59,6 +60,8 @@ def cmd_check(_args) -> int:
         except Exception:
             ff = None
     print(f"{_ok(bool(ff))}ffmpeg           {ff or 'no encontrado'}")
+    print(f"{_ok(bool(s.ngrok_authtoken))}NGROK_AUTHTOKEN      (opcional: enlace público con «b5t4 ui --ngrok»; "
+          f"contraseña B5T4_UI_AUTH {'definida' if ':' in s.ui_auth else 'sin definir'})")
     return 0
 
 
@@ -160,7 +163,7 @@ def cmd_rag_eval(args) -> int:
 def cmd_ui(args) -> int:
     from .app.ui import launch
 
-    launch(share=args.share)
+    launch(share=args.share, ngrok=args.ngrok)
     return 0
 
 
@@ -197,6 +200,7 @@ def main(argv: list[str] | None = None) -> None:
     r.set_defaults(fn=cmd_rag)
     u = sub.add_parser("ui", help="interfaz web (Gradio)")
     u.add_argument("--share", action="store_true", help="enlace público temporal de Gradio (para la demo)")
+    u.add_argument("--ngrok", action="store_true", help="enlace público por ngrok (necesita NGROK_AUTHTOKEN en .env)")
     u.set_defaults(fn=cmd_ui)
     args = p.parse_args(argv)
     sys.exit(args.fn(args))

@@ -78,6 +78,40 @@ def test_cli_keeps_rag_eval_from_main(monkeypatch):
     assert result.value.code == 0 and received == [True]
 
 
+def test_cli_passes_ngrok_option_to_ui(monkeypatch):
+    received = []
+    monkeypatch.setattr(ui, "launch", lambda **kwargs: received.append(kwargs))
+    with pytest.raises(SystemExit) as result:
+        cli.main(["ui", "--ngrok"])
+    assert result.value.code == 0 and received == [{"share": False, "ngrok": True}]
+
+
+def test_ngrok_link_needs_token_and_tunnels_the_gradio_port(monkeypatch, capsys):
+    """Sin authtoken no se arranca nada; con él, el túnel va al puerto que Gradio eligió y se aplica la contraseña."""
+    from dataclasses import replace
+    from b5t4 import config
+
+    class Demo:
+        server_port, kwargs, blocked = 7999, None, False
+        def queue(self): return self
+        def launch(self, **kwargs): self.kwargs = kwargs
+        def block_thread(self): self.blocked = True
+    demo, base = Demo(), config.get_settings()
+    monkeypatch.setattr(ui, "build", lambda: demo)
+    monkeypatch.setattr(ui, "_ngrok", lambda port, s: f"https://ejemplo.ngrok.app/{port}")
+
+    monkeypatch.setattr(config, "get_settings", lambda: replace(base, ngrok_authtoken="", ui_auth=""))
+    with pytest.raises(SystemExit, match="NGROK_AUTHTOKEN"):
+        ui.launch(ngrok=True)
+    assert demo.kwargs is None
+
+    monkeypatch.setattr(config, "get_settings", lambda: replace(base, ngrok_authtoken="token", ui_auth="equipo:cla:ve"))
+    ui.launch(ngrok=True)
+    assert demo.kwargs["auth"] == ("equipo", "cla:ve") and demo.kwargs["prevent_thread_lock"] and demo.blocked
+    out = capsys.readouterr().out
+    assert "https://ejemplo.ngrok.app/7999" in out and "AVISO" not in out
+
+
 def test_shared_renderer_keeps_all_original_scene_kinds():
     from playwright.sync_api import sync_playwright
     from b5t4.render.schemas import Scene, Storyboard
