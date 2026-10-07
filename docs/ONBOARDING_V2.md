@@ -67,6 +67,23 @@ siguen necesitando respaldo. El tamaño y la disposición de los componentes se 
 Las ilustraciones se generan después del storyboard, únicamente para los componentes que las muestran;
 la portada del informe reutiliza uno de esos recursos.
 
+### Correcciones acotadas
+
+Un fallo en un elemento no obliga a repetir, ni hace caer, una pieza por lo demás apta. El código corrige
+solo lo afectado y deja constancia; el umbral de 0,80 no cambia y todo lo que se publica vuelve a pasar por él.
+
+| Qué falla | Qué hace el sistema | Registro |
+|---|---|---|
+| El plan cita documentos como contextos o rutas inventadas | Cada ruta exacta va a su lista y las demás se descartan; un capítulo con solo documentos recibe el contexto de su carpeta | — |
+| Una fila de tabla sin respaldo | Se retira la fila; los párrafos siguen exigiendo respaldo | `ajustes_tablas.json` |
+| Un elemento visual sin respaldo (infografía, guion o su reparación) | Se reescribe sobre un único hecho citado; si tampoco se sostiene, se retira y un diagrama que pierde un nodo pasa a mapa | `ajustes_elementos.json` |
+| Los mensajes clave no cuadran con el presupuesto de palabras | Se quita el último hecho de un mensaje con varios, o se añade a un mensaje un hecho de su mismo capítulo | — |
+| Una locución supera el tope de la escena | Se abrevia solo esa locución | — |
+| El ajuste de duración no acierta el total de palabras | Se combinan por escena las versiones ya escritas y verificadas (la actual y las reescritas) hasta entrar en la ventana | registro de la ejecución |
+
+Si una corrección acotada no basta (por ejemplo, la infografía se queda con menos de cuatro módulos o una
+escena sin elementos), la pieza se vuelve a pedir al modelo como antes.
+
 ## Marca y motor
 
 La skill y los masters están versionados en `src/b5t4/render/brand/andbank/`. Las tres piezas usan
@@ -103,6 +120,9 @@ de tempo de hasta el 8 % con ffmpeg, sin cortar palabras ni cambiar el tono; se 
 temporal y el audio resultante vuelve a revisarse. Una desviación mayor detiene la entrega.
 La escucha inicial no recibe el guion. Si su transcripción difiere en nombres o cifras, una segunda
 escucha compara explícitamente sonido y guion; conserva ambas revisiones y vuelve a exigir 0,80 a Jev.
+Lo que suena igual que el guion no se envía al verificador: la comparación ignora mayúsculas, puntuación
+y corte de frases, une homófonos («v11» y «B11») y lee los decimales dígito a dígito («tres coma dos tres»
+equivale a «tres coma veintitrés»). Otra cifra, persona o condición sigue llegando a Jev.
 
 ## Artefactos y reanudación
 

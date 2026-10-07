@@ -4,6 +4,7 @@ import hashlib
 import json
 import re
 import subprocess
+from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
@@ -16,7 +17,7 @@ from ...render import video
 from ...render.onboarding import image_url, referenced
 from ...render.schemas import Scene, Storyboard
 from .v2_schemas import AudioReview, Review, DirectedStoryboard
-from .v2_content import SYSTEM, cited_passage, validate_storyboard
+from .v2_content import SYSTEM, cited_passage, repair_items, validate_storyboard
 
 VOICE_STYLE = ("Spanish from Spain. Warm, clear, sober and professional, like a helpful colleague "
                "welcoming a new team member. Natural conversational phrasing and pauses, measured pace, "
@@ -147,6 +148,34 @@ def align_spelling(heard, script):
     return re.sub(word, spell, heard)
 
 
+@lru_cache(maxsize=1)
+def _number_words():
+    from num2words import num2words
+    return {num2words(number, lang="es"): str(number) for number in range(1000)}
+
+
+def sound_key(text):
+    """Cómo suena un texto: sin mayúsculas ni puntuación, homófonos unidos y decimales dígito a dígito.
+
+    «v once» y «B once», o «tres coma veintitrés» y «tres coma dos tres», son la misma lectura en voz alta.
+    Otra cifra, persona o condición produce una clave distinta y sigue llegando al verificador.
+    """
+    words, key, index = re.findall(r"[^\W_]+", text.lower()), [], 0
+    while index < len(words):
+        key.append(words[index] if words[index].isdigit() else _sound(words[index]))
+        index += 1
+        if words[index - 1] != "coma":
+            continue
+        digits = ""
+        while index < len(words):
+            span = next((size for size in range(5, 0, -1) if " ".join(words[index:index + size]) in _number_words()), 0)
+            if not span: break
+            digits += _number_words()[" ".join(words[index:index + span])]
+            index += span
+        if digits: key.append(digits)
+    return " ".join(key)
+
+
 def audit_audio(plan, client, out, checks):
     voice = out / "voz.wav"
     result = client.audio_review(AudioReview, SYSTEM,
@@ -171,7 +200,10 @@ def audit_audio(plan, client, out, checks):
     split = lambda text: [part.strip() for part in re.split(r"(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÑ¿¡])", text) if len(part.strip())>15]
     def differences(transcript):
         heard = plain(align_spelling(tts.verbalize(transcript), script))
-        pairs = [(part, script) for part in split(heard)] + [(part, heard) for part in split(script)]
+        # Lo que suena igual que el otro texto ya coincide; el verificador solo decide sobre lo demás.
+        sounds = lambda text: f" {sound_key(text)} "
+        pairs = [(part, other) for parts, other in ((split(heard), script), (split(script), heard))
+                 for part in parts if sounds(part) not in sounds(other)]
         return [(part, score) for (part, _), score in zip(pairs, checks.many(pairs)) if score < get_settings().publish_threshold]
     mismatches = differences(result.transcript)
     if mismatches:
@@ -300,5 +332,6 @@ def repair_visuals(plan, direction, bank, brief, client, checks, issues):
         after = [(scene.id, scene.narration, scene.claim_ids, scene.image_id) for scene in result.scenes]
         if before != after:
             raise ValueError("La reparación visual debe conservar ids, orden y locuciones exactamente")
+        repair_items(result.scenes, bank, checks, client)
         validate_storyboard(result, bank, direction, checks)
     return client.json(DirectedStoryboard, SYSTEM, prompt, validate=validate, stage="reparación visual", max_output=12000)
