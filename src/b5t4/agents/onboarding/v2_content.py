@@ -30,6 +30,24 @@ claro y natural. Mantén las citas exactas en los contratos; no las leas en la v
 
 
 class PersonalizedMaterial(Material):
+    """Los capítulos se investigan en paralelo: las lecturas de documentos mutan `evidence`, `reads` y `hashes`,
+    así que todo acceso pasa por un cerrojo reentrante (iterar un dict mientras otro hilo lo amplía falla)."""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._lock = threading.RLock()
+
+    def read_document(self, *args, **kwargs):
+        with self._lock:
+            return super().read_document(*args, **kwargs)
+
+    def for_block(self, *args, **kwargs):
+        with self._lock:
+            return super().for_block(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        with self._lock:
+            return super().save(*args, **kwargs)
+
     def catalog(self):
         return [{"path": f.rel, "kind": f.kind, "folder": f.folder} for f in self.files
                 if f.is_current and f.ext in SUPPORTED and f.ext not in (".csv", ".json")
@@ -60,11 +78,18 @@ class Checks:
     def save_stats(self):
         write_json(self.out / "consumo_jev.json", {**self.stats, "billing": "Registrado separadamente; no incluido en el límite OpenRouter"})
 
-    def check(self, claim: str, passage: str):
-        s = get_settings()
-        if len(claim) + len(passage) > 23000:
-            raise ValueError("Afirmación o pasaje demasiado largo para Jev")
-        key = hashlib.sha256((s.jev_model + "\n" + claim + "\n" + passage).encode()).hexdigest()
+    # Afirmaciones por petición a Jev. Con 5 (varias preguntas sobre el mismo pasaje) Jev pierde finura: en la
+    # ejecución del 8-oct-2026 dio 0,92 a «distribuidores responsables» frente a una fuente que dice
+    # «contribuidores responsables», y la misma afirmación sola sacó 0,33. Por eso 1: una afirmación por
+    # petición, como el diseño original. Las peticiones siguen yendo en paralelo y con caché; el mecanismo de
+    # lotes se conserva por si una versión futura de Jev lo admite sin perder calibración.
+    BATCH = 1
+
+    def _key(self, claim, passage):
+        return hashlib.sha256((get_settings().jev_model + "\n" + claim + "\n" + passage).encode()).hexdigest()
+
+    def _lookup(self, key):
+        """Probabilidad guardada (memoria, ejecución o caché compartida) o None. Sin escrituras en disco."""
         with self.lock:
             if key not in self.cache:
                 with sqlite3.connect(self.database, timeout=30) as db:
@@ -73,36 +98,86 @@ class Checks:
             if key in self.cache:
                 self.stats["cache_hits"] += 1
                 self.used[key] = self.cache[key]
-                self.save_stats()
                 return self.cache[key]["probability"]
+        return None
+
+    def _store(self, key, claim, passage, probability):
+        with self.lock:
+            self.cache[key] = {"claim": claim, "passage": passage, "probability": probability, "model": get_settings().jev_model}
+            with sqlite3.connect(self.database, timeout=30) as db:
+                db.execute("INSERT OR REPLACE INTO checks(key,payload) VALUES (?,?)",
+                           (key, json.dumps(self.cache[key], ensure_ascii=False)))
+            self.used[key] = self.cache[key]
+
+    def _ask(self, call, *args):
         if not verifier.available():
             raise RuntimeError("Onboarding v2 requiere JEV_API_KEY")
         for attempt in range(3):
             with self.lock:
                 self.stats["requests"] += 1
-                self.save_stats()
             try:
-                probability = verifier.supports(claim, passage)
-                break
+                return call(*args)
             except Exception:
                 if attempt == 2:
                     raise
                 time.sleep(attempt + 1)
+
+    def check(self, claim: str, passage: str):
+        if len(claim) + len(passage) > 23000:
+            raise ValueError("Afirmación o pasaje demasiado largo para Jev")
+        key = self._key(claim, passage)
+        probability = self._lookup(key)
+        if probability is not None:
+            return probability
+        probability = self._ask(verifier.supports, claim, passage)
         if probability is None:
             raise ValueError("Jev no devolvió probabilidad")
-        with self.lock:
-            self.cache[key] = {"claim": claim, "passage": passage, "probability": probability, "model": s.jev_model}
-            with sqlite3.connect(self.database, timeout=30) as db:
-                db.execute("INSERT OR REPLACE INTO checks(key,payload) VALUES (?,?)",
-                           (key, json.dumps(self.cache[key], ensure_ascii=False)))
-            self.used[key] = self.cache[key]
-            self.save_stats()
+        self._store(key, claim, passage, probability)
         return probability
 
+    def _batch(self, passage, claims):
+        """Hasta BATCH afirmaciones sobre un pasaje en UNA petición: una pregunta por afirmación."""
+        if len(claims) == 1:
+            return [self.check(claims[0], passage)]
+        state = "PASAJE FUENTE:\n" + passage + "\n\n" + "\n\n".join(f"AFIRMACIÓN {i}:\n{claim}" for i, claim in enumerate(claims, 1))
+        questions = {f"a{i}": {"type": "noul", "instructions": (
+            f"La AFIRMACIÓN {i} está respaldada por el PASAJE FUENTE: se refiere al mismo concepto y periodo, y las "
+            "cifras coinciden admitiendo redondeo razonable. Si el pasaje no lo menciona, NO está respaldada. "
+            "Juzga solo esa afirmación, no las demás.")} for i in range(1, len(claims) + 1)}
+        answers = self._ask(verifier._ask, state, questions)
+        out = []
+        for i, claim in enumerate(claims, 1):
+            probability = round(answers[f"a{i}"]["noul"], 3)
+            self._store(self._key(claim, passage), claim, passage, probability)
+            out.append(probability)
+        return out
+
     def many(self, pairs):
+        """Probabilidades en el orden de `pairs`. Lo ya comprobado sale de la caché; lo demás se agrupa por
+        pasaje y viaja en lotes de hasta BATCH afirmaciones, en paralelo."""
+        pairs = list(pairs)
         try:
-            with ThreadPoolExecutor(max_workers=4) as pool:
-                return list(pool.map(lambda pair: self.check(*pair), pairs))
+            for claim, passage in pairs:
+                if len(claim) + len(passage) > 23000:
+                    raise ValueError("Afirmación o pasaje demasiado largo para Jev")
+            results = [self._lookup(self._key(claim, passage)) for claim, passage in pairs]
+            groups: dict[str, list[str]] = {}
+            for (claim, passage), known in zip(pairs, results):
+                if known is None and claim not in groups.setdefault(passage, []):
+                    groups[passage].append(claim)
+            jobs = [(passage, claims[k:k + self.BATCH]) for passage, claims in groups.items()
+                    for k in range(0, len(claims), self.BATCH)]
+            if jobs:
+                found = {}
+                def work(job):
+                    passage, claims = job
+                    return [((claim, passage), value) for claim, value in zip(claims, self._batch(passage, claims))]
+                with ThreadPoolExecutor(max_workers=min(8, len(jobs))) as pool:
+                    for entries in pool.map(work, jobs):
+                        found.update(entries)
+                results = [known if known is not None else found[(claim, passage)]
+                           for (claim, passage), known in zip(pairs, results)]
+            return results
         finally:
             self.save()
 
@@ -170,6 +245,84 @@ def validate_plan(plan, material):
             raise ValueError(f"{topic.id}: usa solo rutas exactas incluidas en el catálogo")
         if set(topic.sections) - {str(n) for n in range(1, 12)}:
             raise ValueError("Los apartados son números de 1 a 11")
+
+
+# ------------------------------------------------------------------ H · ampliación incremental y catálogo acotado
+# Cuando el primer borrador declara lagunas, antes se pedía al modelo el catálogo COMPLETO (253 rutas, 43 mil
+# caracteres) y después un borrador NUEVO releyendo todas las evidencias del capítulo más los documentos añadidos
+# (100-160 mil caracteres por capítulo), descartando el primero. Ahora: el catálogo va filtrado a las 150 rutas
+# más afines a las lagunas (en la ejecución del 8-oct, las 18 elegidas estaban todas dentro) y la ampliación lee
+# SOLO los documentos nuevos junto con los hechos ya extraídos (no vuelve a leer lo que ya leyó). Se descartó
+# recortar también las evidencias del primer borrador: medido sobre la misma ejecución, un tope de 45 mil
+# caracteres por relevancia léxica dejaba fuera el 28 % de los fragmentos que el modelo acabó citando.
+_STOP = {"para", "como", "este", "esta", "estos", "estas", "desde", "sobre", "entre", "donde", "cuando", "tiene",
+         "tienen", "debe", "deben", "cada", "todo", "toda", "todos", "todas", "sus", "los", "las", "del", "que",
+         "con", "por", "una", "uno", "unos", "unas", "más", "mas", "sin", "sus", "otro", "otra", "según", "segun"}
+
+
+def _fold(text):
+    import unicodedata
+    return "".join(c for c in unicodedata.normalize("NFKD", (text or "").lower()) if not unicodedata.combining(c))
+
+
+def _terms(text):
+    """Raíces de 6 letras de las palabras de 4 o más: «controles»/«control», «semanal»/«semana» coinciden."""
+    return [w[:6] for w in re.findall(r"[a-z0-9]{4,}", _fold(text)) if w not in _STOP]
+
+
+def relevance(query, docs):
+    """Puntuación BM25 sencilla de cada texto de `docs` frente a `query` (sin dependencias ni índice)."""
+    import math as _m
+    q = set(_terms(query))
+    bags = [_terms(d) for d in docs]
+    n = max(1, len(bags))
+    avg = sum(len(b) for b in bags) / n or 1
+    df = {t: sum(1 for b in bags if t in b) for t in q}
+    out = []
+    for bag in bags:
+        tf = {}
+        for t in bag:
+            if t in q: tf[t] = tf.get(t, 0) + 1
+        score = 0.0
+        for t, f in tf.items():
+            idf = _m.log(1 + (n - df[t] + .5) / (df[t] + .5))
+            score += idf * f * 2.2 / (f + 1.2 * (.25 + .75 * len(bag) / avg))
+        out.append(score)
+    return out
+
+
+def focus_catalog(catalog, query, limit=150):
+    """Las `limit` rutas del catálogo más afines a las lagunas (por ruta y carpeta), no las ~1.200."""
+    if len(catalog) <= limit:
+        return catalog
+    scores = relevance(query, [r["path"].replace("/", " ").replace("_", " ") + " " + r.get("kind", "") for r in catalog])
+    top = sorted(range(len(catalog)), key=lambda i: -scores[i])[:limit]
+    return [catalog[i] for i in sorted(top)]
+
+
+def expand_research(topic, brief, draft, new_evidence, client):
+    """Ampliación incremental: hechos ya extraídos + SOLO las evidencias nuevas → lista completa actualizada.
+    Mismo contrato (ResearchDraft, 4-12 hechos) y misma verificación posterior que el borrador completo; lo que
+    cambia es que el modelo no relee las evidencias que ya leyó. Un hecho existente que reescriba sin ver su
+    fuente lo detecta la verificación de Jev contra su pasaje, como cualquier otro."""
+    if not new_evidence:
+        return draft
+    known = {sid for fact in draft.facts for sid in fact.source_ids}
+    prompt = ("Amplía la investigación de este capítulo con DOCUMENTOS NUEVOS elegidos para resolver sus lagunas. "
+              "Devuelve la lista COMPLETA de 8-12 afirmaciones atómicas: conserva literalmente (mismo texto y mismos "
+              "source_ids) los hechos existentes que sigan siendo útiles y añade o sustituye por hechos de las "
+              "evidencias nuevas que resuelvan lagunas. Cada hecho nuevo, una sola idea de 15-35 palabras con 1-2 "
+              "evidencias EXACTAS de las nuevas. No inventes ids. En gaps, solo las lagunas que sigan abiertas.\n"
+              + brief.model_dump_json() + "\nCAPÍTULO:\n" + topic.model_dump_json()
+              + "\nHECHOS EXISTENTES:\n" + json.dumps([f.model_dump() for f in draft.facts], ensure_ascii=False)
+              + "\nLAGUNAS:\n" + json.dumps(draft.gaps, ensure_ascii=False)
+              + "\nEVIDENCIAS NUEVAS:\n" + json.dumps([e.model_dump() for e in new_evidence], ensure_ascii=False))
+    valid_ids = known | {e.id for e in new_evidence}
+    def validate(d):
+        if any(set(f.source_ids) - valid_ids for f in d.facts):
+            raise ValueError("Una afirmación contiene ids de evidencia inexistentes")
+    return client.json(ResearchDraft, SYSTEM, prompt, stage=f"ampliación incremental {topic.id}", max_output=6500,
+                       validate=validate)
 
 
 def validate_references(facts, evidence):
@@ -255,6 +408,40 @@ def prune_rows(chapter, bank, checks):
         adjustments(checks, "ajustes_tablas.json", removed, f"Tabla de {chapter.id}: {len(removed)} fila(s) sin respaldo retiradas")
 
 
+def repair_paragraphs(chapter, bank, client, checks):
+    """Un párrafo sin respaldo se reescribe sobre sus propios hechos (hasta dos rondas) en vez de regenerar el
+    capítulo entero: regenerarlo repite la misma inferencia, descarta los párrafos ya aptos y vuelve a pagar
+    sus verificaciones. Si tras dos rondas sigue flojo, se deja que el contrato falle como antes."""
+    from .v2_schemas import CitedText
+    threshold = get_settings().publish_threshold
+    for round_index in range(3):
+        pairs = [(p.text, cited_passage(p.claim_ids, bank)) for p in chapter.paragraphs]
+        scores = checks.many(pairs)
+        weak = [i for i, score in enumerate(scores) if score < threshold]
+        if not weak:
+            return chapter
+        if round_index == 2:
+            raise ValueError("Respaldo insuficiente tras la reparación de párrafos: "
+                             + "; ".join(f"párrafo {i + 1} de {chapter.id}: {scores[i]:.2f}" for i in weak))
+        for i in weak:
+            paragraph = chapter.paragraphs[i]
+            checks.log(f"  Corrección factual de párrafo {i + 1} de {chapter.id}")
+            def bounded(value, ids=tuple(paragraph.claim_ids)):
+                if set(value.claim_ids) - set(ids):
+                    raise ValueError("Mantén claim_ids dentro de los ids del párrafo")
+            corrected = client.json(CitedText, SYSTEM,
+                "Corrige SOLO este párrafo para que cada frase exprese exactamente hechos del respaldo, sin "
+                "inferencias, consejos ni ejemplos. Conserva la idea útil y el tono natural; puedes acortarlo. "
+                "No menciones ids ni 'según la fuente'. Mantén claim_ids dentro de los ids existentes.\nPÁRRAFO:\n"
+                + paragraph.text + "\nRESPALDO:\n" + pairs[i][1] + "\nIDS:\n" + json.dumps(list(paragraph.claim_ids)),
+                stage=f"reparación de párrafo {chapter.id}-{i + 1}", max_output=1800, validate=bounded)
+            chapter.paragraphs[i] = corrected
+        adjustments(checks, "ajustes_parrafos.json",
+                    [{"chapter": chapter.id, "paragraph": i + 1, "probability": scores[i]} for i in weak],
+                    f"Capítulo {chapter.id}: {len(weak)} párrafo(s) reescritos sobre sus hechos")
+    return chapter
+
+
 def write_chapter(chapter, brief, bank, client, checks, feedback=""):
     local = {fact.id: fact.text for fact in chapter.facts if fact.status == "publicar"}
     prompt = ("Redacta un capítulo de un documento COMPLETO de referencia para quien se incorpora. "
@@ -270,7 +457,8 @@ def write_chapter(chapter, brief, bank, client, checks, feedback=""):
         if result.id != chapter.id:
             raise ValueError("Mantén el id del capítulo")
         prune_rows(result, bank, checks)
-        validate_guide(result, bank, checks)
+        repair_paragraphs(result, bank, client, checks)
+        validate_guide(result, bank, checks)                 # todo en caché ya: no cuesta peticiones
     return client.json(GuideChapter, SYSTEM, prompt, validate=validate, stage=f"referencia {chapter.id}",
                        max_output=6500, temperature=.35)
 
@@ -415,9 +603,21 @@ def validate_storyboard(storyboard, bank, direction, checks):
     validate_narrations([(scene.id, scene.narration, scene.claim_ids) for scene in storyboard.scenes],bank,checks)
 
 
+# Fin de frase: punto, exclamación o interrogación seguidos de mayúscula, SALVO tras una cifra. Las carpetas del
+# equipo se llaman «10. Seccion Alpha» o «99. Old»: partir ahí dejaba fragmentos como «Seccion Alpha, y ... la
+# ruta 99.» que Jev no puede respaldar por sí solos (fallo real del 8-oct-2026 en documentacion_maestro). Si una
+# frase de verdad termina en cifra («... en 2026. La casa ...»), se verifica junto con la siguiente: más largo,
+# no menos exigente.
+SENTENCE_END = re.compile(r"(?<=[.!?])(?<!\d\.)\s+(?=[A-ZÁÉÍÓÚÑ¿¡])")
+
+
+def split_sentences(value):
+    return SENTENCE_END.split(value)
+
+
 def narration_pairs(entries, bank):
     pairs, labels = [], []
-    split = lambda value: re.split(r"(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÑ¿¡])", value)
+    split = split_sentences
     plain = lambda value: re.sub(r"\W+", " ", value.lower()).strip()
     published = bank.published()
     for scene_id, text, ids in entries:

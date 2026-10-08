@@ -8,6 +8,7 @@ Tres pasos deterministas:
   2. render_frames()   Chromium (Playwright) abre templates/scene.html, que expone una función JS render(t);
                        para cada instante t = i / fps se llama a render(t) y se hace una captura → JPG.
   3. ffmpeg            une los JPG y el WAV en un MP4 H.264 (ffmpeg del sistema o el de imageio-ffmpeg).
+Los fotogramas se capturan en varios navegadores a la vez (video.render_workers); render(t) es determinista.
 
 Coste: cero APIs. 60 s de vídeo a 25 fps son 1.500 capturas: ≈ 1-2 min de CPU.
 """
@@ -110,18 +111,26 @@ def render(sb: Storyboard, tl: dict, out: Path, template: str = "scene.html", lo
             if overflow:
                 pg.screenshot(path=str(out / "error_diseno.png"))
                 raise ValueError(f"La escena {sc['id']} desborda el área legible; acorta sus tarjetas")
-        for i in range(n):
-            pg.evaluate(f"render({i / s.fps})")
-            pg.screenshot(path=str(frames / f"f_{i:05d}.jpg"), type="jpeg", quality=92)
-            if i % 250 == 0:
-                log(f"  fotograma {i}/{n}")
         for sc in tl["scenes"]:   # una captura fija por escena: sirve de infografía y de miniatura
             pg.evaluate(f"render({sc['start'] + sc['duration'] * 0.75})")
             pg.screenshot(path=str(out / f"escena_{sc['id']}.png"))
         b.close()
+    # Los fotogramas se reparten entre varios navegadores: render(t) es determinista (cada instante se dibuja
+    # desde cero), así que da igual qué navegador capture cada tramo. Con 4, el montaje tarda ~4 veces menos.
+    workers = max(1, min(s.render_workers, n))
+    bounds = [(k * n // workers, (k + 1) * n // workers) for k in range(workers)]
+    if workers == 1:
+        _capture(html, bounds[0], s, frames, log, n)
+    else:
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            list(pool.map(lambda span: _capture(html, span, s, frames, log, n), bounds))
+    missing = [i for i in range(n) if not (frames / f"f_{i:05d}.jpg").exists()]
+    if missing:
+        raise RuntimeError(f"Faltan {len(missing)} fotogramas (p. ej. {missing[0]})")
     mp4 = out / "video.mp4"
     subprocess.run([_ffmpeg(), "-y", "-v", "error", "-framerate", str(s.fps), "-i", str(frames / "f_%05d.jpg"),
-                    "-i", str(out / "voz.wav"), "-c:v", "libx264", "-preset", "medium", "-crf", "20",
+                    "-i", str(out / "voz.wav"), "-c:v", "libx264", "-preset", "veryfast", "-crf", "20",
                     "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", "-shortest", "-movflags", "+faststart",
                     str(mp4)], check=True)
     # Se borra solo el directorio temporal creado para esta ejecución, dentro de out.
@@ -131,6 +140,26 @@ def render(sb: Storyboard, tl: dict, out: Path, template: str = "scene.html", lo
     shutil.rmtree(frames)
     log(f"  vídeo {mp4.name}: {tl['total']:.1f} s, {n} fotogramas")
     return mp4
+
+
+def _capture(html: str, span: tuple[int, int], s, frames: Path, log, n: int) -> None:
+    """Captura los fotogramas [start, end) con un navegador propio (cada hilo abre el suyo: la API síncrona de
+    Playwright no se comparte entre hilos). Mismo HTML, misma escala y mismo render(t) que la comprobación previa."""
+    from playwright.sync_api import sync_playwright
+
+    start, end = span
+    with sync_playwright() as p:
+        b = p.chromium.launch(executable_path=os.environ.get("B5T4_CHROMIUM") or None)
+        pg = b.new_page(viewport={"width": s.width, "height": s.height})
+        pg.set_content(html, wait_until="load")
+        pg.evaluate("document.fonts.ready")
+        pg.evaluate("scale => {document.body.style.transformOrigin='0 0'; document.body.style.transform=`scale(${scale})`;}", s.width / 1920)
+        for i in range(start, end):
+            pg.evaluate(f"render({i / s.fps})")
+            pg.screenshot(path=str(frames / f"f_{i:05d}.jpg"), type="jpeg", quality=92)
+            if i % 250 == 0:
+                log(f"  fotograma {i}/{n}")
+        b.close()
 
 
 def scene_html(sb: Storyboard, tl: dict, template="scene.html") -> str:

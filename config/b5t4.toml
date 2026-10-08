@@ -35,6 +35,11 @@ speed = 1.1
 max_seconds = 120          # tope del vídeo de onboarding (2 minutos)
 words_per_second = 2.7     # medido con Kokoro em_alex a 1,1 (7-oct-2026, 318 palabras → 116 s): para presupuestar la locución antes de sintetizar
 brand = "Gestión Discrecional"
+render_workers = 4         # navegadores que capturan fotogramas a la vez (cada uno ~300 MB de RAM); 1 = como antes
+
+# Agente 1 (onboarding v2). Lo lee config.py: sección opcional, valores por defecto en Settings.
+[onboarding_v2]
+workers = 6                # capítulos investigados y redactados a la vez (el plan suele tener 6-8; 1 = en serie, como antes)
 
 [rag]
 index_dir = "index"                                  # se genera en local; no se sube al repo (contiene texto del corpus)

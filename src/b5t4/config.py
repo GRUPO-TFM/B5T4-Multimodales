@@ -47,6 +47,7 @@ class Settings:
     model_tts: str = "google/gemini-3.8-flash-tts"
     voice_v2: str = "Algieba"
     onboarding_budget: float = 5.0
+    onboarding_workers: int = 6      # capítulos investigados y redactados a la vez (1 = en serie)
     # --- verificador (Jev) ---
     jev_api_key: str = ""
     jev_url: str = "https://api.typesafe.ai/v1/systemone"
@@ -62,6 +63,7 @@ class Settings:
     max_seconds: int = 120
     words_per_second: float = 2.3
     brand: str = "Gestión Discrecional"
+    render_workers: int = 4          # navegadores que capturan fotogramas a la vez (1 = uno solo, como antes)
     # --- RAG ---
     index_dir: Path = field(default_factory=lambda: ROOT / "index")
     embedding_model: str = "intfloat/multilingual-e5-small"
@@ -126,6 +128,7 @@ def get_settings() -> Settings:
         model_tts=env("B5T4_MODEL_TTS") or onboarding.get("model_tts", Settings.model_tts),
         voice_v2=onboarding.get("voice", Settings.voice_v2),
         onboarding_budget=float(onboarding.get("budget_usd", 5.0)),
+        onboarding_workers=int(env("B5T4_ONBOARDING_WORKERS") or onboarding.get("workers", 6)),
         jev_api_key=env("JEV_API_KEY") or env("TYPESAFE_API_KEY", ""),
         jev_url=v.get("url", Settings.jev_url),
         jev_model=v.get("model", Settings.jev_model),
@@ -139,6 +142,7 @@ def get_settings() -> Settings:
         max_seconds=int(vid.get("max_seconds", 120)),
         words_per_second=float(vid.get("words_per_second", 2.3)),
         brand=vid.get("brand", "Gestión Discrecional"),
+        render_workers=int(env("B5T4_RENDER_WORKERS") or vid.get("render_workers", 4)),
         index_dir=index_dir if index_dir.is_absolute() else ROOT / index_dir,
         embedding_model=r.get("embedding_model", Settings.embedding_model),
         chunk_tokens=int(r.get("chunk_tokens", 450)),
