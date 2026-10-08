@@ -32,3 +32,5 @@ data/*
 *.wav
 evals/*.local.*
 
+# logs de ejecuciones locales
+*.log

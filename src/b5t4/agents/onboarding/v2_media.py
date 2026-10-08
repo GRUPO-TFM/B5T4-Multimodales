@@ -17,7 +17,7 @@ from ...render import video
 from ...render.onboarding import image_url, referenced
 from ...render.schemas import Scene, Storyboard
 from .v2_schemas import AudioReview, Review, DirectedStoryboard
-from .v2_content import SYSTEM, cited_passage, repair_items, validate_storyboard
+from .v2_content import SYSTEM, cited_passage, repair_items, validate_storyboard, split_sentences
 
 VOICE_STYLE = ("Spanish from Spain. Warm, clear, sober and professional, like a helpful colleague "
                "welcoming a new team member. Natural conversational phrasing and pauses, measured pace, "
@@ -197,7 +197,7 @@ def audit_audio(plan, client, out, checks):
     # Comillas y rayas no se pronuncian, y la grafía de lo oído se alinea con el guion.
     plain = lambda text: re.sub(r"[«»“”\"]|\s[-–—](?=\s)", "", text)
     script = plain(intended)
-    split = lambda text: [part.strip() for part in re.split(r"(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÑ¿¡])", text) if len(part.strip())>15]
+    split = lambda text: [part.strip() for part in split_sentences(text) if len(part.strip())>15]   # no parte «10. Seccion Alpha»
     def differences(transcript):
         heard = plain(align_spelling(tts.verbalize(transcript), script))
         # Lo que suena igual que el otro texto ya coincide; el verificador solo decide sobre lo demás.

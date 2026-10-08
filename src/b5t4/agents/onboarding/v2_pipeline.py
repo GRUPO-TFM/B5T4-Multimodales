@@ -7,6 +7,8 @@ import json
 import math
 import os
 import shutil
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from uuid import uuid4
 
@@ -19,6 +21,7 @@ from .schemas import SourceSelection
 from .v2_schemas import (OnboardingBrief, ResearchPlan, ResearchDraft, FactChapter, FactBank, GuideChapter,
                          ReferenceGuide, Review, Direction, KeyMessages, DirectedStoryboard)
 from .v2_content import (PersonalizedMaterial, Checks, SYSTEM, plan_research, research_topic, verify_research,
+                         expand_research, focus_catalog,
                          validate_references, validate_plan, write_chapter, validate_guide, editorial_review, direct,
                          validate_modules, repair_items, select_messages, validate_messages, storyboard,
                          validate_storyboard, revise_narration)
@@ -78,13 +81,15 @@ class StageArtifacts:
         self.out, self.previous_recipe, self.current_recipe = out, previous_recipe, current_recipe
         self.path = out / "etapas.json"
         self.metadata = json.loads(self.path.read_text(encoding="utf-8")) if self.path.exists() else {}
+        self.lock = threading.RLock()                       # varios hilos piden contratos a la vez (capítulos)
 
     def close(self):
         if self.lease: self.lease.close()
 
     def get(self, name, schema, create, validate=None, dependencies=None):
         functions = (plan_research, validate_plan) if name == "indice.json" else (
-            (research_topic,) if name.startswith(("investigacion_", "ampliado_")) else
+            (research_topic,) if name.startswith("investigacion_") else
+            (expand_research,) if name.startswith("ampliado_") else
             (verify_research, validate_references) if name.startswith("verificado_") else
             (write_chapter, validate_guide) if name.startswith("referencia_") else
             (editorial_review,) if name.startswith("revision_editorial_") else
@@ -99,7 +104,8 @@ class StageArtifacts:
         recipe_parts.update({file.name: hashlib.sha256(file.read_bytes()).hexdigest() for file in content_files})
         recipe = _hash(recipe_parts)
         stamp = _hash([recipe, schema.model_json_schema(), dependencies])
-        record = self.metadata.get(name)
+        with self.lock:
+            record = self.metadata.get(name)
         early = name.startswith(("indice", "investigacion_", "ampliacion_", "ampliado_", "verificado_", "referencia_")) or name in ("direccion.json", "guion.json")
         legacy = (early and ((isinstance(record, str) and self.previous_recipe and
                   record == _hash([self.previous_recipe, dependencies])) or
@@ -120,10 +126,11 @@ class StageArtifacts:
             result = create()
         if validate: validate(result)
         write_json(path, result)
-        self.metadata[name] = {"stamp": stamp, "dependency_hash": _hash(dependencies), "recipe_hash": self.current_recipe,
-                               "origin_recipe_hash": record.get("origin_recipe_hash", record.get("recipe_hash"))
-                                   if isinstance(record, dict) and (reusable or legacy) else self.previous_recipe if legacy else self.current_recipe}
-        write_json(self.path, self.metadata)
+        with self.lock:
+            self.metadata[name] = {"stamp": stamp, "dependency_hash": _hash(dependencies), "recipe_hash": self.current_recipe,
+                                   "origin_recipe_hash": record.get("origin_recipe_hash", record.get("recipe_hash"))
+                                       if isinstance(record, dict) and (reusable or legacy) else self.previous_recipe if legacy else self.current_recipe}
+            write_json(self.path, self.metadata)
         return result
 
 
@@ -140,6 +147,16 @@ def validate_resume(out, signature, material):
     for rel in sources["documents_read"]:
         material.read_document(rel)
     return state
+
+
+def parallel(function, items, workers):
+    """Aplica `function` a cada elemento en hilos y devuelve los resultados EN EL MISMO ORDEN. Un error en
+    cualquier hilo se propaga (y el resto termina lo que tiene entre manos). Con workers=1 es un bucle normal."""
+    items = list(items)
+    if workers <= 1 or len(items) <= 1:
+        return [function(item) for item in items]
+    with ThreadPoolExecutor(max_workers=min(workers, len(items))) as pool:
+        return list(pool.map(function, items))
 
 
 def validate_selection(value, catalog):
@@ -193,15 +210,16 @@ def run(brief: OnboardingBrief | dict, out_root=None, log=print, *, resume=None,
         stage("2 · Plan personalizado y selección de fuentes")
         plan = cached("indice.json", ResearchPlan, lambda: plan_research(brief, material, client),
                       lambda p: validate_plan(p, material), dependencies=brief.model_dump())
-        chapters = []
-        for topic in plan.chapters:
-            stage("3 · Investigación y verificación: " + topic.title)
+        def research_chapter(topic):
+            """Un capítulo completo: investigación, ampliación si hay lagunas y verificación. Independiente de los
+            demás capítulos, así que corre en un hilo propio (el cliente, Jev, el material y las etapas van con cerrojo)."""
+            log("  capítulo: " + topic.title)
             evidence = material.for_block(topic)
             draft = cached("investigacion_" + topic.id + ".json", ResearchDraft,
                 lambda: research_topic(topic, brief, evidence, client, checks),
                 lambda d: validate_references(d.facts, evidence), dependencies=[topic.model_dump(), brief.model_dump()])
             if draft.gaps:
-                catalog = material.catalog()
+                catalog = focus_catalog(material.catalog(), " ".join([topic.title, topic.purpose, *draft.gaps]))
                 def selection():
                     def valid(value):
                         if set(value.document_paths) - {record["path"] for record in catalog}:
@@ -214,35 +232,42 @@ def run(brief: OnboardingBrief | dict, out_root=None, log=print, *, resume=None,
                 extra = cached("ampliacion_" + topic.id + ".json", SourceSelection, selection,
                                lambda value: validate_selection(value, catalog),
                                dependencies=[topic.model_dump(), draft.model_dump()])
-                more = [record for path in extra.document_paths for record in material.read_document(path)]
+                seen = {e.id for e in evidence}
+                more = [record for path in extra.document_paths for record in material.read_document(path)
+                        if record.id not in seen]
                 if more:
                     evidence = list({e.id: e for e in evidence + more}.values())
+                    first = draft                                 # la ampliación lee solo lo nuevo (mejora H)
                     draft = cached("ampliado_" + topic.id + ".json", ResearchDraft,
-                        lambda: research_topic(topic, brief, evidence, client, checks),
+                        lambda: expand_research(topic, brief, first, more, client),
                         lambda d: validate_references(d.facts, evidence), dependencies=[draft.model_dump(), extra.model_dump()])
-            material.save(out)
             verified = cached("verificado_" + topic.id + ".json", FactChapter,
                 lambda: verify_research(topic, draft, evidence, client, checks),
                 lambda value: validate_references(value.facts, evidence), dependencies=draft.model_dump())
             # Las decisiones se recalculan incluso en caché; referencias y umbral siguen siendo obligatorios.
             lookup = {record.id: record for record in evidence}
             validate_references(verified.facts, evidence)
-            for fact in verified.facts:
-                passage = "\n\n".join(f"[{sid}] {lookup[sid].heading}\n{lookup[sid].text}" for sid in fact.source_ids)
-                fact.probability = checks.check(fact.text, passage)
+            passages = ["\n\n".join(f"[{sid}] {lookup[sid].heading}\n{lookup[sid].text}" for sid in fact.source_ids)
+                        for fact in verified.facts]
+            for fact, probability in zip(verified.facts, checks.many(list(zip([f.text for f in verified.facts], passages)))):
+                fact.probability = probability
                 fact.status = "publicar" if fact.probability >= s.publish_threshold else "revisar" if fact.probability >= s.discard_threshold else "descartar"
             write_json(out / ("verificado_" + topic.id + ".json"), verified)
-            chapters.append(verified)
+            return verified
+
+        stage(f"3 · Investigación y verificación: {len(plan.chapters)} capítulos en paralelo")
+        chapters = parallel(research_chapter, plan.chapters, s.onboarding_workers)
+        material.save(out)
         bank = FactBank(title=plan.title, chapters=chapters)
         write_json(out / "verificacion.json", bank)
         weak = [chapter.id for chapter in chapters if sum(f.status == "publicar" for f in chapter.facts) < 3]
         if weak:
             raise ValueError("Falta cobertura verificada para el informe: " + ", ".join(weak))
         stage("4 · Documento completo de referencia")
-        guide_chapters = [cached("referencia_" + chapter.id + ".json", GuideChapter,
-                         lambda chapter=chapter: write_chapter(chapter, brief, bank, client, checks),
-                         lambda value: validate_guide(value, bank, checks), dependencies=[chapter.model_dump(), brief.model_dump()])
-                          for chapter in chapters]
+        guide_chapters = parallel(lambda chapter: cached("referencia_" + chapter.id + ".json", GuideChapter,
+                         lambda: write_chapter(chapter, brief, bank, client, checks),
+                         lambda value: validate_guide(value, bank, checks), dependencies=[chapter.model_dump(), brief.model_dump()]),
+                                  chapters, s.onboarding_workers)
         guide = ReferenceGuide(title=bank.title, chapters=guide_chapters)
         for attempt in range(3):
             renderer.write_reference(guide, bank, brief, material, out)
