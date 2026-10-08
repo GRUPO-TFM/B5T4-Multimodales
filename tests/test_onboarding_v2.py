@@ -72,6 +72,105 @@ def test_organisation_without_relations_is_shown_as_map():
     assert scene.kind == "map" and not scene.edges
 
 
+def test_plan_sorts_contexts_and_documents_and_drops_invented_paths():
+    from types import SimpleNamespace
+    from b5t4.agents.onboarding.v2_content import normalise_plan, validate_plan
+    material=SimpleNamespace(contexts={"00_CONTEXTO.md":{},"01. Organizacion/00_CONTEXTO.md":{}},
+        catalog=lambda:[{"path":"01. Organizacion/01_Personas.md"},{"path":"04. Procesos/P02.md"}])
+    topic=lambda sources,documents=(): SimpleNamespace(id="team",sections=["1"],sources=list(sources),document_paths=list(documents))
+    plan=SimpleNamespace(chapters=[topic(["01. Organizacion/01_Personas.md","inventado.md"]),
+        topic(["01. Organizacion/00_CONTEXTO.md"],["04. Procesos/P02.md","no-existe.pdf"]),topic(["04. Procesos/P02.md"])])
+    validate_plan(normalise_plan(plan,material),material)
+    first,second,third=plan.chapters
+    assert first.sources==["01. Organizacion/00_CONTEXTO.md"] and first.document_paths==["01. Organizacion/01_Personas.md"]
+    assert second.sources==["01. Organizacion/00_CONTEXTO.md"] and second.document_paths==["04. Procesos/P02.md"]
+    assert third.sources==["00_CONTEXTO.md"] and third.document_paths==["04. Procesos/P02.md"]
+    first.sections=["§4","7. Recursos","Anexo","4","12"]; normalise_plan(plan,material)
+    assert first.sections==["4","7"]
+    plan.chapters.append(topic(["inventado.md"]))
+    with pytest.raises(ValueError,match="al menos un contexto"): validate_plan(normalise_plan(plan,material),material)
+
+
+def test_unsupported_visual_item_is_rewritten_or_removed_without_failing_the_piece(bank):
+    from b5t4.agents.onboarding.v2_content import repair_items
+    from b5t4.agents.onboarding.v2_schemas import VisualItem
+    class Gate:
+        log=staticmethod(lambda _:None)
+        def many(self,pairs): return [self.check(*pair) for pair in pairs]
+        def check(self,claim,passage): return .2 if "dirige" in claim else .99
+    class Client:
+        def __init__(self,detail): self.detail,self.calls=detail,0
+        def json(self,schema,system,prompt,*,validate,**kwargs):
+            self.calls+=1
+            value=VisualItem(id="ana",label="Ana y Luis",detail=self.detail,claim_ids=["team-01"])
+            validate(value); return value
+    nodes=[{"id":"ana","label":"Ana","detail":"Ana dirige a Luis.","claim_ids":["team-01","team-02"]},
+           {"id":"luis","label":"Luis","claim_ids":["team-01"]}]
+    process=lambda: VisualModule(kind="process",title="Equipo",items=nodes,edges=[{"from_id":"ana","to_id":"luis","claim_ids":["team-01"]}])
+    fixed,client=process(),Client("Trabajan en el equipo."); repair_items([fixed],bank,Gate(),client)
+    assert client.calls==1 and fixed.kind=="process" and len(fixed.edges)==1
+    assert fixed.items[0].detail=="Trabajan en el equipo." and fixed.items[0].claim_ids==["team-01"]
+    # Si la reescritura tampoco se sostiene, el elemento se retira y el diagrama deja de afirmar una secuencia.
+    dropped=process(); repair_items([dropped],bank,Gate(),Client("Ana dirige a Luis."))
+    assert [item.id for item in dropped.items]==["luis"] and dropped.kind=="map" and not dropped.edges
+    modules=[VisualModule(kind="focus",title="Ana",items=nodes[:1]),process()]
+    repair_items(modules,bank,Gate(),Client("Ana dirige a Luis."))
+    assert [module.kind for module in modules]==["map"]
+    scene=DirectedScene(kind="focus",title="Ana",items=nodes[:1],id="scene-ana",claim_ids=["team-01"],
+                        narration="Ana y Luis trabajan en el equipo de gestión.")
+    with pytest.raises(ValueError,match="scene-ana se queda sin elementos"): repair_items([scene],bank,Gate(),Client("Ana dirige a Luis."))
+
+
+def test_unsupported_table_row_is_removed_instead_of_rewriting_the_chapter(bank):
+    from b5t4.agents.onboarding.v2_content import prune_rows
+    from b5t4.agents.onboarding.v2_schemas import GuideChapter
+    row=lambda label,detail: {"label":label,"detail":detail,"claim_ids":["team-01"]}
+    chapter=GuideChapter(id="team",title="Equipo",table_title="Personas",rows=[row("Ana","Dirige a Luis."),row("Luis","Trabaja en el equipo.")],
+        paragraphs=[{"text":"Ana y Luis trabajan en el equipo.","claim_ids":["team-01"]}]*3)
+    class Gate:
+        def many(self,pairs): return [.2 if "Dirige" in claim else .99 for claim,_ in pairs]
+    prune_rows(chapter,bank,Gate())
+    assert [item.label for item in chapter.rows]==["Luis"] and chapter.table_title=="Personas"
+    chapter.rows=[chapter.rows[0].model_copy(update={"detail":"Dirige a Ana."})]; prune_rows(chapter,bank,Gate())
+    assert not chapter.rows and not chapter.table_title
+
+
+def test_key_messages_are_fitted_to_the_budget_without_asking_again(bank):
+    from types import SimpleNamespace
+    from b5t4.agents.onboarding.v2_content import fit_messages
+    bank.chapters[0].facts[2].status="publicar"   # los hechos tienen 6, 9 y 6 palabras; con 14 caben entre 13 y 16
+    select=lambda *groups: SimpleNamespace(messages=[SimpleNamespace(title="Mensaje",claim_ids=list(ids)) for ids in groups])
+    chosen=lambda messages: [message.claim_ids for message in messages.messages]
+    assert chosen(fit_messages(select(["team-02","team-01"],["team-03"]),bank,14))==[["team-02"],["team-03"]]
+    assert chosen(fit_messages(select(["team-01"]),bank,14))==[["team-01","team-02"]]
+    assert chosen(fit_messages(select(["team-01"],["team-02"]),bank,14))==[["team-01"],["team-02"]]
+
+
+def test_only_the_narration_over_the_limit_is_shortened():
+    from types import SimpleNamespace
+    from b5t4.agents.onboarding.v2_content import shorten_narrations
+    from b5t4.agents.onboarding.v2_schemas import CitedText
+    scenes=[SimpleNamespace(id="one",narration="palabra "*50,claim_ids=["team-01","team-02"]),
+            SimpleNamespace(id="two",narration="Ana y Luis trabajan en el equipo.",claim_ids=["team-01"])]
+    class Client:
+        stages=[]
+        def json(self,schema,system,prompt,*,stage,validate,**kwargs):
+            self.stages.append(stage); value=CitedText(text="palabra "*40,claim_ids=["team-01"])
+            validate(value); return value
+    client=Client(); shorten_narrations(scenes,client)
+    assert client.stages==["abreviar locución one"]
+    assert len(scenes[0].narration.split())==40 and scenes[0].claim_ids==["team-01"] and scenes[1].narration.startswith("Ana")
+
+
+def test_duration_fit_mixes_versions_already_written_for_each_scene():
+    from b5t4.agents.onboarding.v2_content import mix_narrations
+    from b5t4.agents.onboarding.v2_schemas import CitedText
+    version=lambda words: CitedText(text="palabra "*words,claim_ids=["team-01"])
+    pool=[[version(13),version(21)],[version(28),version(41)],[version(27),version(40)]]   # corta y larga por escena
+    assert sum(len(chosen.text.split()) for chosen in mix_narrations(pool,85,92,90))==89
+    assert mix_narrations(pool,95,100,97) is None and mix_narrations(pool+[[]],0,500,90) is None
+
+
 def test_shared_jev_cache_reuses_passage_across_instances(tmp_path, monkeypatch):
     from b5t4.models import verifier
     calls=[]
@@ -128,6 +227,14 @@ def test_narration_repairs_only_affected_text_and_stops_after_two_rounds(bank):
     wrong=WrongClient(); scene.narration='Ana dirige a Luis en el equipo.'
     with pytest.raises(ValueError): repair_narrations(SimpleNamespace(scenes=[scene]),bank,wrong,Gate())
     assert wrong.calls==2
+
+
+def test_sentence_copied_from_a_cited_fact_is_not_asked_again(bank):
+    from b5t4.agents.onboarding.v2_content import narration_pairs
+    pairs,labels=narration_pairs([('one','Ana y Luis trabajan en el equipo. Ana dirige a Luis.',['team-01']),
+                                  ('two','Ana y Luis trabajan en el equipo.',['team-02'])],bank)
+    assert [claim for claim,_ in pairs]==['Ana dirige a Luis.','Ana y Luis trabajan en el equipo.']
+    assert labels==['locución one, frase 2','locución two, frase 1']
 
 
 def test_audio_resume_requires_matching_text_clips_and_track(tmp_path):
@@ -190,6 +297,19 @@ def test_audio_audit_accepts_homophone_spelling_without_second_listening(tmp_pat
     assert client.calls==1
 
 
+def test_audio_audit_accepts_what_sounds_like_the_script(tmp_path):
+    from b5t4.agents.onboarding.v2_media import sound_key
+    assert sound_key("sobre el maestro B once y el JSON")==sound_key("Sobre el maestro v once, y el JSON.")
+    assert sound_key("un tres coma dos tres por ciento, doce coma cinco cuatro")==sound_key("un tres coma veintitrés por ciento; doce coma cincuenta y cuatro")
+    assert sound_key("selecciona treinta valores")!=sound_key("selecciona veinte valores")
+    assert sound_key("tres coma veintitrés")!=sound_key("tres coma veinticuatro")
+    # Otra puntuación y otro corte de frases: el verificador de la prueba las rechazaría, pero suenan igual.
+    client,run=audit(tmp_path,['El equipo gestiona las carteras P1-P4, la sección Alfa selecciona 20 valores; '
+                               'las tesis se firman como equipo de gestión, sección Alfa.'])
+    run()
+    assert client.calls==1
+
+
 def test_audio_audit_reports_the_scene_whose_words_changed(tmp_path):
     from b5t4.agents.onboarding.v2_media import AudioMismatch
     heard=('El equipo gestiona las carteras P1-P4. La Sección Alpha selecciona 30 valores. '
@@ -209,7 +329,7 @@ def test_key_messages_fit_the_voice_and_cite_each_fact_once(bank):
     chosen=select("team-01","team-02","team-03")
     with pytest.raises(ValueError,match="al menos 5 mensajes"): validate_messages(chosen,bank,200)
     with pytest.raises(ValueError,match="suman 22 palabras"): validate_messages(chosen,bank,100)
-    validate_messages(chosen,bank,30)
+    validate_messages(chosen,bank,20)
     assert list(message_facts(chosen,bank))==["team-01","team-02","team-03"]
 
 

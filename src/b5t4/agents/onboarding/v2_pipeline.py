@@ -20,8 +20,8 @@ from .v2_schemas import (OnboardingBrief, ResearchPlan, ResearchDraft, FactChapt
                          ReferenceGuide, Review, Direction, KeyMessages, DirectedStoryboard)
 from .v2_content import (PersonalizedMaterial, Checks, SYSTEM, plan_research, research_topic, verify_research,
                          validate_references, validate_plan, write_chapter, validate_guide, editorial_review, direct,
-                         validate_modules, select_messages, validate_messages, storyboard, validate_storyboard,
-                         revise_narration)
+                         validate_modules, repair_items, select_messages, validate_messages, storyboard,
+                         validate_storyboard, revise_narration)
 from .v2_media import common_storyboard, narrate, audit_audio, previews, visual_review, repair_visuals, fit_audio_tempo, cached_timeline
 
 
@@ -284,6 +284,7 @@ def run(brief: OnboardingBrief | dict, out_root=None, log=print, *, resume=None,
                 def valid(value):
                     if value.illustrations != direction.illustrations or value.narrative_arc != direction.narrative_arc:
                         raise ValueError("Conserva las ilustraciones y el arco narrativo")
+                    repair_items(value.modules, bank, checks, client)
                     validate_modules(value.modules, bank, checks)
                 return client.json(Direction, SYSTEM,
                     "Corrige únicamente composición, títulos, etiquetas y detalles de los módulos de esta "
@@ -327,7 +328,8 @@ def run(brief: OnboardingBrief | dict, out_root=None, log=print, *, resume=None,
         renderer.write_reference(guide, bank, brief, material, out, direction, images)
         saved_audio = cached_timeline(plan_video,out) if resume else None
         words = sum(len(scene.narration.split()) for scene in plan_video.scenes)
-        pre_adjusted = not saved_audio and (words > target_words * 1.08 or words < target_words * .85)
+        # Por debajo del 95 % la voz no llega a la duración mínima: se corrige antes de pagar la voz.
+        pre_adjusted = not saved_audio and (words > target_words * 1.08 or words < target_words * .95)
         if pre_adjusted:
             plan_video = revise_narration(plan_video, bank, brief, client, checks, target_words, messages)
             write_json(out / "guion.json", plan_video)
