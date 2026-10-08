@@ -1,0 +1,1282 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Guía de los tres agentes B5T4</title>
+<style>
+/* Layout: herramienta de estudio de una columna ancha. Barra fija con pestañas por agente y conmutador
+   Estudio / Explicación corta. Cada agente = partitura (pasos × actores) + ficha del paso seleccionado. */
+:root{
+  --bg:#EEF1F4; --surface:#FBFCFD; --ink:#15202B; --muted:#55636F; --line:#C9D2DA;
+  --accent:#0A5F86; --accent-soft:#D6E8F1;
+  --od:#1C63B8; --od-t:#DCE8F7;
+  --code:#4A5560; --code-t:#E0E5EA;
+  --llm:#6A3FC9; --llm-t:#E8E0F8;
+  --mm:#B4246E; --mm-t:#F7DEEA;
+  --jev:#8F5400; --jev-t:#F6E7C8;
+  --disk:#1B7449; --disk-t:#D9EFE3;
+  --f-display:"Bahnschrift","DIN Alternate","Avenir Next Condensed","Roboto Condensed","Arial Narrow",sans-serif;
+  --f-body:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  --f-mono:"Cascadia Mono","Cascadia Code",Consolas,"SF Mono",Menlo,monospace;
+  --r:6px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#10171E; --surface:#18222C; --ink:#E7EDF2; --muted:#9AAAB8; --line:#2F3E4C;
+    --accent:#6CC4EC; --accent-soft:#173646;
+    --od:#7FB6F5; --od-t:#17304D; --code:#AEB9C4; --code-t:#26323D; --llm:#B7A0FF; --llm-t:#2D2550;
+    --mm:#FF8FC4; --mm-t:#4A1E36; --jev:#F2B755; --jev-t:#40300F; --disk:#6FD6A2; --disk-t:#173A2A;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10171E; --surface:#18222C; --ink:#E7EDF2; --muted:#9AAAB8; --line:#2F3E4C;
+  --accent:#6CC4EC; --accent-soft:#173646;
+  --od:#7FB6F5; --od-t:#17304D; --code:#AEB9C4; --code-t:#26323D; --llm:#B7A0FF; --llm-t:#2D2550;
+  --mm:#FF8FC4; --mm-t:#4A1E36; --jev:#F2B755; --jev-t:#40300F; --disk:#6FD6A2; --disk-t:#173A2A;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-body)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3{font-family:var(--f-display);font-weight:600;line-height:1.15;margin:0;text-wrap:balance}
+h1{font-size:34px;letter-spacing:-.01em;margin-bottom:10px}
+h2{font-size:23px;margin:44px 0 12px;scroll-margin-top:120px}
+h3{font-size:19px}
+h4{font:700 12px/1.3 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+p{margin:0 0 12px;max-width:74ch}
+ul,ol{max-width:76ch}
+li{margin-bottom:6px}
+a{color:var(--accent)}
+.lead{font-size:17.5px;line-height:1.5;max-width:68ch}
+.muted{color:var(--muted)}
+.wrap{max-width:1200px;margin:0 auto;padding-inline:20px;padding-block:28px 72px}
+
+/* barra */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+.bar-in{max-width:1200px;margin:0 auto;padding:10px 20px 0;display:flex;gap:10px 20px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.brand{font:600 17px var(--f-display)}
+.brand b{background:var(--ink);color:var(--surface);padding:1px 7px;border-radius:3px;margin-right:8px;font-weight:600}
+.mode{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:2px;background:var(--bg)}
+.mode button{border:0;background:none;color:var(--muted);font:600 13.5px var(--f-body);padding:6px 14px;border-radius:999px;cursor:pointer}
+.mode button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.tabs{max-width:1200px;margin:0 auto;padding:6px 12px 0;display:flex;gap:2px;overflow-x:auto}
+.tabs button{border:0;background:none;padding:8px 10px 9px;font:600 14px var(--f-body);color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap;cursor:pointer}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+
+/* modos */
+body[data-mode="quick"] .only-study{display:none}
+body[data-mode="study"] .only-quick{display:none}
+
+/* piezas comunes */
+.k{width:10px;height:10px;border-radius:2px;flex:none;display:inline-block}
+.k-od{background:var(--od)}.k-code{background:var(--code)}.k-llm{background:var(--llm)}
+.k-mm{background:var(--mm)}.k-jev{background:var(--jev)}.k-disk{background:var(--disk)}
+.chip{display:inline-flex;align-items:center;font:600 11.5px var(--f-body);padding:2px 9px;border-radius:999px;white-space:nowrap}
+.chip-od{background:var(--od-t);color:var(--od)}.chip-code{background:var(--code-t);color:var(--code)}
+.chip-llm{background:var(--llm-t);color:var(--llm)}.chip-mm{background:var(--mm-t);color:var(--mm)}
+.chip-jev{background:var(--jev-t);color:var(--jev)}.chip-disk{background:var(--disk-t);color:var(--disk)}
+.btn{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:var(--r);padding:6px 12px;font:600 13.5px var(--f-body);cursor:pointer}
+.btn:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.btn:disabled{opacity:.4;cursor:default}
+.linkbtn{border:0;background:none;padding:0;color:var(--accent);font:inherit;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font:700 11.5px/1.3 var(--f-body);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);text-align:left;padding:10px 12px;vertical-align:bottom}
+td{padding:10px 12px;border-top:1px solid var(--line);vertical-align:top}
+td:first-child,th:first-child{padding-left:14px}
+.wide{min-width:880px}
+.io{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px 28px;margin:16px 0}
+.io>div{border-top:2px solid var(--ink);padding-top:8px;min-width:0}
+.io p{margin:0}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin:8px 0 14px;font-size:13.5px}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.und{border:1.5px dashed var(--muted);border-radius:var(--r);padding:12px 16px;margin-top:8px;max-width:920px}
+.und h4::before{content:"? ";font-family:var(--f-mono)}
+.und ul{margin:0;padding-left:18px}
+.note{border-left:3px solid var(--accent);padding:2px 0 2px 12px;color:var(--muted);max-width:78ch;margin:12px 0}
+.subnav{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13.5px;margin:6px 0 18px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:20px 36px}
+.cols>*{min-width:0}
+dl.qa{margin:0;max-width:80ch}
+dl.qa dt{font-weight:600;margin-top:12px}
+dl.qa dd{margin:2px 0 0}
+.dec{display:grid;gap:0;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);max-width:980px}
+.dec>div{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,8fr);gap:6px 20px;padding:12px 16px;border-top:1px solid var(--line)}
+.dec>div:first-child{border-top:0}
+.dec b{font-family:var(--f-display);font-size:15.5px;font-weight:600}
+@media(max-width:640px){.dec>div{grid-template-columns:1fr}}
+
+/* figuras */
+figure{margin:16px 0}
+figcaption{font-size:13.5px;color:var(--muted);max-width:80ch;margin-top:8px}
+.fig{overflow-x:auto}
+.fig svg{display:block;min-width:780px;max-width:100%;height:auto;color:var(--ink)}
+.fig text{font-family:var(--f-body)}
+.chain{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch}
+.chain .n{border:1px solid var(--line);border-radius:var(--r);padding:8px 12px;background:var(--surface);flex:1 1 150px;max-width:230px;min-width:0}
+.chain .n b{display:block;font-size:13.5px;margin-top:4px}
+.chain .n small{display:block;color:var(--muted);font-size:12.5px;line-height:1.35}
+.chain .a{align-self:center;color:var(--muted);font-family:var(--f-mono)}
+.rowlabel{font:700 12px var(--f-body);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:14px 0 6px}
+
+/* partitura */
+.flowbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0 8px;scroll-margin-top:120px}
+.flowbar .pos{font-weight:600}
+.flowbar .hint{color:var(--muted);font-size:13px;margin-left:auto}
+.fg{display:grid;grid-template-columns:158px repeat(var(--n),minmax(80px,1fr));min-width:calc(158px + var(--n) * 80px)}
+.fg>*{border-left:1px solid var(--line);border-top:1px solid var(--line);min-width:0}
+.corner,.lh{position:sticky;left:0;z-index:2;background:var(--surface);border-left:0}
+.corner{border-top:0;padding:8px 10px;font-size:11.5px;color:var(--muted);display:flex;flex-direction:column;justify-content:flex-end;line-height:1.3}
+.sh{border-top:0;border-right:0;border-bottom:0;background:none;cursor:pointer;padding:9px 4px;display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--ink);position:relative;font:inherit}
+.sn{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--ink);display:grid;place-items:center;font:600 13px var(--f-mono)}
+.st{font:600 12px/1.2 var(--f-body);text-align:center}
+.lp{position:absolute;top:5px;right:7px;font-size:12px;color:var(--muted)}
+.sh[aria-pressed="true"] .sn{background:var(--ink);color:var(--surface)}
+.lh{padding:8px 10px;display:flex;gap:8px;align-items:center;font-size:12.5px;line-height:1.25}
+.lh small{display:block;color:var(--muted);font-size:11px;font-weight:400}
+.c{padding:5px;display:flex;align-items:center;justify-content:center;min-height:50px;cursor:pointer}
+.m{display:block;width:100%;font:600 11px/1.2 var(--f-body);padding:5px 4px;border-radius:4px;text-align:center}
+.m-od{background:var(--od-t);color:var(--od)}.m-code{background:var(--code-t);color:var(--code)}
+.m-llm{background:var(--llm-t);color:var(--llm)}.m-mm{background:var(--mm-t);color:var(--mm)}
+.m-jev{background:var(--jev-t);color:var(--jev)}.m-disk{background:var(--disk-t);color:var(--disk)}
+.sel{background:var(--accent-soft)}
+
+/* ficha del paso */
+.detail{margin-top:14px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:22px}
+.dh{display:flex;gap:14px;align-items:flex-start;margin-bottom:12px}
+.dn{font:600 15px var(--f-mono);background:var(--ink);color:var(--surface);min-width:34px;height:34px;border-radius:50%;display:grid;place-items:center}
+.log{font-size:13px;color:var(--muted);margin:3px 0 0}
+.what{font-size:16px;max-width:78ch}
+.blocks{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,440px),1fr));gap:12px;margin-top:6px}
+.blk{border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;min-width:0;background:var(--bg)}
+.blk>h4{display:flex;align-items:center;gap:8px;margin-bottom:8px;color:var(--ink)}
+.blk p{margin:0}
+.call+.call{margin-top:14px;padding-top:14px;border-top:1px dashed var(--line)}
+.call h5{margin:0 0 6px;font:600 14.5px var(--f-body)}
+.tag{font:600 10.5px var(--f-mono);text-transform:uppercase;letter-spacing:.05em;padding:2px 6px;border-radius:3px;margin-left:8px;vertical-align:1px;white-space:nowrap}
+.tag-llm{background:var(--llm-t);color:var(--llm)}.tag-mm{background:var(--mm-t);color:var(--mm)}
+dl.kv{display:grid;grid-template-columns:88px minmax(0,1fr);gap:5px 12px;margin:0;font-size:14px}
+dl.kv dt{color:var(--muted);font-weight:600;font-size:12.5px;padding-top:2px}
+dl.kv dd{margin:0}
+@media(max-width:520px){dl.kv{grid-template-columns:1fr}dl.kv dt{margin-top:4px}}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:18px 32px;margin-top:20px}
+.notes>*{min-width:0}
+.notes ul{margin:0;padding-left:18px}
+
+/* explicación corta */
+.only-quick{font-size:16.5px}
+.q-steps{list-style:none;margin:18px 0;padding:0;counter-reset:q;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);max-width:none}
+.q-steps li{counter-increment:q;display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:4px 14px;align-items:start;padding:13px 16px;border-top:1px solid var(--line);margin:0}
+.q-steps li:first-child{border-top:0}
+.q-steps li::before{content:counter(q);font:600 14px var(--f-mono);width:30px;height:30px;border-radius:50%;border:1.5px solid var(--ink);display:grid;place-items:center}
+.q-steps b{font:600 18px var(--f-display)}
+.q-steps p{margin:2px 0 7px;max-width:80ch}
+.q-keys{display:flex;gap:6px;flex-wrap:wrap}
+.q-go{align-self:center;white-space:nowrap;font-size:14px}
+@media(max-width:640px){.q-go{grid-column:2;justify-self:start}}
+.q-ideas{margin:0;padding-left:20px}
+.q-ideas li{margin-bottom:8px}
+.q-warn{border:1.5px dashed var(--muted);border-radius:var(--r);padding:10px 14px;max-width:900px;margin-top:18px}
+
+/* escala de Jev */
+.scale{display:flex;height:38px;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);max-width:640px;font:600 13px var(--f-body)}
+.scale div{display:grid;place-items:center}
+.scale .s1{background:var(--code-t);color:var(--code)}.scale .s2{background:var(--jev-t);color:var(--jev)}.scale .s3{background:var(--disk-t);color:var(--disk)}
+.ticks{position:relative;height:22px;max-width:640px;font:12px var(--f-mono);color:var(--muted)}
+.ticks span{position:absolute;top:4px;transform:translateX(-50%)}
+.ticks span:first-child{transform:none}.ticks span:last-child{transform:translateX(-100%)}
+footer{margin-top:56px;padding-top:14px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body data-mode="study">
+
+<header class="bar">
+  <div class="bar-in">
+    <div class="brand"><b>B5T4</b>Guía de los tres agentes</div>
+    <div class="mode" role="group" aria-label="Modo de lectura">
+      <button type="button" data-mode="study" aria-pressed="true">Estudio</button>
+      <button type="button" data-mode="quick" aria-pressed="false">Explicación corta</button>
+    </div>
+  </div>
+  <nav class="tabs" id="tabs" aria-label="Secciones"></nav>
+</header>
+
+<main class="wrap">
+
+<!-- ============================================================ PANORAMA -->
+<section class="panel" id="p-pan">
+  <h1>Tres agentes sobre la carpeta de un equipo</h1>
+  <p class="lead">El MVP lee la carpeta de trabajo de un equipo de gestión de carteras (caso real: Gestión Discrecional de Andbank España, 1.185 ficheros) y la convierte en tres productos: un onboarding a medida, un informe de qué cambia en la opinión de la casa y un asistente al que preguntar.</p>
+
+  <div class="only-study">
+    <h2>Cómo usar esta guía</h2>
+    <div class="cols">
+      <div>
+        <p><b>Estudio.</b> Cada agente tiene un flujo que se recorre paso a paso: clic en un paso o flechas ← → del teclado. La ficha del paso dice qué entra y qué sale, qué se le pide a cada modelo y qué se hace con su respuesta, qué comprueba Jev, qué se lee de OneDrive y qué se escribe.</p>
+        <p><b>Explicación corta.</b> El mismo agente en una pantalla, para contarlo rápido. Cada línea lleva un enlace a su detalle. Con las flechas se pasa de un agente a otro.</p>
+      </div>
+      <div>
+        <p>En todos los flujos, cada fila es un actor:</p>
+        <div class="legend">
+          <span><i class="k k-od"></i>Carpeta OneDrive (solo se lee)</span>
+          <span><i class="k k-code"></i>Código sin modelos</span>
+          <span><i class="k k-llm"></i>LLM de texto</span>
+          <span><i class="k k-mm"></i>Modelos multimodales</span>
+          <span><i class="k k-jev"></i>Jev</span>
+          <span><i class="k k-disk"></i>Disco local (lo que se escribe)</span>
+        </div>
+        <p class="muted">Un recuadro de trazo discontinuo con «?» marca lo que no se puede deducir ni del código ni del enunciado.</p>
+      </div>
+    </div>
+  </div>
+
+  <h2>Los tres agentes de un vistazo</h2>
+  <div class="scroll">
+    <table class="wide">
+      <thead><tr><th>Agente</th><th>Entra</th><th>Sale</th><th>LLM de texto</th><th>Multimodal</th><th>Jev</th><th>Carpeta OneDrive</th></tr></thead>
+      <tbody>
+        <tr><td><button class="linkbtn" data-tab="a1">1 · Onboarding</button></td><td>Una conversación en texto</td><td>Informe de referencia, infografía y vídeo de 1 a 5 min</td><td>Muchas llamadas pequeñas con contrato: planifica, extrae hechos, redacta, revisa y dirige</td><td>Visión (tres revisiones), imagen generada, voz sintetizada y escucha del audio</td><td>Obligatorio. Seis controles con umbral 0,80</td><td>Lee los contextos y los documentos que elige. No escribe</td></tr>
+        <tr><td><button class="linkbtn" data-tab="a2">2 · Opinión Corporativa</button></td><td>Las dos últimas ediciones en PDF</td><td>Informe para clientes, tres gráficos, datos y vídeo opcional de hasta 2 min</td><td>Lee página a página y redacta una frase y un porqué por cambio. No compara</td><td>Visión para leer una tabla que es imagen; voz sintetizada</td><td>Opcional. Respaldo y tono MiFID en una llamada</td><td>Lee el manifiesto y los PDF. No escribe</td></tr>
+        <tr><td><button class="linkbtn" data-tab="a3">3 · Preguntas</button></td><td>Una pregunta escrita o hablada</td><td>Respuesta con citas, en texto y en voz</td><td>Una llamada: responder con 8 pasajes o decir «No consta»</td><td>Voz a texto, vectores de texto e imagen y texto a voz, los tres en local</td><td>Opcional. Frase a frase</td><td>Lee solo al indexar. Al preguntar, nada. No escribe</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Tres ideas que sostienen el diseño</h2>
+  <ol>
+    <li><b>La carpeta está preparada para agentes.</b> Un manifiesto dice de cada fichero si es vigente, de qué sección y de qué tipo; y cada carpeta tiene un documento de contexto con la misma plantilla de 11 apartados. Los agentes filtran antes de leer y trocean por apartado, no por número de caracteres.</li>
+    <li><b>El modelo propone; los contratos y las verificaciones controlan la entrega.</b> Los LLM seleccionan, redactan y dirigen. Jev comprueba el respaldo documental. El código controla formato, marca, presupuesto y montaje.</li>
+    <li><b>El storyboard y la voz medida fijan el montaje.</b> Los vídeos se dibujan por código a partir de datos: texto, cifras, logos y diagramas no los genera ningún modelo.</li>
+  </ol>
+
+  <div class="only-study">
+    <h2>Lo que comparten los tres</h2>
+    <ul>
+      <li><b>Capas.</b> Datos · modelos · salidas · lógica (un agente por carpeta) · interfaz. Cada capa solo usa las de debajo, así que se puede cambiar de proveedor sin tocar un agente. Es la separación que pide el punto 4.4 del enunciado.</li>
+      <li><b>Contrato en cada respuesta.</b> Todo lo que escribe un LLM se pide como datos estructurados y se valida contra un esquema antes de pasar a la etapa siguiente. Si no cumple, se le devuelve el error y se repite. La respuesta de un modelo se trata como una entrada no fiable.</li>
+      <li><b>Un único proveedor de LLM.</b> Todo pasa por OpenRouter: una clave, cualquier modelo y el modelo se cambia en la configuración. Alternativa descartada: una API por proveedor.</li>
+      <li><b>Tres formas de llamar al LLM.</b> Una común y sencilla (agente 3 y la versión 1 del agente 1); otra con presupuesto, registro de cada petición y entradas multimodales (agente 1, versión 2); y una propia del agente 2, con razonamiento al mínimo y contador de coste. El código explica el motivo: cada persona desarrolló su agente en paralelo sin tocar la capa común.</li>
+      <li><b>Una interfaz.</b> Una aplicación web con tres pestañas y una línea de comandos que hace lo mismo. Se puede abrir un enlace público temporal, con contraseña opcional.</li>
+    </ul>
+
+    <h2>Modelos: quién hace qué</h2>
+    <div class="scroll">
+      <table class="wide">
+        <thead><tr><th>Modelo</th><th>Modalidad</th><th>Agentes</th><th>Dónde corre</th></tr></thead>
+        <tbody>
+          <tr><td>Gemini 3.8 Flash</td><td>Texto → datos estructurados</td><td>1, 2 y 3</td><td>Nube (OpenRouter)</td></tr>
+          <tr><td>Gemini 3.8 Flash, con imágenes</td><td>Imagen → valoración o datos</td><td>1 (revisa infografía, ilustraciones y escenas) y 2 (lee la tabla sinóptica)</td><td>Nube</td></tr>
+          <tr><td>Gemini 3.8 Flash, con audio</td><td>Voz → transcripción y valoración</td><td>1 (escucha la pista de voz)</td><td>Nube</td></tr>
+          <tr><td>Gemini 3.1 Flash Image</td><td>Texto → imagen</td><td>1 (ilustraciones conceptuales)</td><td>Nube</td></tr>
+          <tr><td>Gemini 3.8 Flash TTS</td><td>Texto → voz</td><td>1 (voz Algieba) y 2 (voz Charon)</td><td>Nube</td></tr>
+          <tr><td>Kokoro</td><td>Texto → voz</td><td>3; respaldo del 2; versión 1 del 1</td><td>Local, CPU</td></tr>
+          <tr><td>Whisper «small»</td><td>Voz → texto</td><td>3 (pregunta hablada)</td><td>Local, CPU</td></tr>
+          <tr><td>EmbeddingGemma 2</td><td>Texto e imagen → vector</td><td>3 (búsqueda híbrida)</td><td>Local, CPU</td></tr>
+          <tr><td>BM25 (propio)</td><td>Texto → ranking</td><td>3</td><td>Local</td></tr>
+          <tr><td>Jev (TypeSafe)</td><td>Afirmación y pasaje → probabilidad</td><td>1, 2 y 3</td><td>Nube</td></tr>
+          <tr><td>Chromium, GSAP, D3 y ffmpeg</td><td>Datos → imagen y vídeo (sin IA)</td><td>1 y 2</td><td>Local</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Dónde la documentación y el código no coinciden</h2>
+    <p>Son los puntos en los que una pregunta puede pillar a contrapié si solo se ha leído el README. Esta guía sigue al código.</p>
+    <ul>
+      <li>El documento de arquitectura dice que la voz de los tres agentes es Kokoro y que el vídeo de onboarding dura como mucho 2 minutos. En el código actual, el agente 1 (versión 2) y el agente 2 usan Gemini TTS, y el onboarding admite de 1 a 5 minutos.</li>
+      <li>El diagrama del agente 3 muestra un «router de metadatos», búsqueda híbrida y Jev. En la aplicación principal, la pestaña 3 hace búsqueda por palabras, una llamada al LLM y voz. La voz de entrada, el híbrido y Jev están en una interfaz aparte. El router no está en el código.</li>
+      <li>La configuración define un modelo «barato» (DeepSeek) para tareas mecánicas. Ningún agente lo usa.</li>
+      <li>La configuración nombra un modelo de embeddings solo de texto como propuesta. El código usa EmbeddingGemma 2.</li>
+      <li>La carpeta de evaluación dice que la referencia del agente 2 es una tabla hecha a mano dentro de la carpeta de datos. El código de evaluación usa su propio fichero de referencia.</li>
+      <li>Uno de los principios de diseño dice «voz, vídeo y embeddings en local». Es anterior a la voz en la nube de los agentes 1 y 2.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================================ AGENTES (se rellenan por script) -->
+<section class="panel" id="p-a1" hidden></section>
+<section class="panel" id="p-a2" hidden></section>
+<section class="panel" id="p-a3" hidden></section>
+
+<!-- ============================================================ JEV -->
+<section class="panel" id="p-jev" hidden>
+  <h1>Jev, el verificador</h1>
+  <p class="lead">Jev (de TypeSafe) es un modelo que no escribe: juzga. Recibe un texto y una afirmación sobre él, y devuelve la probabilidad de que la afirmación se cumpla. Los tres agentes lo usan para lo mismo: que nada se publique sin respaldo en su fuente.</p>
+
+  <h2>Cómo se le pregunta</h2>
+  <div class="cols">
+    <div>
+      <p><b>El estado</b> es el texto sobre el que juzga. Casi siempre tiene dos partes, «pasaje fuente» y «afirmación», y admite hasta 24.000 caracteres.</p>
+      <p><b>La pregunta</b> es un criterio redactado como afirmación. <b>La respuesta</b> es una probabilidad entre 0 y 1.</p>
+    </div>
+    <div>
+      <p>El MVP usa dos criterios:</p>
+      <ul>
+        <li><b>Respaldo.</b> «La afirmación está respaldada por el pasaje: se refiere al mismo concepto y periodo, y las cifras coinciden admitiendo redondeo razonable. Si el pasaje no lo menciona, no está respaldada.»</li>
+        <li><b>Recomendación.</b> «La frase es una recomendación de inversión personalizada o una incitación a comprar o vender, en el sentido de MiFID II, y no mera información.» Solo lo usa el agente 2.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Qué se hace con la probabilidad</h2>
+  <div class="scale" role="img" aria-label="Escala de 0 a 1: por debajo de 0,30 se descarta, entre 0,30 y 0,80 se revisa, desde 0,80 se publica">
+    <div class="s1" style="flex:30">descartar</div><div class="s2" style="flex:50">revisar</div><div class="s3" style="flex:20">publicar</div>
+  </div>
+  <div class="ticks" aria-hidden="true"><span style="left:0">0</span><span style="left:30%">0,30</span><span style="left:80%">0,80</span><span style="left:100%">1</span></div>
+  <p>Los dos umbrales están en la configuración y son los mismos para todos. Lo que cambia es qué hace cada agente en cada tramo:</p>
+  <div class="scroll">
+    <table class="wide">
+      <thead><tr><th>Dónde</th><th>Desde 0,80</th><th>Entre medias</th><th>Por debajo de 0,30</th><th>Si Jev no responde</th></tr></thead>
+      <tbody>
+        <tr><td>Agente 1</td><td>El hecho puede alimentar las piezas</td><td>No se publica. Se intenta reparar simplificando</td><td>No se publica</td><td>Tres intentos y la ejecución se detiene. Sin clave de Jev no arranca</td></tr>
+        <tr><td>Agente 2 · frase por cambio</td><td>Sello «verificada»</td><td>Se reescribe una vez. Si sigue por debajo de 0,60 se sustituye por la frase factual; entre 0,60 y 0,80 queda «a revisar»</td><td>Se sustituye por la frase factual</td><td>Un reintento; después, «sin verificar» y sin sello</td></tr>
+        <tr><td>Agente 2 · tono</td><td colspan="3">Otra escala: si la probabilidad de sonar a recomendación es 0,50 o más, la frase se sustituye por la factual</td><td>Igual que arriba</td></tr>
+        <tr><td>Agente 2 · porqué</td><td>Se publica</td><td>De 0,60 a 0,80 se enseña «a revisar»; por debajo de 0,60 no se publica</td><td>No se publica</td><td>Un reintento; después, «sin verificar»</td></tr>
+        <tr><td>Agente 3</td><td>La frase se queda</td><td>Se queda con ⚠️</td><td>Se quita</td><td>Sin clave, la respuesta sale sin verificar y se avisa. No hay reintento: un fallo aparece como error</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Dónde aparece en cada agente</h2>
+  <div class="cols">
+    <div>
+      <h3>Agente 1 · seis controles</h3>
+      <ol>
+        <li>Que el modelo ha entendido el encargo: su interpretación contra las palabras del usuario. <button class="linkbtn" data-go="a1:0">Paso 1</button></li>
+        <li>Cada hecho contra la evidencia de la carpeta que cita. <button class="linkbtn" data-go="a1:4">Paso 5</button></li>
+        <li>Cada párrafo y cada fila de tabla contra los hechos que cita. <button class="linkbtn" data-go="a1:5">Paso 6</button></li>
+        <li>Cada etiqueta y cada relación dibujada contra sus hechos. <button class="linkbtn" data-go="a1:7">Pasos 8 y 9</button></li>
+        <li>La locución, frase a frase, contra los hechos de su escena. <button class="linkbtn" data-go="a1:8">Pasos 9 y 10</button></li>
+        <li>Lo que se oye en el audio contra el guion, y al revés. <button class="linkbtn" data-go="a1:10">Paso 11</button></li>
+      </ol>
+    </div>
+    <div>
+      <h3>Agente 2 · tres controles</h3>
+      <ol>
+        <li>Cada frase de cambio: respaldo y tono, en una sola llamada con dos preguntas. <button class="linkbtn" data-go="a2:6">Paso 7</button></li>
+        <li>El resumen, contra la lista de cambios. <button class="linkbtn" data-go="a2:6">Paso 7</button></li>
+        <li>Cada argumento del porqué contra el párrafo de su cita. <button class="linkbtn" data-go="a2:7">Paso 8</button></li>
+      </ol>
+      <h3 style="margin-top:18px">Agente 3 · un control</h3>
+      <ol>
+        <li>Cada frase de la respuesta contra los fragmentos que cita. <button class="linkbtn" data-go="a3:5">Paso 6</button></li>
+      </ol>
+    </div>
+  </div>
+
+  <h2>Por qué Jev y no un LLM haciendo de juez</h2>
+  <p>Es la decisión número 6 del registro. Se apoya en un banco de pruebas propio (2 de octubre de 2026) con etiquetas puestas a mano:</p>
+  <div class="scroll" style="max-width:760px">
+    <table>
+      <thead><tr><th>Prueba</th><th>Aciertos</th><th>Brier</th></tr></thead>
+      <tbody>
+        <tr><td>¿El pasaje respalda la afirmación?</td><td>11 de 12</td><td>0,071</td></tr>
+        <tr><td>¿La frase es una recomendación de inversión?</td><td>10 de 10</td><td>0,017</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="margin-top:12px">El Brier mide la calibración: es el error cuadrático medio entre la probabilidad que da el modelo y la respuesta correcta. Cero es perfecto y cuanto menor, mejor. Alternativa descartada: un LLM como juez, «más caro, peor calibrado».</p>
+  <p>Las 12 afirmaciones llevan trampas deliberadas: una cifra que es de otro trimestre, un semestre presentado como año completo, un dato que no está en el pasaje. El banco tiene un tercer experimento (filtrar publicaciones de redes) que viene de la idea anterior del MVP, descartada el 5 de octubre.</p>
+
+  <h2>Patrones que se repiten</h2>
+  <ul>
+    <li><b>Afirmación corta contra pasaje acotado.</b> Por eso los hechos del agente 1 son atómicos y la locución y las respuestas se comprueban frase a frase.</li>
+    <li><b>Reparar simplificando, nunca bajando el umbral.</b> Lo que no pasa se acorta, se sustituye o se quita.</li>
+    <li><b>No preguntar lo que ya coincide.</b> Una frase que reproduce literalmente un hecho, o un audio que suena igual que el guion, no se envía al verificador.</li>
+    <li><b>No pagar dos veces.</b> El agente 1 guarda cada comprobación en una base local compartida entre ejecuciones. En las dos ejecuciones validadas se reutilizaron 732 y 4.734 comprobaciones.</li>
+  </ul>
+
+  <h2>Límites que conviene conocer</h2>
+  <ul>
+    <li>Los umbrales 0,80 y 0,30 se fijaron con un banco de 12 casos. La propia documentación dice que es «poco para calibrar».</li>
+    <li>Mide respaldo documental, no verdad ni calidad. «No sustituye la revisión editorial del equipo.»</li>
+    <li>Las afirmaciones y sus pasajes salen del ordenador hacia TypeSafe.</li>
+    <li>Su consumo se registra aparte (número de peticiones) y no entra en el presupuesto de OpenRouter.</li>
+  </ul>
+  <div class="und">
+    <h4>No determinado</h4>
+    <ul>
+      <li>Cómo calcula Jev la probabilidad y con qué datos está calibrado.</li>
+      <li>Su precio y el coste real de una ejecución.</li>
+      <li>Qué distingue el tipo de pregunta que se usa, más allá de que devuelve una probabilidad.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================================ ONEDRIVE -->
+<section class="panel" id="p-od" hidden>
+  <h1>La carpeta en OneDrive</h1>
+  <p class="lead">La «base de datos» del MVP no es un motor de base de datos. Es una carpeta de OneDrive: la copia estructurada «Tarea MIAX» de la carpeta del equipo. Los tres agentes la leen. Ninguno escribe en ella.</p>
+
+  <h2>Qué hay dentro</h2>
+  <div class="cols">
+    <div>
+      <p><b>El manifiesto.</b> Una tabla con una fila por fichero: ruta original, ruta en la copia, carpeta, sección, tipo de documento, extensión, estado (vigente, archivo, duplicado o no copiado), tamaño y huella. Es el primer filtro: antes de abrir un documento ya se sabe si es vigente y de qué trata.</p>
+      <p><b>Veinte documentos de contexto</b>, uno por carpeta, todos con la misma plantilla de 11 apartados y una cabecera de metadatos:</p>
+      <p class="muted">Qué es · Responsables · Objetivos · Entregables y cadencia · Procesos · Tipos de archivo · Dónde está cada cosa · Reglas · Incoherencias y pendientes · Preguntas frecuentes · Fuentes</p>
+    </div>
+    <div>
+      <p><b>Los documentos.</b> 1.185 ficheros: Markdown, texto, HTML, correos, PDF, PowerPoint, Excel. Los Excel no se leen a propósito: sus fórmulas de Bloomberg no dan valores fiables sin terminal.</p>
+      <p><b>La carpeta de la Opinión Corporativa.</b> Cuatro ediciones en PDF, con la fecha de edición al principio del nombre.</p>
+      <p><b>Por qué esta estructura</b> (decisión número 3): permite filtrar por metadatos antes de buscar, que es barato, y da fragmentos con sentido completo y etiquetados igual en todas las carpetas. Alternativa descartada: indexar la carpeta original tal cual.</p>
+    </div>
+  </div>
+
+  <h2>Qué lee y qué escribe cada agente</h2>
+  <div class="scroll">
+    <table class="wide">
+      <thead><tr><th>Agente</th><th>Qué lee de OneDrive</th><th>En qué punto</th><th>Qué escribe, siempre en local</th></tr></thead>
+      <tbody>
+        <tr><td rowspan="3"><button class="linkbtn" data-tab="a1">1 · Onboarding</button></td><td>El manifiesto y los 20 contextos completos</td><td><button class="linkbtn" data-go="a1:1">Paso 2</button>, al empezar</td><td rowspan="3">Una carpeta por ejecución con todo el expediente: encargo, evidencias, registro de fuentes con sus huellas, hechos, informe, infografía, guion, ilustraciones, audio, vídeo, revisiones y consumo. Además, la base de comprobaciones de Jev compartida y los borradores de conversación.</td></tr>
+        <tr><td>Documentos vigentes concretos: los que elige el plan y los que se añaden para cubrir lagunas</td><td><button class="linkbtn" data-go="a1:3">Paso 4</button>, capítulo a capítulo</td></tr>
+        <tr><td>Las mismas fuentes otra vez, para comparar su huella</td><td>Al reanudar una ejecución</td></tr>
+        <tr><td rowspan="2"><button class="linkbtn" data-tab="a2">2 · Opinión Corporativa</button></td><td>El manifiesto y la portada de cada PDF candidato</td><td><button class="linkbtn" data-go="a2:0">Paso 1</button>, siempre</td><td rowspan="2">En la carpeta de índices: la lectura de cada edición, las imágenes de la tabla y la voz por frase. En la carpeta de resultados: informe, gráficos, datos de los cambios y vídeo.</td></tr>
+        <tr><td>El texto completo de los dos PDF y la página de la tabla como imagen</td><td><button class="linkbtn" data-go="a2:1">Pasos 2 y 4</button>, solo si esa edición no está ya leída y guardada</td></tr>
+        <tr><td rowspan="3"><button class="linkbtn" data-tab="a3">3 · Preguntas</button></td><td>El manifiesto, los contextos y los documentos vigentes de texto</td><td><button class="linkbtn" data-go="a3:0">Paso 1</button>, al construir el índice</td><td rowspan="3">En la carpeta de índices: fragmentos, vectores e imágenes de página. En la carpeta de resultados: un audio por respuesta.</td></tr>
+        <tr><td>Los PDF de la Opinión, página a página, como imagen</td><td><button class="linkbtn" data-go="a3:1">Paso 2</button>, al construir el índice denso</td></tr>
+        <tr><td>Nada</td><td>En cada pregunta</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">Lo que se escribe va a dos carpetas del repositorio que quedan fuera de Git: la de resultados y la de índices. Las dos contienen texto del corpus. La validación del onboarding lo confirma: los datos de OneDrive no se han modificado.</p>
+
+  <h2>Qué sale del ordenador</h2>
+  <ul>
+    <li><b>A OpenRouter:</b> los fragmentos seleccionados para cada llamada (nunca el corpus entero), las imágenes que la visión revisa o lee, la pista de audio que se escucha y el texto de las locuciones.</li>
+    <li><b>A Jev:</b> afirmaciones y sus pasajes.</li>
+    <li><b>Se queda en local:</b> la extracción de texto, los índices, la transcripción, los embeddings, la voz de Kokoro, el dibujo y el montaje.</li>
+    <li>El repositorio no contiene los datos, solo apunta a la carpeta. Aun así debe ser privado: las preguntas de evaluación contienen correos internos.</li>
+  </ul>
+
+  <h2>Avisos prácticos</h2>
+  <ul>
+    <li>Cada miembro del equipo pone su propia ruta a la carpeta en su fichero de entorno. Por defecto apunta a la ruta de quien la creó.</li>
+    <li>OneDrive tiene que estar abierto, o la carpeta marcada como «Mantener siempre en este dispositivo». Con ficheros «solo en la nube» la lectura falla, tanto en los Markdown como en los PDF.</li>
+    <li>En la validación, 205 documentos no legibles en OneDrive impidieron terminar la prueba de evaluación del agente 3.</li>
+    <li>El repositorio va fuera de OneDrive. Es una regla del equipo.</li>
+    <li>Si cambian los datos: el agente 3 necesita reconstruir el índice, el agente 1 no deja reanudar una ejecución anterior y el agente 2 vuelve a leer un PDF cuya huella haya cambiado.</li>
+  </ul>
+  <div class="und">
+    <h4>No determinado</h4>
+    <ul>
+      <li>Cómo se construyó la copia estructurada: quién escribió el manifiesto y los contextos, y con qué proceso. El repositorio solo dice que «se preparó para que la leyeran agentes».</li>
+      <li>Permisos y control de acceso de la carpeta en OneDrive.</li>
+      <li>La copia anonimizada para ejecutar la demo sin datos reales figura como pendiente.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================================ ENUNCIADO -->
+<section class="panel" id="p-enu" hidden>
+  <h1>Lo que pide la práctica y cómo responde el MVP</h1>
+  <p class="lead">Taller B5-T4: diseño y prototipado de una startup FinTech basada en IA multimodal. Grupos de tres. Entregable: repositorio con el MVP funcional y una demostración. Fecha límite: 8 de octubre de 2026, 18:00.</p>
+
+  <h2>Punto por punto</h2>
+  <div class="scroll">
+    <table class="wide">
+      <thead><tr><th>Punto</th><th>Qué pide</th><th>Cómo responde el repositorio</th><th>Lo que no consta</th></tr></thead>
+      <tbody>
+        <tr><td>4.1 Idea y viabilidad</td><td>Problema, público objetivo y propuesta de valor de la multimodalidad. Viabilidad: costes de inferencia, latencias, marco regulatorio y monetización</td><td>Problema: incorporar a alguien a un equipo con más de mil ficheros. Costes medidos o estimados por agente y presupuesto con tope por ejecución. Latencias medidas en el agente 3. Regulación: control de tono MiFID y aviso legal en el agente 2; datos fuera del repositorio; listado de qué sale a cada proveedor</td><td>Tipo de público (B2C, B2B, B2B2C) y modelo de monetización</td></tr>
+        <tr><td>4.2 Multimodalidad y orquestación</td><td>Cuantas más modalidades integradas con sentido, mejor. Puntúa más encadenar modelos especializados que llamar a uno solo</td><td>Entradas: texto, PDF, imagen de página, voz. Salidas: informe, infografía, imagen generada, voz y vídeo. Cadenas de modelos distintos en los tres agentes (tabla de abajo)</td><td>—</td></tr>
+        <tr><td>4.3 MVP y usabilidad</td><td>Aplicación operativa, interfaz y flujos claros, arranque directo y dependencias completas</td><td>Aplicación web con tres pestañas y línea de comandos. Arranque en un paso para Windows y para macOS y Linux. Dependencias fijadas con un fichero de proyecto y otro de bloqueo</td><td>El enunciado nombra requirements.txt o Dockerfile; el repositorio usa otro formato de dependencias</td></tr>
+        <tr><td>4.4 Repositorio y documentación</td><td>README con capturas, diagrama de flujo multimodal y arquitectura. Separación entre conexión con modelos, lógica de negocio e interfaz</td><td>Capas separadas para datos, modelos, salidas, agentes e interfaz. README con diagrama de flujo, estructura y costes</td><td>Capturas de pantalla: no aparecen en el README de la rama principal</td></tr>
+        <tr><td>5 Entregables</td><td>Repositorio y demostración: desplegada, grabada o en vivo</td><td>Enlace público temporal a la interfaz, con contraseña opcional</td><td>Una demo grabada</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Las modalidades del enunciado, agente por agente</h2>
+  <div class="scroll">
+    <table class="wide">
+      <thead><tr><th>Modalidad</th><th>Agente 1</th><th>Agente 2</th><th>Agente 3</th></tr></thead>
+      <tbody>
+        <tr><td>Texto a texto</td><td>Plan, hechos, capítulos, revisión, dirección y guion</td><td>Lectura de páginas, frases y porqués</td><td>Respuesta con citas</td></tr>
+        <tr><td>Imagen o documento a texto</td><td>Revisa la infografía, las ilustraciones y las escenas</td><td>Lee la tabla sinóptica desde la imagen</td><td>—</td></tr>
+        <tr><td>Texto a imagen</td><td>Ilustraciones conceptuales</td><td>—</td><td>—</td></tr>
+        <tr><td>Audio a texto</td><td>Escucha y transcribe la voz generada</td><td>—</td><td>Pregunta hablada</td></tr>
+        <tr><td>Texto a audio</td><td>Voz del vídeo</td><td>Voz del vídeo</td><td>Respuesta en voz</td></tr>
+        <tr><td>Cruzadas: búsqueda multimodal e informes multimedia</td><td>Vídeo e infografía montados automáticamente</td><td>Vídeo montado automáticamente</td><td>Vectores de texto e imagen en el mismo espacio</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">Infografías y gráficos no son «texto a imagen»: los dibuja el código a partir de datos. Es una decisión, no una carencia: ninguna cifra ni nombre sale de un generador de imágenes.</p>
+
+  <h2>Cadenas de modelos</h2>
+  <div class="rowlabel">Agente 1</div>
+  <div class="chain">
+    <div class="n"><span class="chip chip-llm">LLM</span><b>Gemini, texto</b><small>hechos, informe, guion</small></div><span class="a">→</span>
+    <div class="n"><span class="chip chip-jev">Jev</span><b>Verificador</b><small>en cada transformación</small></div><span class="a">→</span>
+    <div class="n"><span class="chip chip-mm">Multimodal</span><b>Gemini, visión</b><small>revisa lo dibujado</small></div><span class="a">→</span>
+    <div class="n"><span class="chip chip-mm">Multimodal</span><b>Gemini Image</b><small>ilustraciones</small></div><span class="a">→</span>
+    <div class="n"><span class="chip chip-mm">Multimodal</span><b>Gemini TTS</b><small>voz</small></div><span class="a">→</span>
+    <div class="n"><span class="chip chip-mm">Multimodal</span><b>Gemini, audio</b><small>escucha la voz</small></div>
+  </div>
+  <div class="rowlabel">Agente 2</div>
+  <div class="chain">
+    <div class="n"><span class="chip chip-llm">LLM</span><b>Gemini, texto</b><small>lee páginas</small></div><span class="a">→</span>
+    <div class="n"><span class="chip chip-mm">Multimodal</span><b>Gemini, visión</b><small>lee la tabla</small></div><span class="a">→</span>
+    <div class="n"><span class="chip chip-llm">LLM</span><b>Gemini, texto</b><small>frases y porqués</small></div><span class="a">→</span>
+    <div class="n"><span class="chip chip-jev">Jev</span><b>Verificador</b><small>respaldo y tono</small></div><span class="a">→</span>
+    <div class="n"><span class="chip chip-mm">Multimodal</span><b>Gemini TTS o Kokoro</b><small>voz</small></div>
+  </div>
+  <div class="rowlabel">Agente 3</div>
+  <div class="chain">
+    <div class="n"><span class="chip chip-mm">Multimodal</span><b>Whisper</b><small>voz a texto</small></div><span class="a">→</span>
+    <div class="n"><span class="chip chip-mm">Multimodal</span><b>EmbeddingGemma 2</b><small>texto e imagen</small></div><span class="a">→</span>
+    <div class="n"><span class="chip chip-llm">LLM</span><b>Gemini, texto</b><small>respuesta citada</small></div><span class="a">→</span>
+    <div class="n"><span class="chip chip-jev">Jev</span><b>Verificador</b><small>frase a frase</small></div><span class="a">→</span>
+    <div class="n"><span class="chip chip-mm">Multimodal</span><b>Kokoro</b><small>texto a voz</small></div>
+  </div>
+</section>
+
+<footer>Fuentes: código de la rama principal del repositorio (commit e07c3c2) y enunciado del Taller B5-T4. Lo que no se deduce de ellas está marcado como no determinado.</footer>
+</main>
+
+<script>
+/* ============================================================ DATOS */
+const call=(n,k,short,send,ask,back,then)=>({n,k,short,send,ask,back,then});
+
+const A1={id:'a1',title:'Agente 1 · Onboarding',
+lead:`Parte de una conversación sobre quién se incorpora y qué necesita saber, y entrega tres piezas a su medida: un documento de referencia, una infografía y un vídeo de 1 a 5 minutos. Nada llega a esas piezas sin que Jev lo respalde con al menos 0,80.`,
+inp:`Una conversación en texto, que termina en un encargo confirmado: puesto, experiencia, objetivo, área, duración (60 a 300 s) y presupuesto.`,
+out:`Informe HTML con citas numeradas, infografía PNG, vídeo MP4 de 1920×1080 con voz, y el expediente completo de la ejecución.`,
+note:`Esta guía describe la versión 2, que es la que lanza la interfaz. La versión 1, sin encargo, sigue en el código: está resumida más abajo.`,
+laneSub:{mm:'visión · imagen · voz · audio'},
+idea:{title:'La idea central: verificar en cada transformación',html:`
+<figure><div class="fig"><svg viewBox="0 0 1010 270" role="img" aria-label="Las evidencias de la carpeta pasan por Jev y forman el banco de hechos. Informe, infografía y escenas, y locución salen del banco y cada uno vuelve a pasar por Jev. La voz se compara con la locución mediante escucha y Jev.">
+<defs><marker id="ah1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="currentColor"/></marker></defs>
+<g fill="none" stroke="currentColor" stroke-width="1.3">
+<line x1="170" y1="135" x2="288" y2="135" marker-end="url(#ah1)"/>
+<line x1="460" y1="135" x2="500" y2="135"/><line x1="500" y1="47" x2="500" y2="223"/>
+<line x1="500" y1="47" x2="618" y2="47" marker-end="url(#ah1)"/><line x1="500" y1="135" x2="618" y2="135" marker-end="url(#ah1)"/><line x1="500" y1="223" x2="618" y2="223" marker-end="url(#ah1)"/>
+<line x1="800" y1="223" x2="898" y2="223" marker-end="url(#ah1)"/>
+</g>
+<g style="fill:var(--surface)" stroke="currentColor" stroke-width="1.3">
+<rect x="10" y="103" width="160" height="64" rx="6"/><rect x="290" y="95" width="170" height="80" rx="6" stroke-width="2.2"/>
+<rect x="620" y="17" width="180" height="60" rx="6"/><rect x="620" y="105" width="180" height="60" rx="6"/><rect x="620" y="193" width="180" height="60" rx="6"/><rect x="900" y="193" width="100" height="60" rx="6"/>
+</g>
+<g style="fill:var(--jev-t);stroke:var(--jev)" stroke-width="1.3">
+<rect x="204" y="123" width="52" height="24" rx="12"/><rect x="534" y="35" width="52" height="24" rx="12"/><rect x="534" y="123" width="52" height="24" rx="12"/><rect x="534" y="211" width="52" height="24" rx="12"/><rect x="806" y="211" width="88" height="24" rx="12"/>
+</g>
+<g style="fill:var(--jev)" font-size="12" font-weight="700" text-anchor="middle">
+<text x="230" y="139">Jev</text><text x="560" y="51">Jev</text><text x="560" y="139">Jev</text><text x="560" y="227">Jev</text><text x="850" y="227">escucha + Jev</text>
+</g>
+<g fill="currentColor" text-anchor="middle">
+<text x="90" y="131" font-size="13.5" font-weight="700">Evidencias</text><text x="90" y="149" font-size="11.5">apartados y páginas</text>
+<text x="375" y="128" font-size="14" font-weight="700">Banco de hechos</text><text x="375" y="147" font-size="11.5">solo los de 0,80 o más</text>
+<text x="710" y="43" font-size="13.5" font-weight="700">Informe</text><text x="710" y="61" font-size="11.5">párrafos y filas de tabla</text>
+<text x="710" y="131" font-size="13.5" font-weight="700">Infografía y escenas</text><text x="710" y="149" font-size="11.5">etiquetas y relaciones</text>
+<text x="710" y="219" font-size="13.5" font-weight="700">Locución</text><text x="710" y="237" font-size="11.5">frase a frase</text>
+<text x="950" y="219" font-size="13.5" font-weight="700">Voz</text><text x="950" y="237" font-size="11.5">audio real</text>
+</g></svg></div>
+<figcaption>Jev compara cada cosa nueva con aquello de lo que procede: los hechos con las evidencias de la carpeta; los párrafos, las etiquetas, las relaciones y la locución con los hechos; y, al final, lo que se oye con el guion. Las tres piezas salen del mismo banco de hechos y ninguna vuelve a leer la carpeta.</figcaption></figure>`},
+steps:[
+{s:'Encargo',t:'Conversación y encargo',loop:1,lanes:{llm:'interpreta el encargo',jev:'¿lo entendió bien?',disk:'borrador'},
+what:`El usuario describe en un chat quién se incorpora y qué necesita saber. El modelo va rellenando un borrador de encargo y solo pregunta si faltan el puesto o el objetivo; para lo demás usa valores por defecto (se incorpora al equipo, área Gestión Discrecional, 120 segundos). El usuario puede editar los campos y confirma una sola vez. Para cambiar algo después hay que abrir un encargo nuevo.`,
+inp:`Los mensajes del chat.`,out:`Un encargo confirmado: puesto, experiencia, objetivo, área, duración entre 60 y 300 s, presupuesto y preferencias de contenido.`,
+calls:[call('Interlocutor del encargo','texto','Entender el encargo y contestar en el chat',
+`El historial completo de la conversación.`,
+`Rellenar puesto, experiencia, objetivo, área, duración y preferencias, y escribir el siguiente mensaje. Preguntar solo por puesto u objetivo, no inventar datos de la persona, no prometer la generación antes de confirmar, no responder consultas corporativas y no aceptar cambios de identidad visual.`,
+`Un borrador estructurado del encargo y un mensaje para el usuario.`,
+`El borrador rellena los campos editables y el mensaje se añade al chat. Mientras falte puesto u objetivo, el botón de confirmar sigue desactivado.`)],
+jev:`Cuando ya hay puesto y objetivo, Jev comprueba que el modelo ha entendido bien al usuario. Recibe dos afirmaciones («El onboarding solicitado está dirigido a: …» y «El objetivo solicitado es: …») y, como pasaje, lo que el usuario ha escrito. Si alguna queda por debajo de 0,80, el fallo vuelve al modelo y se repite, hasta tres intentos.`,
+od:`Ninguna lectura. La conversación no consulta la carpeta.`,
+disk:`El borrador de la conversación y su consumo, en una carpeta de borradores por sesión. Al confirmar se copian a la carpeta de la ejecución.`,
+dec:[`Una confirmación explícita antes de gastar: nada se genera hasta que el usuario confirma.`,`Valores por defecto para no convertir el chat en un interrogatorio.`,`Aquí Jev no mira el corpus: vigila al intérprete. Es el único uso de Jev contra las palabras del usuario.`],
+qa:[[`¿Se vuelve a verificar lo que el usuario edita a mano?`,`No. Al confirmar, el encargo se construye con los campos tal como estén, sin otra llamada al modelo ni a Jev.`],[`¿Y si el usuario pide otra estética?`,`El modelo explica que se aplica la identidad corporativa. Las preferencias solo recogen contenido.`]],
+extra:`Antes de arrancar, la versión 2 exige las dos claves (OpenRouter y Jev) y, si va a haber vídeo, comprueba que ffmpeg y Chromium funcionan. Así no se gasta en una ejecución que no podría terminar.`},
+
+{s:'Contextos',t:'Contextos completos y firma de entradas',log:'«1 · Encargo y contextos completos»',lanes:{od:'manifiesto + 20 contextos',code:'evidencias y huellas',disk:'dosier y fuentes'},
+what:`Se cargan el manifiesto y los 20 documentos de contexto completos. Cada apartado se convierte en una o varias «evidencias» (fragmentos de hasta 5.500 caracteres) con identificador propio. Se calcula la huella de cada contexto y del manifiesto. Con el encargo, esas huellas, los modelos, la voz, el umbral, la marca y el formato de vídeo se forma la firma de la ejecución.`,
+inp:`El encargo confirmado y la carpeta de datos.`,out:`Evidencias numeradas de todos los contextos, catálogo de documentos y firma de entradas.`,
+od:`El manifiesto entero y los 20 documentos de contexto enteros: cabecera de metadatos (incluida su lista de fuentes), los 11 apartados y los anexos.`,
+code:`Sin modelos: leer, trocear, numerar y calcular huellas.`,
+disk:`El dosier con todas las evidencias, el registro de fuentes (huellas, documentos leídos e incidencias de lectura), el encargo y el estado de la ejecución.`,
+dec:[`Toda afirmación posterior cita identificadores de evidencia. Por eso se numeran antes de que intervenga ningún modelo.`,`La firma permite reanudar solo si nada ha cambiado. Si cambian el encargo, las fuentes, el manifiesto, los modelos o la marca, se exige una ejecución nueva.`],
+qa:[[`¿Por qué leer los 20 contextos enteros en vez de buscar?`,`Porque son el mapa: la misma plantilla de 11 apartados en todas las carpetas. El plan necesita verlos todos. Los documentos concretos se leen después, y solo los elegidos.`],[`¿Qué pasa si OneDrive no tiene los ficheros descargados?`,`La lectura falla. La carpeta tiene que estar disponible sin conexión o el cliente de OneDrive abierto.`]]},
+
+{s:'Plan',t:'Plan personalizado y selección de fuentes',loop:1,log:'«2 · Plan personalizado y selección de fuentes»',lanes:{llm:'plan de capítulos',code:'ordena y valida rutas',disk:'índice'},
+what:`El modelo diseña el índice de un documento de referencia completo para ese perfil y elige de dónde saldrá cada capítulo. Después el código ordena y valida lo que el modelo ha elegido.`,
+inp:`El encargo, un extracto de cada contexto y el catálogo de documentos.`,out:`Entre 6 y 10 capítulos, cada uno con sus contextos, apartados y documentos.`,
+calls:[call('Plan de capítulos y fuentes','texto','Planificar 6–10 capítulos y elegir sus fuentes',
+`El encargo; de cada contexto, su ruta, su título, su lista de fuentes y los primeros 900 caracteres de los apartados 1, 2, 4, 7, 8 y 9; y el catálogo de documentos (ruta, tipo y carpeta).`,
+`Planificar un documento completo, no un resumen del vídeo: 6–10 capítulos, cuatro comunes obligatorios (equipo, organización, reglas y recursos) y al menos dos específicos del perfil. Para cada uno, hasta 4 contextos, los apartados que necesita y hasta 3 documentos, con rutas exactas. Sin capítulos de relleno.`,
+`Un título y la lista de capítulos: identificador, título, propósito, si es común, contextos, apartados y documentos.`,
+`El código coloca cada ruta en su lista (contexto o documento), descarta las inventadas, da a un capítulo que solo cita documentos el contexto de su carpeta y comprueba que todo existe en el catálogo. Si aun así no cumple, el error vuelve al modelo.`)],
+od:`Nada nuevo: trabaja con lo cargado en el paso anterior. El catálogo sale del manifiesto.`,
+code:`El catálogo solo ofrece documentos vigentes en formatos legibles. Excluye CSV, JSON y los propios contextos, y de la carpeta de proyectos solo deja README, manuales, marcos, instrucciones y glosarios.`,
+disk:`El índice del documento.`,
+dec:[`Capítulos comunes fijos más capítulos del perfil: se personaliza sin perder la base que todo el mundo necesita.`,`Los errores típicos del plan (rutas mezcladas) los arregla el código en lugar de repetir la petición: «repetir no lo arregla, devuelve la misma confusión».`,`El perfil decide qué se cuenta y con qué profundidad, pero «no demuestra hechos de la empresa».`],
+qa:[[`¿El modelo ve el corpus entero para planificar?`,`No. Ve extractos de los contextos y la lista de documentos, no su contenido.`]]},
+
+{s:'Investigar',t:'Investigación por capítulo',loop:1,log:'«3 · Investigación y verificación: [capítulo]»',lanes:{od:'documentos vigentes elegidos',llm:'hechos atómicos',disk:'borradores'},
+what:`Capítulo a capítulo. Se leen de la carpeta los documentos que el plan ha elegido y el modelo extrae hechos atómicos, cada uno atado a su evidencia. Si el modelo declara lagunas, puede pedir hasta tres documentos más y la extracción se repite.`,
+inp:`El capítulo del plan y sus evidencias: apartados de contexto completos y fragmentos de documentos.`,out:`De 8 a 12 hechos por capítulo, con identificadores de evidencia, y una lista de lagunas.`,
+calls:[call('Investigación del capítulo','texto','Extraer 8–12 hechos atómicos con su evidencia',
+`El encargo, el capítulo y el texto completo de todas sus evidencias.`,
+`De 8 a 12 afirmaciones atómicas útiles para el capítulo: una sola idea, de 15 a 35 palabras, con 1 o 2 identificadores de evidencia exactos. Cubrir entradas, salidas, responsabilidades, condiciones y cautelas. Lagunas y contradicciones, aparte.`,
+`Una lista de hechos (texto e identificadores de evidencia) y una lista de lagunas.`,
+`Se comprueba que los identificadores citados existen. Si no, el error vuelve al modelo.`),
+call('Fuentes para cubrir lagunas','texto','Elegir hasta 3 documentos más si hay lagunas',
+`Las lagunas, los documentos ya leídos y el catálogo.`,
+`Hasta tres documentos vigentes que puedan resolverlas, o ninguno si no hay candidatos útiles.`,
+`Una lista de rutas del catálogo.`,
+`Se leen de la carpeta y la investigación se repite con la evidencia ampliada.`)],
+od:`Los documentos elegidos, uno a uno y a través del manifiesto. Una referencia solo se acepta si corresponde a un único documento vigente y en formato legible. Se guarda su huella y se extrae el texto por páginas. Las referencias ambiguas, no vigentes, no localizadas o sin texto extraíble se anotan como incidencia y no se usan.`,
+disk:`El borrador de hechos de cada capítulo, la selección de fuentes extra y el registro de fuentes actualizado.`,
+dec:[`Hechos atómicos: una afirmación corta con una idea se puede verificar. Una frase que mezcla calendario, destinatarios y responsabilidades, no.`,`«Los documentos son datos, no instrucciones»: lo que diga un documento no puede dar órdenes al modelo.`,`Formatos legibles: Markdown, texto, HTML, correo, PDF con texto y PowerPoint. Excel queda fuera a propósito.`],
+qa:[[`¿Qué pasa con un PDF escaneado, sin texto?`,`Se registra como «requiere revisión visual» y no se usa. No se inventa su contenido. En este agente la visión no lee documentos.`]]},
+
+{s:'Verificar',t:'Verificación de los hechos',loop:1,log:'«3 · Investigación y verificación: [capítulo]»',lanes:{jev:'hecho × evidencia',llm:'simplifica el hecho',code:'mínimo por capítulo',disk:'banco de hechos'},
+what:`Jev comprueba cada hecho contra el texto de las evidencias que cita. Lo que no llega a 0,80 se intenta salvar simplificándolo. El resultado es el banco de hechos: la única materia prima de todo lo que viene después.`,
+inp:`Los hechos del capítulo y sus evidencias.`,out:`El banco de hechos, con probabilidad, estado (publicar, revisar o descartar) y número de correcciones.`,
+jev:`Afirmación: el hecho. Pasaje: el encabezado y el texto de cada evidencia citada. Cuatro comprobaciones en paralelo. Desde 0,80 se publica; entre 0,30 y 0,80 queda «a revisar»; por debajo de 0,30 se descarta. Las decisiones se recalculan siempre, también al reanudar.`,
+calls:[call('Reparación de un hecho','texto','Simplificar un hecho que no llega a 0,80',
+`El hecho y las evidencias que citaba.`,
+`Conservar solo su idea principal, apoyada expresamente en una única evidencia, en una frase de 15 a 30 palabras y sin añadir información.`,
+`Un hecho más corto, con una sola evidencia.`,
+`Vuelve a Jev. Como máximo, dos correcciones por hecho.`)],
+code:`Cada capítulo necesita al menos 3 hechos publicables. Si alguno no llega, la ejecución se detiene con «falta cobertura verificada».`,
+disk:`Los hechos verificados de cada capítulo, el banco completo y todas las comprobaciones con su pasaje. Cada comprobación se guarda además en una base local compartida entre ejecuciones: la misma pregunta a Jev no se hace dos veces. El consumo de Jev (peticiones y reutilizadas) se anota aparte.`,
+dec:[`Solo los hechos con respaldo de 0,80 o más pueden alimentar una pieza publicada.`,`Se repara simplificando, nunca bajando el umbral.`,`Lo que no pasa no desaparece: queda en el expediente, y las lagunas se muestran en el informe como «información pendiente o con matices».`],
+qa:[[`¿Jev puede equivocarse?`,`Sí. Mide la probabilidad de respaldo documental. La documentación dice expresamente que no sustituye la revisión editorial del equipo.`],[`¿Cuántos hechos salen?`,`En las dos ejecuciones validadas, 76 y 88 hechos publicados, con respaldo mínimo de 0,81 y 0,82.`]]},
+
+{s:'Informe',t:'Documento completo de referencia',loop:1,log:'«4 · Documento completo de referencia»',lanes:{llm:'redacta capítulos',jev:'párrafo × hechos',code:'maqueta',disk:'informe'},
+what:`El modelo redacta cada capítulo usando solo los hechos publicables de ese capítulo. Jev comprueba cada párrafo y cada fila de tabla contra los hechos que cita. El código maqueta el informe con referencias numeradas a la carpeta.`,
+inp:`Los hechos publicables del capítulo (identificador y texto) y el encargo.`,out:`Capítulos de 3 a 6 párrafos con tabla opcional; informe en HTML y en Markdown con índice de fuentes.`,
+calls:[call('Redacción del capítulo','texto','Redactar el capítulo solo con hechos verificados',
+`El encargo y los hechos publicables del capítulo. No recibe documentos.`,
+`De 3 a 6 párrafos explicativos (180 a 350 palabras) y, si ayuda, una tabla de hasta 6 filas. Cada párrafo y cada fila llevan los identificadores de los hechos que respaldan todo lo que dicen. Sin consejos, sin ejemplos inventados, sin inferencias organizativas y sin mencionar identificadores en el texto.`,
+`El capítulo, con párrafos y filas y los hechos que cita cada uno.`,
+`Jev lo comprueba. Una fila sin respaldo se retira y queda registrada. Un párrafo sin respaldo vuelve al modelo con el detalle del fallo.`)],
+jev:`Segundo nivel de verificación. Afirmación: el párrafo o la fila. Pasaje: el texto de los hechos que cita. Umbral 0,80.`,
+code:`Maqueta el informe: cada párrafo enlaza con su fuente numerada (ruta y apartado o página), cada capítulo muestra sus lagunas y al final va el índice de fuentes. Más adelante el informe recibe una portada (una de las ilustraciones) y los diagramas de organigrama o proceso de sus capítulos.`,
+disk:`Cada capítulo redactado, el informe en HTML y en Markdown y el registro de filas retiradas.`,
+dec:[`El redactor no ve el corpus, solo hechos ya verificados. No puede traer nada nuevo de los documentos.`,`El informe no está limitado por la duración del vídeo: es la pieza completa. Infografía y vídeo seleccionan.`,`La tabla es un apoyo opcional: una fila sin respaldo se quita en lugar de reescribir el capítulo.`],
+qa:[[`Si los hechos ya están verificados, ¿por qué verificar otra vez el párrafo?`,`Porque al unir hechos en prosa el modelo puede añadir causas, matices o relaciones que ningún hecho dice.`]]},
+
+{s:'Revisión',t:'Revisión editorial independiente',loop:1,log:'«5 · Revisión editorial independiente»',lanes:{llm:'revisor editorial',jev:'reverifica lo reescrito',disk:'revisión'},
+what:`Otra llamada al mismo modelo hace de revisor: lee el documento entero y lo puntúa. Si no lo aprueba, solo se reescriben los capítulos señalados. Con la opción «solo informe», el flujo termina aquí.`,
+inp:`El documento de referencia completo y el encargo.`,out:`Tres notas de 1 a 5, los problemas que impiden entregar y los capítulos afectados.`,
+calls:[call('Revisión editorial independiente','texto','Puntuar claridad, relevancia y coherencia',
+`El encargo y la guía completa.`,
+`Evaluar claridad, relevancia para el perfil, coherencia y repetición, de 1 a 5 (4 es apto). Señalar solo problemas que impiden entregar, no preferencias, y los capítulos afectados. No penalizar que las fuentes no documenten algo.`,
+`Tres notas, una lista de problemas y los capítulos afectados.`,
+`Es apto si las tres notas son 4 o más y no hay problemas. Si no, los capítulos afectados se reescriben con los problemas como indicación. Máximo tres revisiones; si la tercera tampoco aprueba, la ejecución se detiene.`)],
+jev:`Los capítulos reescritos vuelven a pasar la verificación de párrafos y filas.`,
+disk:`Cada revisión y la guía final.`,
+dec:[`Calidad editorial y veracidad se controlan por separado: Jev no opina sobre si el texto es claro, y el revisor no decide si algo es cierto.`,`Las notas son valoraciones de calidad, no probabilidades de veracidad.`],
+qa:[[`¿«Independiente» significa otro modelo?`,`No. Es el mismo modelo en una llamada separada, que recibe solo el resultado y no cómo se redactó.`]]},
+
+{s:'Dirección',t:'Dirección narrativa e infografía',loop:1,log:'«6 · Dirección narrativa e infografía»',lanes:{llm:'arco y módulos',jev:'etiquetas y relaciones',code:'dibuja la infografía',mm:'visión: revisa el PNG',disk:'infografía'},
+what:`El modelo hace de director: propone el arco narrativo, los módulos de la infografía y las ilustraciones. Cada etiqueta y cada relación dibujada se verifican. El código dibuja la infografía y el modelo la revisa mirando la imagen.`,
+inp:`La guía, los hechos publicados y el encargo.`,out:`Arco narrativo, objetivos de aprendizaje, de 4 a 6 módulos visuales, de 1 a 3 ilustraciones conceptuales y la infografía en PNG.`,
+calls:[call('Dirección narrativa y visual','texto','Proponer arco, módulos de infografía e ilustraciones',
+`El encargo, la guía y los hechos publicados.`,
+`Un arco que lleve de entender el equipo a entender el trabajo del perfil; de 4 a 6 módulos (portada, organigrama, mapa, proceso, cronología, ilustración, foco, cierre) con elementos y relaciones que citan hechos; y de 1 a 3 ilustraciones conceptuales sin texto, cifras, logos ni retratos. Organigrama solo con jerarquías expresas; proceso solo con pasos documentados.`,
+`El arco, los objetivos de aprendizaje, los módulos con sus elementos y relaciones, y la lista de ilustraciones (tema y propósito).`,
+`Jev comprueba elementos y relaciones. Lo que no pasa se corrige de forma acotada.`),
+call('Reparación de un elemento visual','texto','Reescribir una etiqueta sobre un único hecho',
+`El elemento, sus hechos citados y el título del módulo.`,
+`Reescribirlo para que afirme exactamente lo que dice uno de sus hechos, copiando nombres, cifras y condiciones.`,
+`El mismo elemento con otra etiqueta y un solo hecho citado.`,
+`Si Jev lo respalda, se queda. Si no, el elemento se retira.`),
+call('Revisión de la infografía','visión','Mirar el PNG y decir si se puede entregar',
+`La imagen de la infografía ya dibujada, a 1.600 px de ancho.`,
+`Evaluar legibilidad, jerarquía, claridad y síntesis. Señalar solo fallos que impiden entregar: texto cortado, nodos solapados o falta de contraste.`,
+`Notas de 1 a 5 y una lista de problemas.`,
+`Si no pasa, una llamada de texto corrige solo composición, títulos y etiquetas, sin tocar ilustraciones ni arco, y se vuelve a dibujar. Hasta tres rondas.`)],
+jev:`Cada elemento («etiqueta: detalle») contra sus hechos. Cada relación se convierte en una frase («A está por encima jerárquicamente de B», «A precede en el proceso a B») y se comprueba igual; en los procesos, también el orden de cada par de pasos. Una relación sin respaldo convierte el módulo en un mapa sin conectores.`,
+code:`Dibuja la infografía con HTML, CSS y D3 y la captura con Chromium. Un organigrama sin relaciones documentadas se muestra como mapa. Hacen falta al menos 4 módulos con respaldo.`,
+disk:`La dirección, la infografía (HTML y PNG), sus revisiones y el registro de elementos y relaciones corregidos.`,
+dec:[`Una flecha también es una afirmación: dibujar que A manda sobre B, o que un paso va antes que otro, exige el mismo respaldo que escribirlo.`,`El modelo revisa la imagen final, no su descripción: los cortes y solapes solo se ven una vez dibujada.`,`Si falla un elemento, se corrige ese elemento. No se pide otra vez toda la dirección.`],
+qa:[[`¿Quién dibuja la infografía? ¿Un modelo de imagen?`,`No. La dibuja el código a partir de datos verificados. El modelo de imagen solo hace ilustraciones conceptuales sin texto.`]]},
+
+{s:'Guion',t:'Mensajes clave, guion y storyboard',loop:1,log:'«7 · Guion, storyboard y respaldo documental»',lanes:{llm:'mensajes y guion',code:'cuadra palabras',jev:'locución frase a frase',disk:'guion'},
+what:`Primero se decide qué cabe en el vídeo y después se escribe. El modelo elige los mensajes clave dentro de un presupuesto de palabras y, con ellos, redacta las escenas: qué se ve y qué dice la voz.`,
+inp:`Los hechos publicados, la dirección y la duración pedida.`,out:`Mensajes clave y guion: de 4 a 24 escenas con composición, elementos, locución y hechos citados.`,
+calls:[call('Mensajes clave','texto','Elegir qué hechos caben en la locución',
+`El encargo, el arco y los objetivos de aprendizaje, y todos los hechos publicados con su número de palabras y si ya están en la infografía.`,
+`Mensajes con título y de 1 a 3 hechos cada uno, en el orden en que se contarán, de modo que las palabras de los hechos sumen dentro del presupuesto. Dejar el detalle operativo para el informe y preferir hechos que ya están en la infografía.`,
+`Una lista ordenada de mensajes con sus hechos.`,
+`El código cuadra la suma quitando o añadiendo un hecho, porque «el modelo no sabe sumarlas».`),
+call('Guion y storyboard','texto','Escribir las escenas: pantalla y locución',
+`El encargo, los mensajes clave, la dirección recortada a esos hechos y los hechos.`,
+`Normalmente una escena por mensaje; la primera es portada y la última cierre; al menos tres composiciones distintas; locución de 45 palabras y 4 hechos como máximo; en pantalla, de 1 a 5 elementos que reutilizan etiquetas ya verificadas; al menos una ilustración; movimiento y transición sobrios.`,
+`Las escenas, con tipo de composición, título, elementos, relaciones, locución, hechos citados, ilustración, transición y movimiento.`,
+`Pasa por las correcciones acotadas y por Jev.`),
+call('Abreviar o corregir una locución','texto','Arreglar solo la locución que falla',
+`La locución afectada, las frases que fallan y los hechos de la escena.`,
+`Abreviarla hasta el tope, o reescribirla para que cada frase diga exactamente lo que dicen sus hechos, sin alargarla ni traer hechos de otra escena.`,
+`Una locución con sus hechos citados.`,
+`Sustituye a la anterior. Hasta dos rondas.`)],
+jev:`Elementos y relaciones, igual que en la infografía. La locución, frase a frase, contra los hechos de su escena. Las frases que reproducen literalmente un hecho no se vuelven a preguntar.`,
+code:`Presupuesto de palabras = (duración × 0,95 − 6) × 2,35. Para 120 s son 254 palabras. Solo los hechos de los mensajes clave pueden aparecer en el vídeo.`,
+disk:`Los mensajes clave y el guion.`,
+dec:[`Seleccionar antes de escribir: sin esa selección «el guion intenta recorrer el informe entero».`,`Una escena, una idea: con un tope por escena, ninguna locución se come un tercio del vídeo.`,`Las cuentas las hace el código. Al modelo se le pide lo que sí sabe hacer.`],
+qa:[[`¿Por qué 2,35 palabras por segundo?`,`Es la constante que usa el código para estimar antes de sintetizar. Luego se mide la voz real y se corrige.`]]},
+
+{s:'Imagen y voz',t:'Ilustraciones, voz y duración real',loop:1,log:'«8 · Ilustraciones, voz expresiva y duración real»',lanes:{mm:'imagen · visión · voz',code:'mide la duración',llm:'ajusta la locución',jev:'reverifica',disk:'ilustraciones y audio'},
+what:`Se generan las ilustraciones que el guion muestra y la voz de cada escena. Después se mide cuánto dura la voz de verdad, y el guion se ajusta hasta ocupar entre el 90 % y el 100 % de la duración pedida.`,
+inp:`El guion, los temas de las ilustraciones y la duración pedida.`,out:`Ilustraciones revisadas, un audio por escena, la pista completa y la línea de tiempo real.`,
+calls:[call('Ilustración conceptual','imagen','Generar una ilustración sin texto ni datos',
+`Un prompt de estilo fijo (ilustración editorial, fondo blanco, trazos negros y grises, acento rojo, sin texto, números, logos, gráficos ni retratos) más el tema. Modelo: Gemini 3.1 Flash Image.`,
+`Una imagen apaisada, 16:9.`,
+`Una imagen, que se valida como fichero de imagen real.`,
+`Solo se generan las que alguna escena muestra (portada, ilustración o cierre). Una sirve también de portada del informe.`),
+call('Revisión de la ilustración','visión','Comprobar que la ilustración es apta',
+`La ilustración y su propósito.`,
+`Confirmar que es limpia, sin texto, logos ni retratos identificables, y con la paleta de la marca. Nota 4 es apta.`,
+`Notas y problemas.`,
+`Si no pasa, se regenera añadiendo los problemas al prompt. Hasta tres intentos.`),
+call('Voz de cada escena','voz','Sintetizar la locución',
+`La locución con las cifras ya escritas en palabras y, como metadato aparte, la dirección vocal (español de España, cálido, sobrio, ritmo medido). Modelo: Gemini 3.8 Flash TTS, voz Algieba.`,
+`Leer el texto. La dirección vocal va separada para que no se lea en voz alta.`,
+`Audio mono a 24 kHz.`,
+`Se guarda un clip por escena (no se vuelve a pagar si texto, voz y estilo no cambian) y se mide su duración.`),
+call('Ajuste de duración','texto','Alargar o acortar la locución hasta la ventana',
+`El guion, las palabras actuales y el objetivo por escena, y los hechos.`,
+`Ajustar solo las locuciones para que sumen dentro de la ventana, sin relleno, sin hechos nuevos y sin tocar los gráficos.`,
+`Una locución por escena con sus hechos.`,
+`Si el total no cuadra, el código combina por escena versiones ya escritas y verificadas hasta que entra. Después se vuelve a sintetizar.`)],
+jev:`Toda locución reescrita vuelve a pasar la verificación frase a frase.`,
+code:`Cada escena dura lo que dura su audio, más 0,25 s antes y 0,35 s después. Antes de pagar la voz, un guion fuera del 95 %–108 % del objetivo de palabras se ajusta. Hasta tres rondas de voz. Último recurso: cambiar el tempo un 8 % como máximo, sin cortar palabras ni cambiar el tono. Una desviación mayor detiene la entrega.`,
+disk:`Las ilustraciones y sus revisiones, los clips de audio, la pista de voz y la línea de tiempo.`,
+dec:[`La voz medida fija el montaje, y no al revés: así la voz nunca se corta ni sobra silencio.`,`La imagen generada nunca lleva datos: cifras, letras, gráficos y logos se dibujan por código.`,`El sistema no aumenta el presupuesto ni cambia de voz por su cuenta.`],
+qa:[[`¿Por qué una ventana del 90 % al 100 %?`,`La duración elegida es un máximo y se busca aprovecharla. En la validación: 112 s de 120 y 279 s de 300.`]]},
+
+{s:'Escucha',t:'Revisión del audio y de las composiciones',loop:1,log:'«9 · Revisión del audio y las composiciones»',lanes:{mm:'escucha · visión',code:'compara sonido y guion',jev:'lo que suena distinto',llm:'repara lo visual',disk:'revisiones'},
+what:`Antes de montar, el modelo escucha la pista de voz y mira las escenas. La escucha es a ciegas: no recibe el guion, para no «oír» lo que espera. El código compara lo oído con el guion, y solo lo que suena distinto llega a Jev.`,
+inp:`La pista de voz completa, el guion y las escenas dibujadas.`,out:`Transcripción y notas del audio, validación de diseño y capturas revisadas.`,
+calls:[call('Escucha a ciegas','audio','Transcribir lo que se oye y valorar el audio',
+`La pista de voz completa. No se envía el guion.`,
+`Transcribir literalmente, puntuar claridad y naturalidad de 1 a 5, decir si termina sin palabras cortadas y señalar solo problemas que impiden entregar.`,
+`Transcripción, dos notas, si está completo y problemas.`,
+`Si suspende, se repite la voz con la corrección como indicación. Si aprueba, el código compara la transcripción con el guion.`),
+call('Escucha comparada','audio','Decidir por el sonido si un nombre o una cifra difiere',
+`La misma pista, el guion esperado y las frases que difieren.`,
+`Comparar sonido y guion fijándose en esas diferencias y decidir por lo que se oye. Usar la grafía oficial de un nombre solo si sus sonidos corresponden.`,
+`Una nueva transcripción y problemas.`,
+`Si la diferencia persiste, se repite la voz solo de las escenas afectadas. Hasta tres intentos.`),
+call('Revisión visual de las escenas','visión','Mirar una captura por escena',
+`Una captura de cada escena, el encargo y los títulos.`,
+`Evaluar marca, legibilidad, lenguaje adecuado al perfil, coherencia y variedad. Señalar solo cortes, solapamientos, texto ilegible o incoherencias claras.`,
+`Notas, problemas y escenas afectadas.`,
+`Si hay problemas, o el código detecta desbordes, una llamada de texto corrige solo lo visual, sin tocar el orden, la locución ni las ilustraciones. Hasta tres rondas.`)],
+jev:`Solo las frases que no suenan igual, en los dos sentidos: lo oído contra el guion (añadidos) y el guion contra lo oído (omisiones). Umbral 0,80. Las correcciones visuales vuelven a pasar la verificación de elementos y relaciones.`,
+code:`Compara «cómo suena»: ignora mayúsculas y puntuación, une homófonos («v11» y «B11», «Alfa» y «Alpha») y lee los decimales dígito a dígito. Dibuja cada escena en tres instantes para detectar desbordes y comprueba que un mismo instante da siempre el mismo fotograma.`,
+disk:`Las revisiones del audio (ciega y comparada), la validación de diseño, las capturas y el storyboard final.`,
+dec:[`Escucha a ciegas primero: un revisor con el guion delante tiende a completar lo que no se oye.`,`Lo que suena igual no se manda al verificador: así la ortografía de un nombre no produce un falso error.`,`El fallo se localiza: se repite la voz de las escenas afectadas, no la de todo el vídeo.`],
+qa:[[`¿Para qué escuchar un audio que habéis generado vosotros?`,`Porque la síntesis puede cortar una frase o cambiar un nombre o una cifra. Es otro salto en el que el contenido puede cambiar.`]]},
+
+{s:'Montaje',t:'Montaje y validación del vídeo',log:'«10 · Montaje y validación del MP4 completo»',lanes:{code:'fotogramas → MP4',disk:'vídeo'},
+what:`Sin modelos. Chromium dibuja el vídeo fotograma a fotograma a partir del storyboard y de la línea de tiempo real, y ffmpeg lo une con la voz. El MP4 se decodifica entero para comprobarlo.`,
+inp:`El storyboard, la línea de tiempo y la pista de voz.`,out:`Un vídeo MP4 de 1920×1080 con audio, validado.`,
+code:`25 fotogramas por segundo; cada uno se obtiene pidiendo a la página el instante exacto. Las animaciones y los diagramas van incrustados y funcionan sin conexión. Se comprueba que el vídeo se decodifica completo, que no supera la duración pedida y que mide lo configurado. Por último se reconcilia el coste con el proveedor.`,
+disk:`El vídeo, su validación, el consumo y el estado final de la ejecución.`,
+dec:[`Vídeo dibujado, no generado: cifras y nombres exactos, y sin coste de API. Alternativa descartada: modelos generativos de vídeo, que inventan texto y son caros y lentos.`,`Render reproducible: el mismo instante produce el mismo fotograma, así que se puede validar antes de montar.`],
+qa:[[`¿Cuánto cuesta una ejecución?`,`Hay un tope por ejecución (5 USD por defecto). Las dos ejecuciones validadas contabilizaron 1,92 y 2,49 USD en OpenRouter, incluidos los reintentos del desarrollo. Jev se cuenta aparte.`]]}
+],
+decisions:[
+[`El banco de hechos es la única fuente de las tres piezas`,`Informe, infografía y vídeo solo usan hechos con respaldo de 0,80 o más, y nunca vuelven a leer la carpeta. Ninguna pieza puede decir algo que las otras no puedan justificar.`],
+[`Se verifica en cada transformación, no solo al principio`,`Cada vez que un modelo reescribe (hecho, párrafo, etiqueta, locución, voz) puede añadir algo. Hay un control en cada salto, siempre con el mismo umbral.`],
+[`Correcciones acotadas`,`Un fallo en un elemento no obliga a repetir, ni hace caer, una pieza por lo demás apta. Se corrige solo lo afectado, se deja constancia y el umbral no cambia. Es el último cambio integrado en la rama principal.`],
+[`Etapas guardadas y reanudación con huellas`,`Cada etapa guarda su resultado. Un error conserva lo hecho y se puede reanudar. Si cambian el encargo, las fuentes, el manifiesto, los modelos o la marca, hay que empezar una ejecución nueva para no mezclar resultados.`],
+[`Presupuesto por ejecución`,`Antes de cada llamada a OpenRouter se reserva una estimación, que luego se ajusta al coste comunicado. Una reserva sin confirmar sigue contando. Por defecto, 5 USD. Responde a la viabilidad económica que pide el enunciado.`],
+[`La marca la fija el código`,`Colores, tipografía y logo no los decide el modelo ni el usuario. Una petición de cambiar la paleta no llega a quien dibuja.`],
+[`Vídeo dibujado, ilustración solo conceptual`,`Texto, cifras, logos y diagramas se dibujan por código para que sean exactos. La imagen generada no lleva texto ni datos.`],
+[`La voz medida fija el montaje`,`La duración de cada escena es la de su audio real. El guion se ajusta hasta ocupar entre el 90 % y el 100 % del tiempo pedido.`],
+[`Los documentos son datos, no instrucciones`,`Lo dice el prompt de sistema: lo que haya escrito en un documento no puede dar órdenes al modelo.`],
+[`Solo documentos vigentes y referencias inequívocas`,`El manifiesto decide qué es vigente. Una referencia ambigua no se adivina: se anota. Excel queda fuera porque sus fórmulas de Bloomberg no dan valores fiables sin terminal.`]],
+models:[
+[`Gemini 3.8 Flash`,`Texto → datos estructurados`,`Encargo, evidencias, hechos`,`Plan, hechos, capítulos, revisión, dirección y guion`,`Pasos 1, 3 a 11`],
+[`Gemini 3.8 Flash, con imágenes`,`Imagen → valoración`,`La infografía dibujada; cada ilustración; una captura por escena`,`Notas de 1 a 5 y problemas`,`Pasos 8, 10 y 11`],
+[`Gemini 3.1 Flash Image`,`Texto → imagen`,`Prompt de estilo fijo y un tema`,`Ilustración 16:9 sin texto`,`Paso 10`],
+[`Gemini 3.8 Flash TTS, voz Algieba`,`Texto → voz`,`Locución de cada escena y dirección vocal aparte`,`Audio mono a 24 kHz`,`Paso 10`],
+[`Gemini 3.8 Flash, con audio`,`Voz → texto y valoración`,`La pista de voz completa, primero sin guion`,`Transcripción literal y notas`,`Paso 11`],
+[`Jev`,`Afirmación y pasaje → probabilidad`,`Un hecho, párrafo, etiqueta o frase, y aquello de lo que procede`,`Un número de 0 a 1`,`Pasos 1 y 5 a 11`],
+[`Chromium, GSAP, D3 y ffmpeg`,`Datos → imagen y vídeo`,`Dirección, storyboard y línea de tiempo`,`Infografía, capturas, fotogramas y MP4`,`Pasos 8, 11 y 12`]],
+qa:[
+[`¿Cuántas llamadas al LLM hace una ejecución?`,`No es un número fijo. Depende de los capítulos (6 a 10), de las lagunas y de cuántas correcciones hagan falta. La validación da el coste y las peticiones a Jev (464 y 777 acumuladas), no un recuento de llamadas.`],
+[`¿Qué pasa si algo falla a mitad?`,`El error se registra, se conservan los resultados parciales y la ejecución se puede reanudar: las etapas terminadas no se repiten si sus fuentes no han cambiado. Una carpeta no admite dos reanudaciones a la vez.`],
+[`¿Qué se validó con datos reales?`,`Dos encargos: un analista junior de Alpha (120 s pedidos, 112 s de vídeo, 7 capítulos, 76 hechos) y un responsable de equipo (300 s pedidos, 279 s, 8 capítulos, 88 hechos).`],
+[`¿Las notas de 1 a 5 son fiables?`,`Son valoraciones del propio modelo. La validación dice que la naturalidad y la utilidad final siguen siendo criterios de revisión humana.`],
+[`¿Qué queda fuera?`,`Música, efectos de sonido y avatares.`]],
+und:[`El número de llamadas al LLM por ejecución y el coste de una ejecución limpia, sin los reintentos del desarrollo.`,`El coste de Jev: se cuentan peticiones, no importe.`,`Por qué estos modelos concretos y esta voz frente a otros. El repositorio solo dice que son baratos y que se cambian en la configuración.`,`Si una persona del equipo revisó las piezas de ejemplo antes de la entrega.`],
+v1:`<p>La versión 1 se conserva y se ejecuta cuando no hay encargo (desde la línea de comandos). Mismo esqueleto, más sencillo: los contextos completos, un índice fijo de ocho bloques (banco y equipo, personas, secciones, carteras, un proceso, calendario, reglas y recursos), hechos con evidencia, verificación con Jev y una sola reparación, informe, infografía de cuatro paneles y un vídeo de hasta 120 s.</p><p>Lo que no tiene: conversación, capítulos por perfil, revisión editorial, visión, imagen generada ni escucha del audio. La voz es Kokoro en local. Y es la única variante que admite trabajar sin Jev: con la opción de solo informe produce un borrador marcado como no verificado.</p>`,
+quick:{blocks:[
+[`Encargo`,`Un chat recoge puesto y objetivo. Jev comprueba que el modelo lo ha entendido y el usuario confirma una sola vez.`,0,['llm','jev']],
+[`Leer y planificar`,`Se cargan el manifiesto y los 20 contextos. El modelo planifica de 6 a 10 capítulos y elige documentos vigentes.`,1,['od','llm']],
+[`Hechos verificados`,`De cada capítulo salen hechos atómicos con su evidencia. Jev decide cuáles llegan a 0,80; el resto se simplifica o se queda fuera.`,3,['od','llm','jev']],
+[`Informe`,`El modelo redacta solo con hechos verificados, Jev revisa cada párrafo y otra llamada hace de revisor editorial.`,5,['llm','jev']],
+[`Dirección y guion`,`Arco narrativo, infografía y escenas. Etiquetas, relaciones y locución pasan por Jev, y el modelo mira la infografía ya dibujada.`,7,['llm','mm','jev']],
+[`Imagen, voz y montaje`,`Se generan ilustraciones y voz, se mide la duración real, el modelo escucha el audio y mira las escenas, y el código monta el vídeo.`,9,['mm','jev','code']]],
+ideas:[`Un banco de hechos verificados es la única fuente de las tres piezas.`,`Se verifica en cada transformación: hecho, párrafo, etiqueta, relación, frase de locución y audio.`,`Si algo falla se corrige solo ese elemento. El umbral de 0,80 no se toca.`],
+mm:`Texto a imagen (ilustraciones), imagen a texto (tres revisiones visuales), texto a voz, voz a texto (escucha del audio) y vídeo montado por código.`,
+jev:`Obligatorio. Seis controles con umbral 0,80.`,
+od:`Lee el manifiesto, los 20 contextos y los documentos vigentes que elige el plan. No escribe.`,
+nums:`Validado con datos reales: 112 s para 120 pedidos y 279 s para 300; 76 y 88 hechos publicados; respaldo mínimo de 0,81 y 0,82.`}
+};
+
+const A2={id:'a2',title:'Agente 2 · Opinión Corporativa',
+lead:`Compara las dos últimas ediciones de la Opinión Corporativa de la casa y cuenta a un cliente qué cambia y por qué. El cambio lo calcula el código; el modelo solo lee los PDF y redacta.`,
+inp:`Las dos ediciones más recientes de la Opinión Corporativa, en PDF.`,
+out:`Informe HTML para clientes con la fuente de cada dato, tres gráficos, un fichero de datos con los cambios y, si se pide, un vídeo de hasta 2 minutos.`,
+laneSub:{mm:'visión · voz'},
+idea:{title:'La idea central: quién hace qué',html:`
+<figure><div class="chain">
+<div class="n"><span class="chip chip-llm">LLM y visión</span><b>Lee</b><small>cada PDF pasa a datos: postura y objetivo por activo</small></div><span class="a">→</span>
+<div class="n"><span class="chip chip-code">Código</span><b>Comprueba</b><small>línea literal, suma de control, cruce con la tabla</small></div><span class="a">→</span>
+<div class="n"><span class="chip chip-code">Código</span><b>Compara</b><small>decide qué ha cambiado</small></div><span class="a">→</span>
+<div class="n"><span class="chip chip-llm">LLM</span><b>Cuenta</b><small>una frase y un porqué por cambio</small></div><span class="a">→</span>
+<div class="n"><span class="chip chip-jev">Jev</span><b>Vigila</b><small>respaldo y tono de cada frase</small></div><span class="a">→</span>
+<div class="n"><span class="chip chip-code">Código</span><b>Monta</b><small>informe y vídeo</small></div>
+</div><figcaption>El modelo nunca decide qué ha cambiado. Lee al principio y redacta al final; en medio, la comparación es código. Por eso un cambio de recomendación no puede inventarse.</figcaption></figure>`},
+steps:[
+{s:'Ediciones',t:'Elegir las dos ediciones',log:'«1 ediciones»',lanes:{od:'manifiesto + portadas',code:'3 comprobaciones'},
+what:`Sin modelos. Decide qué PDF son ediciones de la Opinión Corporativa y cuáles son las dos últimas, con tres comprobaciones independientes.`,
+inp:`La carpeta de datos.`,out:`Dos ediciones, la anterior y la nueva, con fecha y etiqueta.`,
+od:`El manifiesto, para quedarse con los ficheros clasificados como Opinión Corporativa y vigentes. Y la primera página de cada candidato, para leer su portada. Si no hay manifiesto, mira directamente la carpeta configurada.`,
+code:`Uno: el manifiesto lo clasifica como Opinión Corporativa vigente. Dos: la portada dice «Opinión corporativa» o «Perspectivas estratégicas». Tres: la fecha de edición va al principio del nombre del fichero. Si algo no encaja, se avisa y ese fichero se ignora. Hacen falta al menos dos ediciones.`,
+dec:[`Gratis, instantáneo y siempre igual: elegir las ediciones no necesita un modelo.`,`Avisar en lugar de adivinar.`],
+qa:[[`¿Se pueden comparar otras dos ediciones?`,`El flujo compara siempre las dos más recientes. En la carpeta hay cuatro.`]]},
+
+{s:'Páginas',t:'Decidir qué páginas leer',log:'«2 extracción»',lanes:{od:'texto de los 2 PDF',code:'páginas y región'},
+what:`Se extrae el texto de todas las páginas de cada PDF y, sin modelos, se decide cuáles hay que leer. Funciona porque la plantilla de la casa usa títulos fijos y cada página de coyuntura trata de un solo país.`,
+inp:`Los dos PDF.`,out:`Para cada edición: las páginas de recomendaciones con su región, las de tendencias y materias primas, y la de la tabla sinóptica.`,
+od:`El texto completo de los dos PDF, página a página. Si una edición ya está leída y guardada, no se vuelve a abrir.`,
+code:`Busca los títulos fijos («Perspectivas de mercado», «Tendencias estructurales», materias primas, «Tabla sinóptica») y detecta la región de cada página por palabras clave (S&amp;P, Bund, Topix…), exigiendo palabra completa. Las dos ediciones se procesan en paralelo.`,
+dec:[`Decidir qué leer con código deja al modelo prompts cortos y de una sola región.`,`Palabra completa: «ust» no debe coincidir dentro de «ajuste» o «robusto».`]},
+
+{s:'Lectura',t:'Leer recomendaciones y tendencias',log:'«2 extracción»',lanes:{llm:'1 llamada por página',code:'catálogo de activos'},
+what:`El único paso en el que un LLM lee los documentos. Lo hace en llamadas pequeñas y en paralelo: una por página de recomendaciones y otra para tendencias y materias primas.`,
+inp:`El bloque de recomendaciones de cada página y las páginas de tendencias.`,out:`Recomendaciones por activo, tendencias con su conclusión y riesgos del oro, como datos estructurados.`,
+calls:[call('Recomendaciones de una página','texto','Extraer postura y objetivo de cada activo',
+`La región detectada, el número de página, el catálogo de activos de esa región y solo el bloque de recomendaciones.`,
+`Una fila por activo: identificador elegido del catálogo (o «otro» si no está), postura normalizada, postura literal, objetivo literal, objetivo como número (nulo si hay varios) y unidad. Nada que no sea una recomendación del bloque.`,
+`Una lista de recomendaciones.`,
+`Un identificador de otra región se trata como error del modelo. Nombres y regiones se toman del catálogo, no del modelo. Los duplicados se eliminan.`),
+call('Tendencias y materias primas','texto','Extraer temas, conclusiones y riesgos del oro',
+`El texto de esas páginas, marcado con su número, y el catálogo.`,
+`Cada tema de tendencias con su conclusión (POSITIVA, NEUTRAL, FAVORABLE…) y una frase fiel; los riesgos del oro con su calificación literal; postura u objetivo del petróleo y del oro. Si algo no aparece, lista vacía.`,
+`Tendencias, riesgos y las recomendaciones de materias primas.`,
+`Pasan a las comprobaciones del paso 5.`)],
+code:`Temperatura 0 y razonamiento al mínimo que admite el modelo: para extraer datos, «pensar» cuesta tokens y segundos sin mejorar nada.`,
+dec:[`Catálogo de identificadores: el mismo activo se escribe distinto en cada edición («UST10», «UST 10 años»). Si el modelo eligiera el nombre, la comparación vería un activo que desaparece y otro que aparece.`,`Un prompt corto con una región «falla mucho menos que uno largo con ocho», y el error de una página no contamina a las demás.`],
+qa:[[`¿Qué modelo lee?`,`Gemini 3.8 Flash por defecto. Se puede configurar para este agente por separado.`]]},
+
+{s:'Tabla',t:'Leer la tabla sinóptica con visión',loop:1,log:'«2 extracción»',lanes:{od:'página de la tabla',code:'recorta en bandas',mm:'visión: lee la tabla',disk:'recortes'},
+what:`La tabla sinóptica de rentabilidades esperadas está en el PDF como imagen, sin texto extraíble. Se convierte la página en imagen, se recorta en bandas y la lee el modelo de visión.`,
+inp:`La página de la tabla.`,out:`Unas 55 filas: clase de activo, índice, precio actual, objetivo de la casa y rentabilidad esperada.`,
+od:`La página de la tabla, que se convierte en imagen.`,
+calls:[call('Lectura de la tabla sinóptica','visión','Leer todas las filas de la tabla desde la imagen',
+`Dos recortes de la página (mitad superior y mitad inferior, con solape) a buena resolución.`,
+`Todas las filas, de arriba abajo: clase de activo, nombre literal del índice, precio actual, objetivo a fin de año y rentabilidad esperada con signo. «Si una celda no se lee con seguridad, null antes que adivinar.»`,
+`Una lista de filas con sus números.`,
+`Si llegan menos de 40 filas, segundo intento con tres bandas distintas. Las filas repetidas por el solape se eliminan.`)],
+code:`Recorta en bandas para que el modelo vea la tabla grande. El reintento cambia los recortes porque, a temperatura 0, repetir la misma imagen da la misma respuesta.`,
+disk:`Los recortes y la página completa, que luego se enseña en el informe como fuente.`,
+dec:[`Visión solo donde hace falta: el resto del PDF tiene texto y se lee como texto.`,`Nulo antes que adivinar: una cifra inventada en una tabla es peor que un hueco.`]},
+
+{s:'Comprobar',t:'Comprobar la lectura y guardarla',log:'«2 extracción»',lanes:{code:'línea literal · suma de control',disk:'lectura guardada'},
+what:`Sin modelos. El código comprueba lo que el LLM ha leído usando el propio documento, y guarda la lectura para no pagarla otra vez.`,
+inp:`Lo extraído en los dos pasos anteriores y el texto de las páginas.`,out:`Los datos de la edición, con su evidencia literal y sus avisos.`,
+code:`Evidencia literal: para cada recomendación busca en la página la línea que contiene esa postura y las cifras del objetivo; si no la encuentra, la fila queda «a revisar». Suma de control: en índices, divisas y materias primas, la rentabilidad esperada debe ser objetivo/precio − 1 (±0,4 puntos, con margen de redondeo en divisas). A cada tendencia se le adjunta su frase literal de conclusión.`,
+disk:`La lectura de cada edición se guarda junto a la huella del PDF: «un PDF se paga una vez». Al cargarla, las comprobaciones se rehacen siempre, porque son gratis y así una mejora del código llega a las ediciones ya leídas.`,
+dec:[`La evidencia la busca el código, no el modelo. El informe enseñará esa línea.`,`La tabla trae su propia prueba: si un dígito se lee mal, la rentabilidad no cuadra.`,`Se guarda solo lo que cuesta dinero (la lectura). Lo gratuito se recalcula.`],
+qa:[[`¿Cómo sabéis que el LLM lee bien?`,`Hay un modo de evaluación que compara su lectura con una extracción de referencia hecha a mano, bloque a bloque. Y un modo que usa esa referencia en lugar del LLM, para ejecutar el agente sin claves.`]],
+und:[`Los resultados numéricos de esa evaluación no están en el repositorio: se calculan al ejecutarla.`]},
+
+{s:'Comparar',t:'Comparar las dos ediciones',log:'«3 comparación»',lanes:{code:'diferencias por activo'},
+what:`Sin modelos. El código cruza las dos ediciones dato a dato y produce la lista de cambios, ordenada por importancia.`,
+inp:`Los datos de las dos ediciones.`,out:`La lista de cambios: tipo, activo, antes, ahora, dirección, variación, páginas, evidencias y avisos.`,
+code:`Recomendaciones, por identificador de activo: cambio de postura (el titular; con una escala ordenada se sabe si mejora o empeora), cambio de objetivo (en puntos básicos si es un rendimiento), activo nuevo o que desaparece. Tabla sinóptica, por nombre de fila: objetivos revisados. Tendencias, por parecido de título: tema nuevo, tema que sale o conclusión que cambia de signo. Riesgos del oro: cambio de calificación. Además cruza, dentro de cada edición, el objetivo del texto con el de la tabla.`,
+dec:[`«Un cambio de recomendación no puede inventarse»: o sale de cruzar los datos de las dos ediciones, o no existe. Alternativa descartada: pedir al LLM que compare las dos ediciones.`,`Se comparan cifras, no texto: «4,5 %» y «4,50%» son lo mismo, y un año («cierre de 2026») no es un objetivo.`,`Cualquier aviso de las comprobaciones deja el cambio marcado «a revisar».`],
+qa:[[`Si el LLM leyó mal, ¿se comparan datos falsos?`,`Sí. Por eso existen la evidencia literal, la suma de control y el cruce entre texto y tabla, que marcan el dato para revisión, y la evaluación de la lectura frente a una referencia.`]]},
+
+{s:'Frases',t:'Una frase por cambio',loop:1,log:'«4 explicación y verificación»',lanes:{llm:'una frase por cambio',jev:'respaldo + tono',code:'frase factual'},
+what:`El modelo no decide qué ha cambiado: lo cuenta. Recibe los cambios ya calculados y escribe una frase por cambio para un cliente. Jev controla cada frase dos veces. Se ejecuta en paralelo con el paso siguiente.`,
+inp:`La lista de cambios con su evidencia y los párrafos macro de las páginas nuevas.`,out:`Una frase por cambio con su cita de página y su estado, y un resumen de 3 o 4 frases.`,
+calls:[call('Una frase por cambio','texto','Contar cada cambio a un cliente en una frase',
+`Las dos ediciones con su fecha; cada cambio con tipo, activo, antes, ahora, página y línea literal; y los párrafos macro de las páginas nuevas implicadas, recortados.`,
+`Una frase por cambio para clientes de banca privada: qué cambia y, si el contexto lo explica, el motivo; cifras copiadas tal cual; terminada con la página entre paréntesis; tono informativo. Prohibido dirigirse al lector o aconsejarle. No añadir ni quitar cambios. Además, un resumen de 3 o 4 frases.`,
+`El resumen y una frase por identificador de cambio.`,
+`Cada frase se asigna a su cambio y pasa a Jev. Si falta alguna, se usa la frase factual.`),
+call('Reescritura de frases flojas','texto','Reescribir las frases «a revisar» pegadas a la fuente',
+`Las frases que han quedado «a revisar» y su texto fuente.`,
+`Reescribir cada una ciñéndose solo a lo que dice la fuente, sin motivos ni matices añadidos.`,
+`Las mismas frases, reescritas.`,
+`Vuelven a Jev. Lo que siga por debajo de 0,60 se sustituye por la frase factual; entre 0,60 y 0,80 se mantiene marcada.`)],
+jev:`Una llamada por frase con dos preguntas a la vez, 16 en paralelo. Respaldo: ¿lo respalda el pasaje (antes y ahora, líneas literales de las dos ediciones y contexto macro de la página nueva)? Tono: ¿es una recomendación personalizada o una incitación a comprar o vender, en el sentido de MiFID II? Con tono de 0,50 o más, se sustituye. Con respaldo por debajo de 0,30, se sustituye. Desde 0,80, se publica. Entre medias, «a revisar». El resumen también se comprueba y, si falla, se elimina.`,
+code:`La frase factual la escribe el código («X pasa de A a B (p. N)») y es lo que se publica cuando la del modelo no pasa. Las ausencias (un activo o un tema que desaparece, un activo nuevo) llevan siempre frase factual, sin LLM ni Jev: ningún pasaje puede respaldar que algo ya no está. Las revisiones de la tabla se cuentan por bloque, una frase por clase de activo.`,
+dec:[`El informe va a clientes: además del respaldo, se vigila que ninguna frase suene a recomendación personalizada.`,`«El informe nunca publica una frase que no se ha podido respaldar»: siempre hay una versión factual de reserva.`,`Si Jev no responde, un reintento. Si persiste, la frase se enseña como «sin verificar», sin sello. Nunca se publica como verificada sin serlo.`],
+qa:[[`¿Jev garantiza el cumplimiento de MiFID?`,`No. Da la probabilidad de que una frase suene a recomendación personalizada, y el informe añade un aviso legal. No consta una revisión de cumplimiento más allá de esto.`],[`¿Y sin clave de Jev?`,`El agente funciona: las frases salen «sin verificar» y el informe lo dice.`]]},
+
+{s:'Porqué',t:'El porqué, con cita literal',log:'«4 explicación y verificación»',lanes:{llm:'argumentos con cita',code:'¿la cita existe?',jev:'argumento × párrafo'},
+what:`Para los cambios importantes, el informe explica por qué la casa toma esa posición, con sus propias palabras. Cada argumento lleva una cita literal de la edición nueva, que el código comprueba y Jev valora.`,
+inp:`Los cambios importantes, el texto de sus páginas en la edición nueva y el párrafo equivalente de la anterior.`,out:`De 2 a 4 argumentos por cambio, cada uno con su cita, su página y si es nuevo respecto a la edición anterior.`,
+calls:[call('El porqué con cita literal','texto','Dar 2–4 argumentos por cambio con cita literal',
+`Un bloque por página, no por cambio: el texto nuevo de la página, los cambios que se justifican en ella y, solo como contexto, el texto equivalente de la edición anterior.`,
+`Por cada cambio, de 2 a 4 argumentos de 12 a 24 palabras, cada uno con una cita copiada carácter a carácter de la edición nueva. Marcar como «nuevo» el argumento que no estaba en la edición anterior. No repetir un argumento en dos cambios. Sin aconsejar.`,
+`Argumentos con su cita y la marca de «nuevo».`,
+`El código comprueba que la cita está de verdad en la página. Si el modelo la ha retocado, se descarta. Una cita repetida en la misma página se usa una sola vez.`)],
+jev:`Afirmación: el argumento. Pasaje: el cambio y el párrafo que rodea a la cita. Desde 0,80 se publica; entre 0,60 y 0,80 se enseña marcado «a revisar»; por debajo de 0,60 no se publica.`,
+code:`Solo se explican los cambios importantes: posturas, tendencias nuevas o que cambian de conclusión, riesgos y objetivos revisados en 25 puntos básicos o más.`,
+dec:[`Cita literal obligatoria: el cliente puede comprobar cada porqué contra la frase original.`,`«Nuevo en esta edición» separa el cambio de discurso del cambio de cifra.`,`Un bloque por página: la misma página no se envía tres veces y el modelo ve juntos los cambios que comparten argumento.`]},
+
+{s:'Informe',t:'Informe para clientes',log:'«5 informe»',lanes:{code:'HTML · gráficos · datos',disk:'informe'},
+what:`Sin modelos. Se maqueta lo ya calculado y verificado en un informe para clientes, pensado para móvil, donde cada dato lleva su fuente.`,
+inp:`Los cambios con sus frases, porqués, evidencias y avisos.`,out:`Informe HTML, tres gráficos y un fichero de datos con todos los cambios.`,
+code:`Titulares con los cambios de postura; cada cambio con su línea literal, su página y un enlace al PDF; el porqué con la cita en su contexto; lo que no cambia; la imagen de la tabla sinóptica original; un mapa de posturas y dos gráficos de objetivos revisados; indicadores («n de n frases verificadas por Jev · k factuales»); coste y tiempo; y aviso legal.`,
+disk:`Una carpeta por ejecución con el informe, los gráficos y los datos de los cambios.`,
+dec:[`Cada dato enseña su fuente: línea literal, página y enlace.`,`La regla operativa del PDF («comprar por debajo de…, vender por encima de…») no se reproduce: el documento vigila su tono.`,`Las frases factuales no cuentan como «no verificadas»: nunca pasan por Jev.`],
+qa:[[`¿Los enlaces al PDF funcionan para un cliente?`,`Solo si los PDF están publicados en una dirección configurada. Si no, apuntan al fichero local, que sirve al equipo.`],[`¿Cuánto cuesta?`,`Según la documentación del agente: unos 0,033 $ con las dos ediciones ya leídas, y unos 0,010 $ leer una edición nueva.`]],
+und:[`La latencia real hasta el informe. La documentación da entre 18 y 22 s como valor esperado, pendiente de medir.`]},
+
+{s:'Vídeo',t:'Vídeo resumen (opcional)',log:'«6 vídeo»',lanes:{code:'guion sin modelo',mm:'voz: Gemini TTS o Kokoro',disk:'vídeo'},
+what:`Opcional. El guion no lo escribe un modelo: el código lo monta con las frases ya verificadas. El único modelo que interviene es el de voz.`,
+inp:`Los datos de los cambios de esa ejecución.`,out:`Un vídeo de hasta 2 minutos, con voz.`,
+calls:[call('Voz del vídeo','voz','Sintetizar la narración de cada escena',
+`La narración de cada escena, adaptada para leerse en voz alta (sin citas de página y con las siglas desarrolladas). Modelo: Gemini 3.8 Flash TTS, voz Charon.`,
+`Leer el texto.`,
+`Audio a 24 kHz.`,
+`Las escenas se sintetizan en paralelo y cada frase se guarda para no pagarla dos veces. Si Gemini falla en cualquier escena, todo el vídeo se rehace con Kokoro, en local.`)],
+code:`Escenas: portada, una por cambio de recomendación con sus razones, objetivos revisados en barras, temas que entran y salen, riesgo del oro y cierre con aviso. Solo entran razones verificadas y cortas, las nuevas primero. Si un cambio no tiene, se dice «La casa no detalla el motivo en esta edición». Tope de 120 s sobre la duración estimada: si se pasa, primero menos razones y luego sin la escena del oro; nunca sin un cambio de recomendación. Mismo motor de fotogramas que el agente 1, con plantilla propia.`,
+disk:`El vídeo, su storyboard y sus estadísticas en la carpeta de la ejecución. La voz, en una caché por frase.`,
+dec:[`Guion sin modelo: «el vídeo no puede decir nada que no esté en el informe».`,`Nunca se mezclan dos voces: si falla la principal, se rehace todo con la de respaldo.`,`Nada se trunca: se elige el argumento que cabe.`],
+qa:[[`¿En qué se diferencia del vídeo del agente 1?`,`Aquí no hay guionista ni revisión audiovisual. El guion es una plantilla rellenada con frases verificadas, y la duración se controla con una estimación, no midiendo la voz y corrigiendo.`],[`¿Cuánto cuesta y cuánto dura?`,`Según la documentación del agente: unos 0,03 $ de voz. En la prueba documentada, 207 palabras dieron 82 s.`]],
+und:[`El documento de mejoras deja la voz de Gemini como pieza pendiente de comprobar de oído. No consta si se comprobó.`]}
+],
+decisions:[
+[`La comparación la hace el código, no el LLM`,`Un cambio de recomendación no puede inventarse: o sale de cruzar los datos de las dos ediciones, o no existe. Es la decisión número 8 del registro.`],
+[`Catálogo de activos con identificadores fijos`,`El mismo activo se escribe distinto en cada edición. El modelo elige un identificador de una lista y la comparación cruza identificadores, no nombres.`],
+[`Llamadas pequeñas, una región por llamada`,`Un prompt corto falla menos y su error no contamina al resto. Qué páginas leer lo decide el código por los títulos fijos de la plantilla.`],
+[`El documento se comprueba a sí mismo`,`Línea literal de cada dato, suma de control de la tabla y cruce entre texto y tabla. Son comprobaciones gratuitas que no dependen de ningún modelo.`],
+[`Se guarda la lectura, no las comprobaciones`,`Un PDF se paga una vez. Lo que calcula el código se rehace siempre, y así una mejora llega a las ediciones ya leídas.`],
+[`Doble control de Jev y frase factual de reserva`,`El informe va a clientes: cada frase necesita respaldo y no puede sonar a recomendación personalizada. Si no pasa, se publica una frase generada por código.`],
+[`Cada porqué lleva su cita literal`,`El código comprueba que la cita existe en la página y Jev valora si sostiene el argumento. El cliente puede comprobarlo.`],
+[`El guion del vídeo no lo escribe un modelo`,`Se monta con frases ya verificadas, así que el vídeo no puede decir nada que no esté en el informe.`],
+[`Cliente de LLM propio`,`Añade razonamiento al mínimo y un contador de coste sin tocar la capa común mientras los otros agentes se desarrollaban en paralelo.`]],
+models:[
+[`Gemini 3.8 Flash`,`Texto → datos estructurados`,`El bloque de recomendaciones de una página; las páginas de tendencias`,`Filas con postura y objetivo; temas y riesgos`,`Paso 3`],
+[`Gemini 3.8 Flash, con imágenes`,`Imagen → datos estructurados`,`Dos o tres recortes de la tabla sinóptica`,`Unas 55 filas con precio, objetivo y rentabilidad`,`Paso 4`],
+[`Gemini 3.8 Flash`,`Texto → texto`,`Cambios calculados y su contexto`,`Una frase por cambio, resumen y argumentos con cita`,`Pasos 7 y 8`],
+[`Jev`,`Afirmación y pasaje → probabilidad`,`Una frase o argumento y su evidencia`,`Respaldo y tono`,`Pasos 7 y 8`],
+[`Gemini 3.8 Flash TTS, voz Charon`,`Texto → voz`,`La narración de cada escena`,`Audio a 24 kHz`,`Paso 10`],
+[`Kokoro, en local`,`Texto → voz`,`Lo mismo, si Gemini falla o así se configura`,`Audio`,`Paso 10, respaldo`],
+[`Gráficos, Chromium y ffmpeg`,`Datos → imagen y vídeo`,`Los cambios`,`Tres gráficos y el vídeo`,`Pasos 9 y 10`]],
+qa:[
+[`¿Puede inventarse un cambio?`,`No en la comparación, que es código. Lo que puede fallar es la lectura del PDF, y para eso están la línea literal, la suma de control y el cruce con la tabla.`],
+[`¿Qué pasa cuando sale una edición nueva?`,`Se lee una vez y queda guardada. La anterior ya estaba leída, así que el coste de lectura es el de un solo PDF.`],
+[`¿Dónde está lo multimodal?`,`En la entrada: PDF con texto y una tabla que solo existe como imagen. En la salida: informe, gráficos, voz y vídeo.`],
+[`¿Qué ve el cliente si Jev no está configurado?`,`Las frases, marcadas como sin verificar.`]],
+und:[`Los resultados numéricos de la evaluación de la lectura.`,`Si la voz de Gemini se llegó a comprobar de oído.`,`La latencia real completa.`,`Qué relación tiene la evaluación del código con la tabla hecha a mano que la carpeta de evaluación cita como referencia.`],
+quick:{blocks:[
+[`Elegir las dos ediciones`,`Sin LLM: manifiesto, portada y fecha del nombre. Se toman las dos más recientes.`,0,['od','code']],
+[`Leer cada PDF`,`El texto, con una llamada corta por página y región. La tabla sinóptica, que es una imagen, con visión.`,2,['od','llm','mm']],
+[`Comprobar y guardar`,`El código busca la línea literal de cada dato y recalcula la tabla. La lectura se guarda: un PDF se paga una vez.`,4,['code','disk']],
+[`Comparar`,`Las diferencias, activo por activo, las calcula el código. Un cambio no puede inventarse.`,5,['code']],
+[`Contar y justificar`,`Una frase por cambio y su porqué con cita literal. Jev mide respaldo y tono; lo que no pasa se sustituye por una frase factual.`,6,['llm','jev']],
+[`Informe y vídeo`,`Informe para clientes con la fuente de cada dato. Vídeo opcional, montado con frases ya verificadas y voz sintetizada.`,8,['code','mm','disk']]],
+ideas:[`El modelo lee y redacta. Comparar lo hace el código.`,`El documento se comprueba a sí mismo: línea literal, suma de control de la tabla y cruce entre texto y tabla.`,`Va a clientes: doble control de Jev y frase factual de reserva.`],
+mm:`PDF con texto, imagen de la tabla (visión), gráficos, voz sintetizada y vídeo.`,
+jev:`Opcional. Respaldo y tono en una sola llamada por frase, y respaldo de cada argumento.`,
+od:`Lee el manifiesto y los PDF de la Opinión. No escribe.`,
+nums:`Según la documentación del agente: informe por unos 0,033 $ con las ediciones ya leídas; vídeo por unos 0,03 $ y 82 s.`}
+};
+
+const A3={id:'a3',title:'Agente 3 · Preguntas',
+lead:`Responde a lo que cualquier empleado preguntaría a un compañero, usando solo la carpeta del equipo. Cita la fuente de cada dato, contesta en texto y en voz y, si la respuesta no está en los documentos, dice «No consta».`,
+inp:`Una pregunta escrita o hablada.`,
+out:`Una respuesta de 1 a 5 frases con citas numeradas, la lista de fuentes y un audio con la respuesta.`,
+note:`Conviven dos variantes. La pestaña 3 de la aplicación principal hace la versión básica: pregunta escrita, búsqueda por palabras, respuesta citada y voz. La voz de entrada, la búsqueda híbrida y la verificación con Jev están en una interfaz aparte, la v1. Cada paso indica dónde está disponible.`,
+laneSub:{mm:'Whisper · EmbeddingGemma · Kokoro',llm:'Gemini 3.8 Flash'},
+idea:{title:'La idea central: dos tiempos',html:`
+<figure>
+<div class="rowlabel">Una vez, y cuando cambian los datos · abre la carpeta de OneDrive</div>
+<div class="chain">
+<div class="n"><span class="chip chip-od">OneDrive</span><b>Carpeta</b><small>contextos y documentos vigentes</small></div><span class="a">→</span>
+<div class="n"><span class="chip chip-code">Código</span><b>Fragmentos</b><small>por apartado y por página, con metadatos</small></div><span class="a">→</span>
+<div class="n"><span class="chip chip-disk">Disco</span><b>Índice de palabras</b><small>unos 2.700 fragmentos</small></div><span class="a">+</span>
+<div class="n"><span class="chip chip-mm">EmbeddingGemma 2</span><b>Índice de vectores</b><small>texto y páginas como imagen (opcional)</small></div>
+</div>
+<div class="rowlabel">En cada pregunta · no abre la carpeta</div>
+<div class="chain">
+<div class="n"><span class="chip chip-mm">Whisper</span><b>Voz a texto</b><small>si la pregunta es hablada</small></div><span class="a">→</span>
+<div class="n"><span class="chip chip-code">Código</span><b>Buscar</b><small>8 fragmentos</small></div><span class="a">→</span>
+<div class="n"><span class="chip chip-llm">LLM</span><b>Responder</b><small>con citas o «No consta»</small></div><span class="a">→</span>
+<div class="n"><span class="chip chip-jev">Jev</span><b>Verificar</b><small>frase a frase</small></div><span class="a">→</span>
+<div class="n"><span class="chip chip-mm">Kokoro</span><b>Texto a voz</b><small>en local</small></div>
+</div>
+<figcaption>La carpeta solo se lee al indexar. Cada pregunta trabaja sobre el índice local, y del ordenador solo salen los 8 pasajes hacia el LLM y las frases hacia Jev.</figcaption></figure>`},
+steps:[
+{s:'Indexar',t:'Trocear e indexar la carpeta',where:'Aplicación principal e interfaz v1 · se hace una vez',lanes:{od:'manifiesto, contextos y documentos',code:'fragmentos + BM25',disk:'índice'},
+what:`Se hace una vez, y cada vez que cambian los datos. La carpeta se convierte en unos 2.700 fragmentos de texto con sus metadatos y un índice de palabras. Es el único momento en que este agente abre la carpeta.`,
+inp:`La carpeta de datos.`,out:`Un índice local de fragmentos: texto, ruta, carpeta, sección, encabezado y tipo.`,
+od:`El manifiesto, los 20 contextos y los documentos vigentes de texto: Markdown, texto, correo, HTML y PDF, página a página.`,
+code:`Contextos: un fragmento por apartado, con el título del documento y del apartado delante. El resto, troceado por párrafos hasta unas 337 palabras. Para el índice de palabras se normaliza el texto: minúsculas, sin tildes, palabras reducidas a su raíz y sin palabras vacías. Los correos y las rutas se guardan enteros y por partes.`,
+disk:`El índice de fragmentos, en una carpeta local fuera de Git, porque contiene texto del corpus. Se construye en unos 3 segundos.`,
+dec:[`Trocear por apartado, no por número de caracteres: da fragmentos con sentido completo y etiquetados igual en todas las carpetas.`,`El manifiesto filtra antes de buscar: lo marcado como archivo o duplicado no entra.`,`Fuera del índice: PowerPoint, Excel y la carpeta de proyectos, que son cientos de ficheros de ejecuciones que no responden preguntas de empleados.`],
+qa:[[`¿Por qué guardar un correo entero y por partes?`,`Para encontrarlo tanto si se pregunta por la dirección completa como por una parte de ella.`]]},
+
+{s:'Índice denso',t:'Índice de vectores con texto e imágenes',where:'Solo para la búsqueda híbrida · interfaz v1',lanes:{od:'PDF de la Opinión',mm:'vectores de texto e imagen',disk:'vectores'},
+what:`Opcional: solo hace falta para la búsqueda híbrida. Un modelo de embeddings convierte en vectores los mismos fragmentos de texto y, además, cada página de los PDF de la Opinión Corporativa como imagen.`,
+inp:`Los fragmentos de texto y las imágenes de página.`,out:`2.796 vectores de 256 dimensiones: 2.703 fragmentos y 93 páginas de 4 PDF.`,
+od:`Los PDF de la Opinión Corporativa, para convertir cada página en imagen y tomar su texto.`,
+calls:[call('Vectorizar texto e imágenes','embedding','Convertir fragmentos y páginas en vectores',
+`Cada fragmento con su título, y cada página como imagen a baja resolución. Modelo: EmbeddingGemma 2, en local.`,
+`Un vector por entrada. Texto e imagen caen en el mismo espacio.`,
+`Vectores normalizados.`,
+`Se guardan en disco. Buscar es un producto escalar: con unos 3.000 vectores no hace falta una base de datos vectorial.`)],
+code:`40 minutos de CPU, un modelo de 1,5 GB y unos 20 s de carga al arrancar.`,
+disk:`Vectores, metadatos e imágenes de página, en la carpeta local de índices.`,
+dec:[`Texto e imagen en el mismo espacio: una pregunta puede encontrar una página por su tabla o su gráfico, aunque el texto extraído sea pobre.`,`Estas dependencias pesadas no están entre las del proyecto, porque obligarían a bajar de versión una librería para todos. Se cargan en un entorno superpuesto.`],
+qa:[[`¿Por qué no un modelo de embeddings solo de texto?`,`Era la propuesta inicial. Se cambió por uno multimodal precisamente para poder buscar páginas por lo que se ve en ellas.`]]},
+
+{s:'Pregunta',t:'La pregunta: escrita o hablada',where:'Voz de entrada: solo interfaz v1 · En la aplicación principal, pregunta escrita',lanes:{mm:'Whisper: voz → texto'},
+what:`La pregunta puede escribirse, decirse al micrófono o subirse como archivo de audio. La voz se transcribe en local.`,
+inp:`Audio o texto.`,out:`La pregunta, en texto.`,
+calls:[call('Transcripción de la pregunta','voz → texto','Pasar la pregunta hablada a texto',
+`El audio. Modelo: Whisper «small», en local, con una pista de vocabulario del equipo (Alpha, High Yield, Luxemburgo, Unit Link…).`,
+`Transcribir en español, ignorando los silencios.`,
+`El texto de la pregunta.`,
+`Un audio nuevo es una pregunta nueva. Si el usuario escribe o corrige el texto, se usa el texto sin volver a transcribir.`)],
+dec:[`La pista de vocabulario inclina al modelo hacia nombres y siglas que no conoce.`,`En local: la voz del empleado no sale del ordenador.`],
+qa:[[`¿Cuánto tarda?`,`6,5 s en la primera pregunta, que incluye cargar el modelo.`]]},
+
+{s:'Buscar',t:'Buscar los fragmentos',where:'Búsqueda por palabras: en las dos · Híbrida: solo interfaz v1',lanes:{code:'BM25 · fusión',mm:'vector de la pregunta'},
+what:`Se buscan los 8 fragmentos más relevantes en el índice local. Por defecto, por palabras (BM25). La interfaz v1 permite elegir el modo híbrido.`,
+inp:`La pregunta.`,out:`8 fragmentos ordenados, con su fuente.`,
+od:`Ninguna lectura. Se busca en el índice local.`,
+code:`BM25: un fragmento puntúa alto si contiene las palabras de la pregunta que son raras en el corpus, corrigiendo por longitud. Los fragmentos de contexto reciben un 15 % extra. Híbrido: 50 candidatos de BM25 y 50 del índice de vectores se fusionan por posición y quedan 8. Si no hay índice de vectores, cae a BM25 y lo dice.`,
+calls:[call('Vector de la pregunta','embedding','Vectorizar la pregunta (solo en híbrido)',
+`La pregunta. Modelo: EmbeddingGemma 2, en local.`,
+`Un vector en el mismo espacio que los fragmentos y las páginas.`,
+`Un vector.`,
+`Se compara con todos los vectores. Si gana una página-imagen, al LLM se le pasa el texto de esa página y se cita como «p. N (imagen)».`)],
+dec:[`Por palabras primero: las preguntas están llenas de nombres propios, correos y siglas, que la similitud semántica sola recupera mal.`,`Fusión por posición, no por puntuación: las puntuaciones de BM25 y las de los vectores no son comparables.`,`La interfaz arranca con BM25 y deja el híbrido como opción: el índice de vectores cuesta 40 minutos y la mejora medida es pequeña.`],
+qa:[[`¿Qué dicen las medidas?`,`Con 14 preguntas con fuente conocida, la fuente correcta está entre las 8 primeras en 14 con BM25, en 11 con vectores solos y en 14 con el híbrido. En primera posición: 5, 6 y 6. La documentación lo llama mejora pequeña y no concluyente.`]],
+und:[`El «router de metadatos» (filtrar por sección, persona o tipo antes de buscar) aparece en el diagrama de arquitectura, pero el código no lo aplica en la consulta.`,`La calidad de la búsqueda por imagen: el conjunto de evaluación no tiene preguntas cuya respuesta esté en una tabla o un gráfico.`]},
+
+{s:'Responder',t:'Responder con citas',loop:1,where:'Aplicación principal e interfaz v1',lanes:{llm:'respuesta con citas'},
+what:`Una sola llamada al LLM, que debe responder usando únicamente los pasajes que recibe y citarlos.`,
+inp:`La pregunta y los 8 pasajes.`,out:`Una respuesta de 1 a 5 frases con marcas [n] y la lista de fuentes, o «No consta en la documentación».`,
+calls:[call('Respuesta con citas','texto','Responder solo con los pasajes, citando',
+`La pregunta y hasta 8 pasajes numerados, cada uno con su fuente, su encabezado y sus primeras 320 palabras.`,
+`Responder en 1 a 5 frases, directo al dato; poner la marca del pasaje tras cada dato; copiar literalmente correos, nombres, cifras y nombres de fichero; si los pasajes no contienen la respuesta, decirlo; y si un dato se deduce, avisarlo.`,
+`Si ha encontrado respuesta, el texto con sus marcas y los pasajes usados.`,
+`Se construye la lista de fuentes. Si no hay respuesta, el texto se sustituye por la frase fija «No consta en la documentación.» y no hay citas. Si el formato no es válido, se reintenta una vez.`)],
+code:`Sin clave de LLM funciona en modo extractivo: enseña el pasaje más relevante y las tres primeras fuentes, sin redactar y sin voz.`,
+dec:[`Regla de honestidad: si los pasajes no lo dicen, «No consta». El conjunto de evaluación incluye una pregunta trampa para medirlo.`,`Copiar literalmente lo que no admite reformulación: correos, nombres y cifras.`],
+qa:[[`¿Cuánto cuesta una pregunta?`,`Unos 4.300 tokens de entrada y 500 de salida: una fracción de céntimo según el precio publicado. Es una estimación, no una factura.`]]},
+
+{s:'Verificar',t:'Verificar frase a frase',where:'Solo interfaz v1 · En la aplicación principal no se verifica',lanes:{jev:'frase × fragmentos'},
+what:`Jev comprueba cada frase de la respuesta contra los fragmentos que cita. Según el resultado, la frase se queda, se marca o se quita.`,
+inp:`La respuesta del LLM y los 8 fragmentos.`,out:`La respuesta verificada, con el resultado de cada frase a la vista.`,
+jev:`La respuesta se parte en frases, cada una con sus marcas [n]. Afirmación: la frase sin marcas. Pasaje: el texto completo de los fragmentos citados. Desde 0,80 se queda; entre 0,30 y 0,80 se queda con ⚠️; por debajo de 0,30 se quita. Una frase sin cita se marca con ⚠️, salvo la abstención «No consta». Si no queda ninguna frase, la respuesta pasa a ser «No consta en la documentación».`,
+dec:[`Verificar frase a frase permite quitar solo lo que sobra y conservar lo respaldado.`,`Sin clave de Jev, la respuesta sale igual y la interfaz dice que no está verificada.`],
+qa:[[`¿Un ejemplo de por qué hace falta?`,`En la prueba de Luxemburgo, el LLM añadió el correo concreto de un banquero. El documento solo dice «con copia al banquero del cliente», sin nombre.`],[`¿Cuánto tiempo añade?`,`0,8 s para tres frases.`]]},
+
+{s:'Voz',t:'Respuesta en voz',where:'Aplicación principal e interfaz v1',lanes:{mm:'Kokoro: texto → voz',disk:'audio'},
+what:`La respuesta se lee en voz alta con un modelo local.`,
+inp:`El texto de la respuesta.`,out:`Un audio con la respuesta.`,
+calls:[call('Respuesta en voz','voz','Leer la respuesta',
+`La respuesta sin marcas [n] ni avisos, con las cifras escritas en palabras. Modelo: Kokoro, en local.`,
+`Sintetizar en español.`,
+`Audio.`,
+`Se reproduce en la interfaz.`)],
+disk:`Un fichero de audio por respuesta, en la carpeta local de resultados.`,
+dec:[`Voz en local y gratis. El precio es la latencia.`],
+qa:[[`¿Dónde está el cuello de botella?`,`En la voz: 7 u 8 s en CPU, más que el LLM. Total medido: 14,8 s una pregunta escrita y 18,6 s una hablada con verificación.`]]}
+],
+decisions:[
+[`Fragmentos por apartado, con metadatos`,`Los contextos tienen la misma plantilla en todas las carpetas, así que cada apartado es un fragmento con sentido completo. Los metadatos del manifiesto permiten citar la fuente.`],
+[`Búsqueda por palabras primero`,`Las preguntas de los empleados van llenas de nombres propios, correos y siglas. En la evaluación, los vectores solos encuentran menos que BM25.`],
+[`Híbrido por posición`,`Las dos listas se fusionan por el puesto que ocupa cada fragmento, porque sus puntuaciones no son comparables. Es la decisión número 9 del registro.`],
+[`Embeddings de texto e imagen`,`Las páginas de la Opinión Corporativa se indexan también como imagen: una pregunta puede encontrar una página por su tabla o su gráfico.`],
+[`Regla de honestidad`,`Si los pasajes no contienen la respuesta, «No consta». Hay una pregunta trampa en el conjunto de evaluación.`],
+[`Verificar cada frase contra su cita`,`Lo que el modelo añade de más se marca o se quita, y lo respaldado se conserva.`],
+[`Todo lo que puede, en local`,`Transcripción, vectores, índice y voz no salen del ordenador. Solo salen los pasajes al LLM y las frases a Jev.`],
+[`La v1, aparte de la aplicación principal`,`Va en su propia interfaz para no tocar la común mientras el equipo integraba, y con sus dependencias pesadas fuera de las del proyecto.`]],
+models:[
+[`Whisper «small»`,`Voz → texto`,`El audio de la pregunta`,`La pregunta en texto`,`Paso 3 (v1), local`],
+[`BM25, propio`,`Texto → ranking`,`La pregunta`,`8 fragmentos`,`Paso 4, local`],
+[`EmbeddingGemma 2`,`Texto e imagen → vector`,`Fragmentos, páginas como imagen y la pregunta`,`Vectores de 256 dimensiones`,`Pasos 2 y 4 (híbrido), local`],
+[`Gemini 3.8 Flash`,`Texto → datos estructurados`,`La pregunta y 8 pasajes`,`Respuesta con citas o «No consta»`,`Paso 5, nube`],
+[`Jev`,`Afirmación y pasaje → probabilidad`,`Una frase y los fragmentos que cita`,`Un número de 0 a 1`,`Paso 6 (v1), nube`],
+[`Kokoro`,`Texto → voz`,`La respuesta sin marcas`,`Audio`,`Paso 7, local`]],
+qa:[
+[`¿Qué versión corre en la aplicación principal?`,`La básica: pregunta escrita, BM25, una llamada al LLM y voz con Kokoro. La voz de entrada, el híbrido y Jev están en la interfaz v1, que se lanza aparte.`],
+[`¿Es multimodal de verdad?`,`Cuatro modalidades (audio de entrada, texto, imagen de página y audio de salida) y cinco modelos especializados encadenados: Whisper, EmbeddingGemma 2, el LLM, Jev y Kokoro.`],
+[`¿Cómo se mide?`,`Con un conjunto de 15 preguntas: 14 con fuente esperada y 1 trampa sin respuesta. Se mide si la fuente correcta aparece entre los primeros fragmentos.`],
+[`¿Qué está sin ajustar?`,`Los parámetros de BM25 son los de manual, el 15 % extra a los contextos es arbitrario, y los umbrales de Jev se fijaron con 12 casos. La documentación lo reconoce.`],
+[`¿Qué mejora ya está identificada?`,`Sintetizar la voz por frases y empezar a reproducir la primera mientras se generan las demás.`]],
+und:[`Qué interfaz se usará en la demo: la pestaña 3 de la aplicación principal o la v1.`,`El acierto de las respuestas y el resultado de la pregunta trampa. Lo medido es si la búsqueda encuentra la fuente.`,`El router de metadatos del diagrama de arquitectura no está en el código.`,`La calidad de la búsqueda por imagen: no hay preguntas de evaluación que la pongan a prueba.`],
+quick:{blocks:[
+[`Indexar, una vez`,`La carpeta se trocea por apartados y páginas con sus metadatos. Opcional: vectores de texto y de páginas como imagen.`,0,['od','code','mm','disk']],
+[`Preguntar`,`Escrita o hablada. La voz se transcribe en local con Whisper.`,2,['mm']],
+[`Buscar`,`BM25 trae 8 fragmentos. El modo híbrido lo fusiona con la búsqueda por significado y por imagen.`,3,['code','mm']],
+[`Responder`,`Una llamada al LLM con los 8 pasajes: de 1 a 5 frases con citas, o «No consta en la documentación».`,4,['llm']],
+[`Verificar`,`Jev comprueba cada frase contra los fragmentos que cita: se queda, se marca o se quita.`,5,['jev']],
+[`Voz`,`Kokoro lee la respuesta, en local.`,6,['mm','disk']]],
+ideas:[`Búsqueda por palabras primero: las preguntas van llenas de nombres, correos y siglas.`,`Honestidad: si los pasajes no lo dicen, «No consta», y cada frase se verifica contra su cita.`,`Casi todo corre en local. Solo salen los pasajes al LLM y las frases a Jev.`],
+mm:`Voz a texto (Whisper), texto e imagen a vector (EmbeddingGemma 2) y texto a voz (Kokoro).`,
+jev:`Opcional, frase a frase, en la interfaz v1.`,
+od:`Solo al indexar. Cada pregunta trabaja sobre el índice local. No escribe.`,
+nums:`La fuente correcta está entre las 8 primeras en 14 de 14 preguntas. Una pregunta completa: 14,8 s escrita y 18,6 s hablada con Jev.`,
+warn:`En la aplicación principal, la pestaña 3 es la versión escrita con BM25 y voz de salida. La voz de entrada, el híbrido y Jev están en la interfaz v1, que se lanza aparte.`}
+};
+
+/* ============================================================ RENDER */
+const AG={a1:A1,a2:A2,a3:A3};
+const LANES=[['od','Carpeta OneDrive','solo lectura'],['code','Código','sin modelos'],['llm','LLM de texto','Gemini 3.8 Flash'],['mm','Modelos multimodales','visión · imagen · voz'],['jev','Jev','verificador'],['disk','Disco local','resultados e índices']];
+const BLK={od:'Carpeta OneDrive: qué lee',code:'Código: qué hace sin modelos',llm:'Llamadas al LLM de texto',mm:'Modelos multimodales',jev:'Jev: qué comprueba',disk:'Disco local: qué escribe'};
+const SHORT={od:'OneDrive',code:'Código',llm:'LLM',mm:'Multimodal',jev:'Jev',disk:'Escribe en local'};
+const TABS=[['pan','Panorama',0],['a1','Agente 1 · Onboarding',0],['a2','Agente 2 · Opinión',0],['a3','Agente 3 · Preguntas',0],['jev','Jev',1],['od','Carpeta OneDrive',1],['enu','Enunciado',1]];
+const state={tab:'pan',mode:'study',step:{a1:0,a2:0,a3:0}};
+const $=id=>document.getElementById(id);
+const lane=k=>k==='texto'?'llm':'mm';
+
+function kv(c){return `<dl class="kv"><dt>Se envía</dt><dd>${c.send}</dd><dt>Se pide</dt><dd>${c.ask}</dd><dt>Se espera</dt><dd>${c.back}</dd><dt>Qué se hace</dt><dd>${c.then}</dd></dl>`}
+function callHTML(c){return `<div class="call"><h5>${c.n}<span class="tag tag-${lane(c.k)}">${c.k}</span></h5>${kv(c)}</div>`}
+function blk(id,body){return body?`<section class="blk"><h4><i class="k k-${id}"></i>${BLK[id]}</h4>${body}</section>`:''}
+const para=x=>x?`<p>${x}</p>`:'';
+
+function stepHTML(A,i){
+  const s=A.steps[i], cs=s.calls||[];
+  const txt=cs.filter(c=>c.k==='texto').map(callHTML).join(''), mm=cs.filter(c=>c.k!=='texto').map(callHTML).join('');
+  let notes='';
+  if(s.dec) notes+=`<div><h4>Decisiones de diseño en este paso</h4><ul>${s.dec.map(d=>`<li>${d}</li>`).join('')}</ul></div>`;
+  if(s.qa) notes+=`<div><h4>Te pueden preguntar</h4><dl class="qa">${s.qa.map(([q,a])=>`<dt>${q}</dt><dd>${a}</dd>`).join('')}</dl></div>`;
+  return `<header class="dh"><span class="dn">${i+1}</span><div><h3>${s.t}</h3>${s.where?`<p class="log">Disponible en: ${s.where}</p>`:''}${s.log?`<p class="log">En el registro de la ejecución aparece como ${s.log}</p>`:''}</div></header>
+  <p class="what">${s.what}</p>
+  <div class="io"><div><h4>Entra</h4><p>${s.inp}</p></div><div><h4>Sale</h4><p>${s.out}</p></div></div>
+  <div class="blocks">${blk('od',para(s.od))}${blk('llm',txt)}${blk('mm',mm)}${blk('jev',para(s.jev))}${blk('code',para(s.code))}${blk('disk',para(s.disk))}</div>
+  ${s.extra?`<p class="note">${s.extra}</p>`:''}
+  <div class="notes">${notes}</div>
+  ${s.und?`<div class="und" style="margin-top:18px"><h4>No determinado</h4><ul>${s.und.map(u=>`<li>${u}</li>`).join('')}</ul></div>`:''}`;
+}
+
+function agentHTML(A){
+  const n=A.steps.length, a=A.id;
+  const head=A.steps.map((s,i)=>`<button type="button" class="sh" data-step="${i}" aria-pressed="false" aria-label="Paso ${i+1}: ${s.t}"><span class="sn">${i+1}</span><span class="st">${s.s}</span>${s.loop?'<span class="lp" title="Tiene bucle de corrección: si no pasa el control, se repite">↺</span>':''}</button>`).join('');
+  const rows=LANES.map(([id,name,sub])=>`<div class="lh"><i class="k k-${id}"></i><span><b>${name}</b><small>${(A.laneSub&&A.laneSub[id])||sub}</small></span></div>`+A.steps.map((s,i)=>`<div class="c" data-step="${i}">${s.lanes[id]?`<span class="m m-${id}">${s.lanes[id]}</span>`:''}</div>`).join('')).join('');
+  const calls=A.steps.flatMap((s,i)=>(s.calls||[]).map(c=>`<tr><td><button class="linkbtn" data-go="${a}:${i}">Paso ${i+1}</button></td><td>${c.n}</td><td><span class="tag tag-${lane(c.k)}" style="margin:0">${c.k}</span></td><td>${c.short}</td></tr>`)).join('');
+  const q=A.quick;
+  return `
+  <h1>${A.title}</h1>
+  <p class="lead">${A.lead}</p>
+  <div class="io"><div><h4>Entra</h4><p>${A.inp}</p></div><div><h4>Sale</h4><p>${A.out}</p></div></div>
+
+  <div class="only-quick">
+    <ol class="q-steps">${q.blocks.map(([t,l,g,ks])=>`<li><div><b>${t}</b><p>${l}</p><div class="q-keys">${ks.map(k=>`<span class="chip chip-${k}">${SHORT[k]}</span>`).join('')}</div></div><button class="linkbtn q-go" data-go="${a}:${g}">Ver detalle →</button></li>`).join('')}</ol>
+    <div class="cols">
+      <div><h4>Tres ideas que defender</h4><ol class="q-ideas">${q.ideas.map(x=>`<li>${x}</li>`).join('')}</ol></div>
+      <div>
+        <h4>Multimodal</h4><p>${q.mm}</p>
+        <h4>Jev</h4><p>${q.jev} <button class="linkbtn" data-tab="jev" data-study="1">Ver Jev →</button></p>
+        <h4>Carpeta OneDrive</h4><p>${q.od} <button class="linkbtn" data-tab="od" data-study="1">Ver OneDrive →</button></p>
+        <h4>Cifras</h4><p>${q.nums}</p>
+      </div>
+    </div>
+    ${q.warn?`<p class="q-warn">${q.warn}</p>`:''}
+  </div>
+
+  <div class="only-study">
+    ${A.note?`<p class="note">${A.note}</p>`:''}
+    <nav class="subnav" aria-label="En esta página"><span class="muted">En esta página:</span>
+      <button class="linkbtn" data-scroll="${a}-flow">Flujo paso a paso</button><button class="linkbtn" data-scroll="${a}-dec">Decisiones de diseño</button>
+      <button class="linkbtn" data-scroll="${a}-mod">Modelos</button><button class="linkbtn" data-scroll="${a}-calls">Llamadas</button>
+      <button class="linkbtn" data-scroll="${a}-qa">Preguntas</button><button class="linkbtn" data-scroll="${a}-und">No determinado</button></nav>
+    <h2 style="margin-top:28px">${A.idea.title}</h2>
+    ${A.idea.html}
+    <h2 id="${a}-flow">El flujo, paso a paso</h2>
+    <p class="muted">Cada columna es un paso y cada fila, un actor. Una casilla con color indica que ese actor interviene en ese paso. ↺ marca los pasos que se repiten si no pasan su control.</p>
+    <div class="flowbar"><button type="button" class="btn" data-nav="-1">← Anterior</button><span class="pos" id="${a}-pos"></span><button type="button" class="btn" data-nav="1">Siguiente →</button><span class="hint">También con las flechas ← → del teclado</span></div>
+    <div class="scroll" id="${a}-scroll"><div class="fg" style="--n:${n}"><div class="corner"><span>pasos →</span><span>actores ↓</span></div>${head}${rows}</div></div>
+    <article class="detail" id="${a}-detail" aria-live="polite"></article>
+
+    <h2 id="${a}-dec">Decisiones de diseño y por qué</h2>
+    <div class="dec">${A.decisions.map(([d,w])=>`<div><b>${d}</b><span>${w}</span></div>`).join('')}</div>
+
+    <h2 id="${a}-mod">Modelos: qué entra, qué sale y cuándo</h2>
+    <div class="scroll"><table class="wide"><thead><tr><th>Modelo</th><th>Modalidad</th><th>Entra</th><th>Sale</th><th>Cuándo</th></tr></thead><tbody>${A.models.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+
+    <h2 id="${a}-calls">Todas las llamadas a modelos</h2>
+    <div class="scroll"><table class="wide"><thead><tr><th>Paso</th><th>Llamada</th><th>Tipo</th><th>Qué se pide</th></tr></thead><tbody>${calls}</tbody></table></div>
+
+    ${A.v1?`<h2>Versión 1</h2>${A.v1}`:''}
+
+    <h2 id="${a}-qa">Preguntas generales</h2>
+    <dl class="qa">${A.qa.map(([x,y])=>`<dt>${x}</dt><dd>${y}</dd>`).join('')}</dl>
+
+    <h2 id="${a}-und">Lo que no se puede deducir</h2>
+    <div class="und"><h4>No determinado</h4><ul>${A.und.map(u=>`<li>${u}</li>`).join('')}</ul></div>
+  </div>`;
+}
+
+function setStep(a,i,keepScroll){
+  const A=AG[a], n=A.steps.length; i=Math.max(0,Math.min(n-1,i)); state.step[a]=i;
+  const root=$('p-'+a);
+  root.querySelectorAll('[data-step]').forEach(el=>{
+    const on=+el.dataset.step===i; el.classList.toggle('sel',on);
+    if(el.classList.contains('sh')) el.setAttribute('aria-pressed',on);
+  });
+  $(a+'-detail').innerHTML=stepHTML(A,i);
+  $(a+'-pos').textContent=`Paso ${i+1} de ${n} · ${A.steps[i].t}`;
+  root.querySelector('[data-nav="-1"]').disabled=i===0;
+  root.querySelector('[data-nav="1"]').disabled=i===n-1;
+  const sc=$(a+'-scroll'), b=root.querySelector(`.sh[data-step="${i}"]`);
+  if(sc&&b&&!keepScroll){
+    const left=b.offsetLeft-166, right=b.offsetLeft+b.offsetWidth+12;
+    if(left<sc.scrollLeft) sc.scrollLeft=Math.max(0,left);
+    else if(right>sc.scrollLeft+sc.clientWidth) sc.scrollLeft=right-sc.clientWidth;
+  }
+}
+
+function save(){try{localStorage.setItem('b5t4-guia',JSON.stringify({tab:state.tab,mode:state.mode}))}catch(e){}}
+function apply(){
+  document.body.dataset.mode=state.mode;
+  document.querySelectorAll('.mode button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===state.mode));
+  const visible=TABS.filter(t=>state.mode==='study'||!t[2]).map(t=>t[0]);
+  if(!visible.includes(state.tab)) state.tab='pan';
+  document.querySelectorAll('#tabs button').forEach(b=>{b.hidden=!visible.includes(b.dataset.tab);b.setAttribute('aria-selected',b.dataset.tab===state.tab)});
+  TABS.forEach(([id])=>{$('p-'+id).hidden=id!==state.tab});
+  save();
+}
+function setTab(t){state.tab=t;apply();try{history.replaceState(null,'','#'+t)}catch(e){}window.scrollTo(0,0)}
+function setMode(m){state.mode=m;apply()}
+function go(a,i){state.mode='study';state.tab=a;apply();setStep(a,i);try{history.replaceState(null,'','#'+a)}catch(e){}const el=document.querySelector('#p-'+a+' .flowbar');if(el)el.scrollIntoView({block:'start'})}
+
+function init(){
+  $('tabs').innerHTML=TABS.map(([id,name])=>`<button type="button" role="tab" data-tab="${id}" aria-selected="false">${name}</button>`).join('');
+  Object.values(AG).forEach(A=>{$('p-'+A.id).innerHTML=agentHTML(A);setStep(A.id,0,true)});
+  try{const s=JSON.parse(localStorage.getItem('b5t4-guia')||'{}');if(s.mode==='quick'||s.mode==='study')state.mode=s.mode;if(TABS.some(t=>t[0]===s.tab))state.tab=s.tab}catch(e){}
+  const h=location.hash.slice(1);if(TABS.some(t=>t[0]===h)){state.tab=h;if(TABS.find(t=>t[0]===h)[2])state.mode='study'}
+  apply();
+
+  document.addEventListener('click',e=>{
+    const t=e.target.closest('[data-go],[data-tab],[data-mode],[data-nav],[data-step],[data-scroll]');if(!t)return;
+    if(t.dataset.go){const [a,i]=t.dataset.go.split(':');go(a,+i)}
+    else if(t.dataset.tab){if(t.dataset.study)state.mode='study';setTab(t.dataset.tab)}
+    else if(t.dataset.mode)setMode(t.dataset.mode)
+    else if(t.dataset.nav){const a=state.tab;if(AG[a])setStep(a,state.step[a]+(+t.dataset.nav))}
+    else if(t.dataset.step!==undefined){const a=state.tab;if(AG[a])setStep(a,+t.dataset.step,true)}
+    else if(t.dataset.scroll){const el=$(t.dataset.scroll);if(el)el.scrollIntoView({block:'start'})}
+  });
+  document.addEventListener('keydown',e=>{
+    if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;
+    if(e.altKey||e.ctrlKey||e.metaKey||/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName))return;
+    const d=e.key==='ArrowRight'?1:-1;
+    if(state.mode==='study'&&AG[state.tab]){setStep(state.tab,state.step[state.tab]+d);e.preventDefault()}
+    else if(state.mode==='quick'){const order=['pan','a1','a2','a3'],i=order.indexOf(state.tab)+d;if(i>=0&&i<order.length){setTab(order[i]);e.preventDefault()}}
+  });
+  window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(TABS.some(t=>t[0]===h)&&h!==state.tab){if(TABS.find(t=>t[0]===h)[2])state.mode='study';state.tab=h;apply()}});
+}
+init();
+</script>
+</body>
+</html>
